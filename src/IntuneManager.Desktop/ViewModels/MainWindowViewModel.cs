@@ -60,6 +60,22 @@ public partial class MainWindowViewModel : ViewModelBase
         LoginViewModel.LoginSucceeded += OnLoginSucceeded;
 
         CurrentView = LoginViewModel;
+
+        // Load profiles asynchronously — never block the UI thread
+        _ = LoadProfilesAsync();
+    }
+
+    private async Task LoadProfilesAsync()
+    {
+        try
+        {
+            await _profileService.LoadAsync();
+            LoginViewModel.PopulateSavedProfiles();
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to load profiles: {ex.Message}");
+        }
     }
 
     // Design-time constructor

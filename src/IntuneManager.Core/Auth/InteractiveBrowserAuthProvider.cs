@@ -10,17 +10,27 @@ public class InteractiveBrowserAuthProvider : IAuthenticationProvider
     {
         var (_, authorityHost) = CloudEndpoints.GetEndpoints(profile.Cloud);
 
-        var credential = new InteractiveBrowserCredential(new InteractiveBrowserCredentialOptions
+        TokenCredential credential = profile.AuthMethod switch
         {
-            TenantId = profile.TenantId,
-            ClientId = profile.ClientId,
-            AuthorityHost = authorityHost,
-            TokenCachePersistenceOptions = new TokenCachePersistenceOptions
-            {
-                Name = $"IntuneManager-{profile.Id}"
-            }
-        });
+            AuthMethod.ClientSecret when !string.IsNullOrWhiteSpace(profile.ClientSecret) =>
+                new ClientSecretCredential(
+                    profile.TenantId,
+                    profile.ClientId,
+                    profile.ClientSecret,
+                    new ClientSecretCredentialOptions { AuthorityHost = authorityHost }),
 
-        return Task.FromResult<TokenCredential>(credential);
+            _ => new InteractiveBrowserCredential(new InteractiveBrowserCredentialOptions
+            {
+                TenantId = profile.TenantId,
+                ClientId = profile.ClientId,
+                AuthorityHost = authorityHost,
+                TokenCachePersistenceOptions = new TokenCachePersistenceOptions
+                {
+                    Name = $"IntuneManager-{profile.Id}"
+                }
+            })
+        };
+
+        return Task.FromResult(credential);
     }
 }

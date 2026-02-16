@@ -32,9 +32,6 @@ public partial class App : Application
             services.AddTransient<MainWindowViewModel>();
             Services = services.BuildServiceProvider();
 
-            var profileService = Services.GetRequiredService<ProfileService>();
-            profileService.LoadAsync().GetAwaiter().GetResult();
-
             desktop.MainWindow = new MainWindow
             {
                 DataContext = Services.GetRequiredService<MainWindowViewModel>(),

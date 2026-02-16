@@ -6,14 +6,14 @@ namespace IntuneManager.Core.Tests.Models;
 public class CloudEndpointsTests
 {
     [Theory]
-    [InlineData(CloudEnvironment.Commercial, "https://graph.microsoft.com")]
-    [InlineData(CloudEnvironment.GCC, "https://graph.microsoft.com")]
-    [InlineData(CloudEnvironment.GCCHigh, "https://graph.microsoft.us")]
-    [InlineData(CloudEnvironment.DoD, "https://dod-graph.microsoft.us")]
+    [InlineData(CloudEnvironment.Commercial, "https://graph.microsoft.com/v1.0")]
+    [InlineData(CloudEnvironment.GCC, "https://graph.microsoft.com/v1.0")]
+    [InlineData(CloudEnvironment.GCCHigh, "https://graph.microsoft.us/v1.0")]
+    [InlineData(CloudEnvironment.DoD, "https://dod-graph.microsoft.us/v1.0")]
     public void GetEndpoints_ReturnsCorrectGraphEndpoint(CloudEnvironment cloud, string expectedEndpoint)
     {
-        var (graphEndpoint, _) = CloudEndpoints.GetEndpoints(cloud);
-        Assert.Equal(expectedEndpoint, graphEndpoint);
+        var (graphBaseUrl, _) = CloudEndpoints.GetEndpoints(cloud);
+        Assert.Equal(expectedEndpoint, graphBaseUrl);
     }
 
     [Theory]

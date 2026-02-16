@@ -16,9 +16,9 @@ public class IntuneGraphClientFactory
     public async Task<GraphServiceClient> CreateClientAsync(TenantProfile profile, CancellationToken cancellationToken = default)
     {
         var credential = await _authProvider.GetCredentialAsync(profile, cancellationToken);
-        var (graphEndpoint, _) = CloudEndpoints.GetEndpoints(profile.Cloud);
+        var (graphBaseUrl, _) = CloudEndpoints.GetEndpoints(profile.Cloud);
         var scopes = CloudEndpoints.GetScopes(profile.Cloud);
 
-        return new GraphServiceClient(credential, scopes, graphEndpoint);
+        return new GraphServiceClient(credential, scopes, graphBaseUrl);
     }
 }
