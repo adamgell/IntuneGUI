@@ -6,7 +6,7 @@ namespace IntuneManager.Core.Services;
 
 public class ImportService : IImportService
 {
-    private readonly IIntuneService _intuneService;
+    private readonly IConfigurationProfileService _configProfileService;
     private readonly ICompliancePolicyService? _compliancePolicyService;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -14,9 +14,9 @@ public class ImportService : IImportService
         PropertyNameCaseInsensitive = true
     };
 
-    public ImportService(IIntuneService intuneService, ICompliancePolicyService? compliancePolicyService = null)
+    public ImportService(IConfigurationProfileService configProfileService, ICompliancePolicyService? compliancePolicyService = null)
     {
-        _intuneService = intuneService;
+        _configProfileService = configProfileService;
         _compliancePolicyService = compliancePolicyService;
     }
 
@@ -69,7 +69,7 @@ public class ImportService : IImportService
         config.LastModifiedDateTime = null;
         config.Version = null;
 
-        var created = await _intuneService.CreateDeviceConfigurationAsync(config, cancellationToken);
+        var created = await _configProfileService.CreateDeviceConfigurationAsync(config, cancellationToken);
 
         // Update migration table with the mapping
         if (originalId != null && created.Id != null)

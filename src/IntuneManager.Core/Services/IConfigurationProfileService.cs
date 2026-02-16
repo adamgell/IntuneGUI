@@ -2,7 +2,7 @@ using Microsoft.Graph.Models;
 
 namespace IntuneManager.Core.Services;
 
-public interface IIntuneService
+public interface IConfigurationProfileService
 {
     Task<List<DeviceConfiguration>> ListDeviceConfigurationsAsync(CancellationToken cancellationToken = default);
     Task<DeviceConfiguration?> GetDeviceConfigurationAsync(string id, CancellationToken cancellationToken = default);

@@ -3,11 +3,11 @@ using Microsoft.Graph.Models;
 
 namespace IntuneManager.Core.Services;
 
-public class IntuneService : IIntuneService
+public class ConfigurationProfileService : IConfigurationProfileService
 {
     private readonly GraphServiceClient _graphClient;
 
-    public IntuneService(GraphServiceClient graphClient)
+    public ConfigurationProfileService(GraphServiceClient graphClient)
     {
         _graphClient = graphClient;
     }

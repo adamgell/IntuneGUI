@@ -21,7 +21,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IExportService _exportService;
 
     private GraphServiceClient? _graphClient;
-    private IIntuneService? _intuneService;
+    private IConfigurationProfileService? _configProfileService;
     private IImportService? _importService;
     private ICompliancePolicyService? _compliancePolicyService;
 
@@ -151,9 +151,9 @@ public partial class MainWindowViewModel : ViewModelBase
             CurrentView = null;
 
             _graphClient = await _graphClientFactory.CreateClientAsync(profile);
-            _intuneService = new IntuneService(_graphClient);
+            _configProfileService = new ConfigurationProfileService(_graphClient);
             _compliancePolicyService = new CompliancePolicyService(_graphClient);
-            _importService = new ImportService(_intuneService, _compliancePolicyService);
+            _importService = new ImportService(_configProfileService, _compliancePolicyService);
 
             RefreshSwitcherProfiles();
             SelectedSwitchProfile = profile;
@@ -221,10 +221,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
         try
         {
-            if (_intuneService != null)
+            if (_configProfileService != null)
             {
                 StatusText = "Loading device configurations...";
-                var configs = await _intuneService.ListDeviceConfigurationsAsync(cancellationToken);
+                var configs = await _configProfileService.ListDeviceConfigurationsAsync(cancellationToken);
                 DeviceConfigurations = new ObservableCollection<DeviceConfiguration>(configs);
             }
 
@@ -428,7 +428,7 @@ public partial class MainWindowViewModel : ViewModelBase
         CompliancePolicies.Clear();
         SelectedCompliancePolicy = null;
         _graphClient = null;
-        _intuneService = null;
+        _configProfileService = null;
         _compliancePolicyService = null;
         _importService = null;
     }
