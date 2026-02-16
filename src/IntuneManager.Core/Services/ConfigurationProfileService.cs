@@ -3,11 +3,11 @@ using Microsoft.Graph.Models;
 
 namespace IntuneManager.Core.Services;
 
-public class IntuneService : IIntuneService
+public class ConfigurationProfileService : IConfigurationProfileService
 {
     private readonly GraphServiceClient _graphClient;
 
-    public IntuneService(GraphServiceClient graphClient)
+    public ConfigurationProfileService(GraphServiceClient graphClient)
     {
         _graphClient = graphClient;
     }
@@ -65,5 +65,13 @@ public class IntuneService : IIntuneService
     {
         await _graphClient.DeviceManagement.DeviceConfigurations[id]
             .DeleteAsync(cancellationToken: cancellationToken);
+    }
+
+    public async Task<List<DeviceConfigurationAssignment>> GetAssignmentsAsync(string configId, CancellationToken cancellationToken = default)
+    {
+        var response = await _graphClient.DeviceManagement.DeviceConfigurations[configId]
+            .Assignments.GetAsync(cancellationToken: cancellationToken);
+
+        return response?.Value ?? [];
     }
 }
