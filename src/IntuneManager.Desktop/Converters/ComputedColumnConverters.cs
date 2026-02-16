@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using Avalonia.Data;
 using Avalonia.Data.Converters;
 using IntuneManager.Desktop.ViewModels;
 
@@ -25,7 +26,7 @@ public class ODataTypeConverter : IValueConverter
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => throw new NotSupportedException();
+        => BindingOperations.DoNothing;
 }
 
 /// <summary>
@@ -41,5 +42,5 @@ public class PlatformConverter : IValueConverter
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => throw new NotSupportedException();
+        => BindingOperations.DoNothing;
 }
