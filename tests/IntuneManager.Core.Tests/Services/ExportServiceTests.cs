@@ -118,4 +118,75 @@ public class ExportServiceTests : IDisposable
         var files = Directory.GetFiles(folder, "*.json");
         Assert.Single(files);
     }
+
+    [Fact]
+    public async Task ExportCompliancePolicy_CreatesJsonFile()
+    {
+        var policy = new DeviceCompliancePolicy
+        {
+            Id = "cp-id",
+            DisplayName = "Test Compliance"
+        };
+        var assignments = new List<DeviceCompliancePolicyAssignment>();
+        var table = new MigrationTable();
+
+        await _service.ExportCompliancePolicyAsync(policy, assignments, _tempDir, table);
+
+        var expectedPath = Path.Combine(_tempDir, "CompliancePolicies", "Test Compliance.json");
+        Assert.True(File.Exists(expectedPath));
+    }
+
+    [Fact]
+    public async Task ExportCompliancePolicy_UpdatesMigrationTable()
+    {
+        var policy = new DeviceCompliancePolicy
+        {
+            Id = "cp-id",
+            DisplayName = "Test Compliance"
+        };
+        var assignments = new List<DeviceCompliancePolicyAssignment>();
+        var table = new MigrationTable();
+
+        await _service.ExportCompliancePolicyAsync(policy, assignments, _tempDir, table);
+
+        Assert.Single(table.Entries);
+        Assert.Equal("cp-id", table.Entries[0].OriginalId);
+        Assert.Equal("CompliancePolicy", table.Entries[0].ObjectType);
+    }
+
+    [Fact]
+    public async Task ExportCompliancePolicy_IncludesAssignmentsInJson()
+    {
+        var policy = new DeviceCompliancePolicy
+        {
+            Id = "cp-id",
+            DisplayName = "With Assignments"
+        };
+        var assignments = new List<DeviceCompliancePolicyAssignment>
+        {
+            new() { Id = "a1", Target = new DeviceAndAppManagementAssignmentTarget() }
+        };
+        var table = new MigrationTable();
+
+        await _service.ExportCompliancePolicyAsync(policy, assignments, _tempDir, table);
+
+        var filePath = Path.Combine(_tempDir, "CompliancePolicies", "With Assignments.json");
+        var json = await File.ReadAllTextAsync(filePath);
+        Assert.Contains("assignments", json);
+    }
+
+    [Fact]
+    public async Task ExportCompliancePolicies_ExportsMultiple()
+    {
+        var policies = new (DeviceCompliancePolicy, IReadOnlyList<DeviceCompliancePolicyAssignment>)[]
+        {
+            (new DeviceCompliancePolicy { Id = "cp-1", DisplayName = "Policy One" }, Array.Empty<DeviceCompliancePolicyAssignment>()),
+            (new DeviceCompliancePolicy { Id = "cp-2", DisplayName = "Policy Two" }, Array.Empty<DeviceCompliancePolicyAssignment>())
+        };
+
+        await _service.ExportCompliancePoliciesAsync(policies, _tempDir);
+
+        var folder = Path.Combine(_tempDir, "CompliancePolicies");
+        Assert.Equal(2, Directory.GetFiles(folder, "*.json").Length);
+    }
 }

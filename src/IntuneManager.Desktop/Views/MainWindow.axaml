@@ -4,13 +4,13 @@
         xmlns:views="using:IntuneManager.Desktop.Views"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="750"
+        mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="750"
         x:Class="IntuneManager.Desktop.Views.MainWindow"
         x:Name="MainWin"
         x:DataType="vm:MainWindowViewModel"
         Title="{Binding WindowTitle}"
-        Width="1000" Height="750"
-        MinWidth="800" MinHeight="625">
+        Width="1100" Height="750"
+        MinWidth="900" MinHeight="625">
 
     <Design.DataContext>
         <vm:MainWindowViewModel />
@@ -48,8 +48,7 @@
                     <DockPanel>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <Button Content="Refresh" Command="{Binding RefreshCommand}" />
-                            <Button Content="Export Selected" Command="{Binding ExportSelectedCommand}"
-                                    IsEnabled="{Binding SelectedConfiguration, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                            <Button Content="Export Selected" Command="{Binding ExportSelectedCommand}" />
                             <Button Content="Export All" Command="{Binding ExportAllCommand}" />
                             <Button Content="Import" x:Name="ImportButton" />
                         </StackPanel>
@@ -70,49 +69,135 @@
                     </DockPanel>
                 </Border>
 
-                <!-- Content Area -->
-                <Grid ColumnDefinitions="*,Auto,*">
-                    <!-- Configuration List -->
-                    <DockPanel Grid.Column="0" Margin="8">
-                        <TextBlock DockPanel.Dock="Top" Text="Device Configurations"
-                                   FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8" />
-                        <DataGrid ItemsSource="{Binding DeviceConfigurations}"
-                                  SelectedItem="{Binding SelectedConfiguration}"
-                                  AutoGenerateColumns="False"
-                                  IsReadOnly="True"
-                                  CanUserResizeColumns="True"
-                                  GridLinesVisibility="Horizontal"
-                                  BorderThickness="1"
-                                  BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Display Name"
-                                                    Binding="{Binding DisplayName}"
-                                                    Width="*" />
-                                <DataGridTextColumn Header="Last Modified"
-                                                    Binding="{Binding LastModifiedDateTime}"
-                                                    Width="150" />
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </DockPanel>
+                <!-- Body: Left Nav + Content + Details -->
+                <Grid ColumnDefinitions="180,Auto,*,Auto,300">
 
-                    <!-- Splitter -->
+                    <!-- Left Nav Panel -->
+                    <Border Grid.Column="0"
+                            Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                            Padding="0,8">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top" Text="Categories"
+                                       FontSize="13" FontWeight="SemiBold"
+                                       Margin="12,0,0,8" />
+                            <ListBox ItemsSource="{Binding NavCategories}"
+                                     SelectedItem="{Binding SelectedCategory}"
+                                     Padding="4">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="4,2">
+                                            <TextBlock Text="{Binding Icon}" FontSize="14" VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding Name}" FontSize="13" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </DockPanel>
+                    </Border>
+
+                    <!-- Splitter: Nav | Content -->
                     <GridSplitter Grid.Column="1" Width="4"
                                   Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" />
 
-                    <!-- Detail Pane -->
+                    <!-- Item List (center) -->
                     <DockPanel Grid.Column="2" Margin="8">
+
+                        <!-- Device Configurations list -->
+                        <DockPanel IsVisible="{Binding IsDeviceConfigCategory}">
+                            <TextBlock DockPanel.Dock="Top" Text="Device Configurations"
+                                       FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8" />
+                            <DataGrid ItemsSource="{Binding DeviceConfigurations}"
+                                      SelectedItem="{Binding SelectedConfiguration}"
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      CanUserResizeColumns="True"
+                                      GridLinesVisibility="Horizontal"
+                                      BorderThickness="1"
+                                      BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Display Name"
+                                                        Binding="{Binding DisplayName}"
+                                                        Width="*" />
+                                    <DataGridTextColumn Header="Last Modified"
+                                                        Binding="{Binding LastModifiedDateTime}"
+                                                        Width="150" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </DockPanel>
+
+                        <!-- Compliance Policies list -->
+                        <DockPanel IsVisible="{Binding IsCompliancePolicyCategory}">
+                            <TextBlock DockPanel.Dock="Top" Text="Compliance Policies"
+                                       FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8" />
+                            <DataGrid ItemsSource="{Binding CompliancePolicies}"
+                                      SelectedItem="{Binding SelectedCompliancePolicy}"
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      CanUserResizeColumns="True"
+                                      GridLinesVisibility="Horizontal"
+                                      BorderThickness="1"
+                                      BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Display Name"
+                                                        Binding="{Binding DisplayName}"
+                                                        Width="*" />
+                                    <DataGridTextColumn Header="Last Modified"
+                                                        Binding="{Binding LastModifiedDateTime}"
+                                                        Width="150" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </DockPanel>
+                    </DockPanel>
+
+                    <!-- Splitter: Content | Details -->
+                    <GridSplitter Grid.Column="3" Width="4"
+                                  Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" />
+
+                    <!-- Detail Pane (right) -->
+                    <DockPanel Grid.Column="4" Margin="8">
                         <TextBlock DockPanel.Dock="Top" Text="Details"
                                    FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8" />
 
-                        <!-- No selection message -->
-                        <TextBlock Text="Select a configuration to view details"
+                        <!-- No selection -->
+                        <TextBlock Text="Select an item to view details"
                                    VerticalAlignment="Center" HorizontalAlignment="Center"
                                    Foreground="Gray" FontSize="14"
-                                   IsVisible="{Binding SelectedConfiguration, Converter={x:Static ObjectConverters.IsNull}}" />
+                                   IsVisible="{Binding !IsDeviceConfigCategory}"
+                                   x:Name="PlaceholderNoCategory" />
 
-                        <!-- Selected item details -->
+                        <!-- Device Configuration details -->
                         <ScrollViewer IsVisible="{Binding SelectedConfiguration, Converter={x:Static ObjectConverters.IsNotNull}}">
                             <StackPanel Spacing="12" DataContext="{Binding SelectedConfiguration}">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="Display Name" FontSize="11" Foreground="Gray" />
+                                    <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="ID" FontSize="11" Foreground="Gray" />
+                                    <TextBlock Text="{Binding Id}" FontSize="12" />
+                                </StackPanel>
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="Description" FontSize="11" Foreground="Gray" />
+                                    <TextBlock Text="{Binding Description}" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="Created" FontSize="11" Foreground="Gray" />
+                                    <TextBlock Text="{Binding CreatedDateTime}" />
+                                </StackPanel>
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="Last Modified" FontSize="11" Foreground="Gray" />
+                                    <TextBlock Text="{Binding LastModifiedDateTime}" />
+                                </StackPanel>
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="Version" FontSize="11" Foreground="Gray" />
+                                    <TextBlock Text="{Binding Version}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Compliance Policy details -->
+                        <ScrollViewer IsVisible="{Binding SelectedCompliancePolicy, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <StackPanel Spacing="12" DataContext="{Binding SelectedCompliancePolicy}">
                                 <StackPanel Spacing="2">
                                     <TextBlock Text="Display Name" FontSize="11" Foreground="Gray" />
                                     <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextWrapping="Wrap" />

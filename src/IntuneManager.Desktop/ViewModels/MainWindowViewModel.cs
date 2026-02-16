@@ -23,6 +23,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private GraphServiceClient? _graphClient;
     private IIntuneService? _intuneService;
     private IImportService? _importService;
+    private ICompliancePolicyService? _compliancePolicyService;
 
     [ObservableProperty]
     private ViewModelBase? _currentView;
@@ -37,26 +38,38 @@ public partial class MainWindowViewModel : ViewModelBase
     private bool _isConnected;
 
     [ObservableProperty]
+    private string _statusText = "Not connected";
+
+    // --- Navigation ---
+    [ObservableProperty]
+    private NavCategory? _selectedCategory;
+
+    public ObservableCollection<NavCategory> NavCategories { get; } =
+    [
+        new NavCategory { Name = "Device Configurations", Icon = "⚙" },
+        new NavCategory { Name = "Compliance Policies", Icon = "✓" }
+    ];
+
+    // --- Device Configurations ---
+    [ObservableProperty]
     private ObservableCollection<DeviceConfiguration> _deviceConfigurations = [];
 
     [ObservableProperty]
     private DeviceConfiguration? _selectedConfiguration;
 
+    // --- Compliance Policies ---
     [ObservableProperty]
-    private string _statusText = "Not connected";
+    private ObservableCollection<DeviceCompliancePolicy> _compliancePolicies = [];
 
-    /// <summary>
-    /// Profile selected in the toolbar switcher. Triggers switch confirmation.
-    /// </summary>
+    [ObservableProperty]
+    private DeviceCompliancePolicy? _selectedCompliancePolicy;
+
+    // --- Profile switcher ---
     [ObservableProperty]
     private TenantProfile? _selectedSwitchProfile;
 
     public ObservableCollection<TenantProfile> SwitcherProfiles { get; } = [];
 
-    /// <summary>
-    /// Raised when the user picks a different profile and we need a confirm dialog.
-    /// The view subscribes to this, shows the dialog, and calls ConfirmSwitchProfile / CancelSwitchProfile.
-    /// </summary>
     public event Func<TenantProfile, Task<bool>>? SwitchProfileRequested;
 
     public LoginViewModel LoginViewModel { get; }
@@ -102,6 +115,23 @@ public partial class MainWindowViewModel : ViewModelBase
         LoginViewModel = null!;
     }
 
+    // --- Navigation ---
+
+    // Computed visibility helpers for the view
+    public bool IsDeviceConfigCategory => SelectedCategory?.Name == "Device Configurations";
+    public bool IsCompliancePolicyCategory => SelectedCategory?.Name == "Compliance Policies";
+
+    partial void OnSelectedCategoryChanged(NavCategory? value)
+    {
+        // Clear selections when switching categories
+        SelectedConfiguration = null;
+        SelectedCompliancePolicy = null;
+        OnPropertyChanged(nameof(IsDeviceConfigCategory));
+        OnPropertyChanged(nameof(IsCompliancePolicyCategory));
+    }
+
+    // --- Connection ---
+
     private async void OnLoginSucceeded(object? sender, TenantProfile profile)
     {
         await ConnectToProfile(profile);
@@ -118,14 +148,18 @@ public partial class MainWindowViewModel : ViewModelBase
             ActiveProfile = profile;
             IsConnected = true;
             WindowTitle = $"IntuneManager - {profile.Name}";
-            CurrentView = null; // Show main content instead of login
+            CurrentView = null;
 
             _graphClient = await _graphClientFactory.CreateClientAsync(profile);
             _intuneService = new IntuneService(_graphClient);
-            _importService = new ImportService(_intuneService);
+            _compliancePolicyService = new CompliancePolicyService(_graphClient);
+            _importService = new ImportService(_intuneService, _compliancePolicyService);
 
             RefreshSwitcherProfiles();
             SelectedSwitchProfile = profile;
+
+            // Default to first nav category
+            SelectedCategory = NavCategories.FirstOrDefault();
 
             StatusText = $"Connected to {profile.Name}";
             await RefreshAsync(CancellationToken.None);
@@ -151,7 +185,6 @@ public partial class MainWindowViewModel : ViewModelBase
 
     partial void OnSelectedSwitchProfileChanged(TenantProfile? value)
     {
-        // Only trigger switch if connected and user picked a *different* profile
         if (value is null || !IsConnected || value.Id == ActiveProfile?.Id)
             return;
 
@@ -173,31 +206,42 @@ public partial class MainWindowViewModel : ViewModelBase
             }
             else
             {
-                // Revert selection silently
                 SelectedSwitchProfile = ActiveProfile;
             }
         }
     }
 
+    // --- Refresh (loads data for the selected category) ---
+
     [RelayCommand]
     private async Task RefreshAsync(CancellationToken cancellationToken)
     {
-        if (_intuneService == null) return;
-
         ClearError();
         IsBusy = true;
-        StatusText = "Loading device configurations...";
 
         try
         {
-            var configs = await _intuneService.ListDeviceConfigurationsAsync(cancellationToken);
-            DeviceConfigurations = new ObservableCollection<DeviceConfiguration>(configs);
-            StatusText = $"Loaded {configs.Count} device configuration(s)";
+            if (_intuneService != null)
+            {
+                StatusText = "Loading device configurations...";
+                var configs = await _intuneService.ListDeviceConfigurationsAsync(cancellationToken);
+                DeviceConfigurations = new ObservableCollection<DeviceConfiguration>(configs);
+            }
+
+            if (_compliancePolicyService != null)
+            {
+                StatusText = "Loading compliance policies...";
+                var policies = await _compliancePolicyService.ListCompliancePoliciesAsync(cancellationToken);
+                CompliancePolicies = new ObservableCollection<DeviceCompliancePolicy>(policies);
+            }
+
+            var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count;
+            StatusText = $"Loaded {totalItems} item(s) ({DeviceConfigurations.Count} configs, {CompliancePolicies.Count} policies)";
         }
         catch (Exception ex)
         {
-            SetError($"Failed to load configurations: {ex.Message}");
-            StatusText = "Error loading configurations";
+            SetError($"Failed to load data: {ex.Message}");
+            StatusText = "Error loading data";
         }
         finally
         {
@@ -205,14 +249,13 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    // --- Export ---
+
     [RelayCommand]
     private async Task ExportSelectedAsync(CancellationToken cancellationToken)
     {
-        if (SelectedConfiguration == null) return;
-
         ClearError();
         IsBusy = true;
-        StatusText = $"Exporting {SelectedConfiguration.DisplayName}...";
 
         try
         {
@@ -221,10 +264,29 @@ public partial class MainWindowViewModel : ViewModelBase
                 "IntuneExport");
 
             var migrationTable = new MigrationTable();
-            await _exportService.ExportDeviceConfigurationAsync(
-                SelectedConfiguration, outputPath, migrationTable, cancellationToken);
-            await _exportService.SaveMigrationTableAsync(migrationTable, outputPath, cancellationToken);
 
+            if (IsDeviceConfigCategory && SelectedConfiguration != null)
+            {
+                StatusText = $"Exporting {SelectedConfiguration.DisplayName}...";
+                await _exportService.ExportDeviceConfigurationAsync(
+                    SelectedConfiguration, outputPath, migrationTable, cancellationToken);
+            }
+            else if (IsCompliancePolicyCategory && SelectedCompliancePolicy != null)
+            {
+                StatusText = $"Exporting {SelectedCompliancePolicy.DisplayName}...";
+                var assignments = _compliancePolicyService != null && SelectedCompliancePolicy.Id != null
+                    ? await _compliancePolicyService.GetAssignmentsAsync(SelectedCompliancePolicy.Id, cancellationToken)
+                    : [];
+                await _exportService.ExportCompliancePolicyAsync(
+                    SelectedCompliancePolicy, assignments, outputPath, migrationTable, cancellationToken);
+            }
+            else
+            {
+                StatusText = "Nothing selected to export";
+                return;
+            }
+
+            await _exportService.SaveMigrationTableAsync(migrationTable, outputPath, cancellationToken);
             StatusText = $"Exported to {outputPath}";
         }
         catch (Exception ex)
@@ -241,11 +303,8 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task ExportAllAsync(CancellationToken cancellationToken)
     {
-        if (!DeviceConfigurations.Any()) return;
-
         ClearError();
         IsBusy = true;
-        StatusText = "Exporting all configurations...";
 
         try
         {
@@ -253,10 +312,36 @@ public partial class MainWindowViewModel : ViewModelBase
                 Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
                 "IntuneExport");
 
-            await _exportService.ExportDeviceConfigurationsAsync(
-                DeviceConfigurations, outputPath, cancellationToken);
+            var migrationTable = new MigrationTable();
+            var count = 0;
 
-            StatusText = $"Exported {DeviceConfigurations.Count} configuration(s) to {outputPath}";
+            // Export device configs
+            if (DeviceConfigurations.Any())
+            {
+                StatusText = "Exporting device configurations...";
+                foreach (var config in DeviceConfigurations)
+                {
+                    await _exportService.ExportDeviceConfigurationAsync(config, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
+            // Export compliance policies with assignments
+            if (CompliancePolicies.Any() && _compliancePolicyService != null)
+            {
+                StatusText = "Exporting compliance policies...";
+                foreach (var policy in CompliancePolicies)
+                {
+                    var assignments = policy.Id != null
+                        ? await _compliancePolicyService.GetAssignmentsAsync(policy.Id, cancellationToken)
+                        : [];
+                    await _exportService.ExportCompliancePolicyAsync(policy, assignments, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
+            await _exportService.SaveMigrationTableAsync(migrationTable, outputPath, cancellationToken);
+            StatusText = $"Exported {count} item(s) to {outputPath}";
         }
         catch (Exception ex)
         {
@@ -269,6 +354,8 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    // --- Import ---
+
     [RelayCommand]
     private async Task ImportFromFolderAsync(string folderPath, CancellationToken cancellationToken)
     {
@@ -276,27 +363,35 @@ public partial class MainWindowViewModel : ViewModelBase
 
         ClearError();
         IsBusy = true;
-        StatusText = "Importing configurations...";
+        StatusText = "Importing...";
 
         try
         {
-            var configs = await _importService.ReadDeviceConfigurationsFromFolderAsync(folderPath, cancellationToken);
             var migrationTable = await _importService.ReadMigrationTableAsync(folderPath, cancellationToken);
-
             var imported = 0;
+
+            // Import device configurations
+            var configs = await _importService.ReadDeviceConfigurationsFromFolderAsync(folderPath, cancellationToken);
             foreach (var config in configs)
             {
                 await _importService.ImportDeviceConfigurationAsync(config, migrationTable, cancellationToken);
                 imported++;
-                StatusText = $"Imported {imported} of {configs.Count}...";
+                StatusText = $"Imported {imported} item(s)...";
+            }
+
+            // Import compliance policies
+            var policies = await _importService.ReadCompliancePoliciesFromFolderAsync(folderPath, cancellationToken);
+            foreach (var export in policies)
+            {
+                await _importService.ImportCompliancePolicyAsync(export, migrationTable, cancellationToken);
+                imported++;
+                StatusText = $"Imported {imported} item(s)...";
             }
 
             // Save updated migration table
             await _exportService.SaveMigrationTableAsync(migrationTable, folderPath, cancellationToken);
+            StatusText = $"Imported {imported} item(s)";
 
-            StatusText = $"Imported {imported} configuration(s)";
-
-            // Refresh the list
             await RefreshAsync(cancellationToken);
         }
         catch (Exception ex)
@@ -309,6 +404,8 @@ public partial class MainWindowViewModel : ViewModelBase
             IsBusy = false;
         }
     }
+
+    // --- Disconnect ---
 
     [RelayCommand]
     private void Disconnect()
@@ -325,10 +422,14 @@ public partial class MainWindowViewModel : ViewModelBase
         ActiveProfile = null;
         WindowTitle = "IntuneManager";
         StatusText = "Not connected";
+        SelectedCategory = null;
         DeviceConfigurations.Clear();
         SelectedConfiguration = null;
+        CompliancePolicies.Clear();
+        SelectedCompliancePolicy = null;
         _graphClient = null;
         _intuneService = null;
+        _compliancePolicyService = null;
         _importService = null;
     }
 }

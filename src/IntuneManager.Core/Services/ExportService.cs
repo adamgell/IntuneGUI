@@ -67,4 +67,52 @@ public class ExportService : IExportService
         var invalid = Path.GetInvalidFileNameChars();
         return string.Join("_", name.Split(invalid, StringSplitOptions.RemoveEmptyEntries)).Trim();
     }
+
+    public async Task ExportCompliancePolicyAsync(
+        DeviceCompliancePolicy policy,
+        IReadOnlyList<DeviceCompliancePolicyAssignment> assignments,
+        string outputPath,
+        MigrationTable migrationTable,
+        CancellationToken cancellationToken = default)
+    {
+        var folderPath = Path.Combine(outputPath, "CompliancePolicies");
+        Directory.CreateDirectory(folderPath);
+
+        var sanitizedName = SanitizeFileName(policy.DisplayName ?? policy.Id ?? "unknown");
+        var filePath = Path.Combine(folderPath, $"{sanitizedName}.json");
+
+        var export = new CompliancePolicyExport
+        {
+            Policy = policy,
+            Assignments = assignments.ToList()
+        };
+
+        var json = JsonSerializer.Serialize(export, JsonOptions);
+        await File.WriteAllTextAsync(filePath, json, cancellationToken);
+
+        if (policy.Id != null)
+        {
+            migrationTable.AddOrUpdate(new MigrationEntry
+            {
+                ObjectType = "CompliancePolicy",
+                OriginalId = policy.Id,
+                Name = policy.DisplayName ?? "Unknown"
+            });
+        }
+    }
+
+    public async Task ExportCompliancePoliciesAsync(
+        IEnumerable<(DeviceCompliancePolicy Policy, IReadOnlyList<DeviceCompliancePolicyAssignment> Assignments)> policies,
+        string outputPath,
+        CancellationToken cancellationToken = default)
+    {
+        var migrationTable = new MigrationTable();
+
+        foreach (var (policy, assignments) in policies)
+        {
+            await ExportCompliancePolicyAsync(policy, assignments, outputPath, migrationTable, cancellationToken);
+        }
+
+        await SaveMigrationTableAsync(migrationTable, outputPath, cancellationToken);
+    }
 }
