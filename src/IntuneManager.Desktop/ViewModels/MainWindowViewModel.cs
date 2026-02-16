@@ -564,13 +564,14 @@ public partial class MainWindowViewModel : ViewModelBase
             _appAssignmentsLoaded = true;
             ApplyFilter();
 
-            // Refresh Overview dashboard with the assignment data
+            // Update Overview dashboard now that all data is ready
             Overview.Update(
                 ActiveProfile,
                 (IReadOnlyList<DeviceConfiguration>)DeviceConfigurations,
                 (IReadOnlyList<DeviceCompliancePolicy>)CompliancePolicies,
                 (IReadOnlyList<MobileApp>)Applications,
                 (IReadOnlyList<AppAssignmentRow>)AppAssignmentRows);
+            Overview.IsLoading = false;
 
             StatusText = $"Loaded {rows.Count} application assignments row(s) from {total} apps";
         }
@@ -996,20 +997,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
             ApplyFilter();
 
-            // Update Overview dashboard with the freshly loaded data
-            Overview.Update(
-                ActiveProfile,
-                (IReadOnlyList<DeviceConfiguration>)DeviceConfigurations,
-                (IReadOnlyList<DeviceCompliancePolicy>)CompliancePolicies,
-                (IReadOnlyList<MobileApp>)Applications,
-                (IReadOnlyList<AppAssignmentRow>)AppAssignmentRows);
-
-            // If currently viewing Application Assignments, reload the flattened view
-            if (IsAppAssignmentsCategory)
-            {
-                _appAssignmentsLoaded = false;
-                await LoadAppAssignmentRowsAsync();
-            }
+            // Always load assignments so the dashboard has complete data
+            Overview.IsLoading = true;
+            _appAssignmentsLoaded = false;
+            await LoadAppAssignmentRowsAsync();
         }
         catch (Exception ex)
         {

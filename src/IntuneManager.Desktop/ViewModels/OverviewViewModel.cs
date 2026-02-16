@@ -48,21 +48,15 @@ public partial class OverviewViewModel : ObservableObject
     [ObservableProperty]
     private int _unassignedAppCount;
 
+    [ObservableProperty]
+    private bool _isLoading;
+
     // --- Charts ---
     [ObservableProperty]
     private ISeries[] _appsByPlatformSeries = [];
 
     [ObservableProperty]
     private ISeries[] _configsByPlatformSeries = [];
-
-    [ObservableProperty]
-    private ISeries[] _topGroupsSeries = [];
-
-    [ObservableProperty]
-    private Axis[] _topGroupsXAxes = [];
-
-    [ObservableProperty]
-    private Axis[] _topGroupsYAxes = [];
 
     // --- Recently modified ---
     public ObservableCollection<RecentItem> RecentlyModified { get; } = [];
@@ -111,9 +105,6 @@ public partial class OverviewViewModel : ObservableObject
 
         // Platform breakdown for configs
         BuildConfigsByPlatformChart(configs);
-
-        // Top assigned groups
-        BuildTopGroupsChart(assignmentRows);
 
         // Recently modified
         BuildRecentlyModified(configs, policies, apps);
@@ -169,59 +160,6 @@ public partial class OverviewViewModel : ObservableObject
         }
 
         ConfigsByPlatformSeries = series.ToArray();
-    }
-
-    private void BuildTopGroupsChart(IReadOnlyList<AppAssignmentRow> rows)
-    {
-        var topGroups = rows
-            .Where(r => r.AssignmentType == "Group" && !string.IsNullOrEmpty(r.TargetName))
-            .GroupBy(r => r.TargetName)
-            .OrderByDescending(g => g.Count())
-            .Take(8)
-            .ToList();
-
-        if (topGroups.Count == 0)
-        {
-            TopGroupsSeries = [];
-            TopGroupsXAxes = [];
-            TopGroupsYAxes = [];
-            return;
-        }
-
-        var labels = topGroups.Select(g => TruncateLabel(g.Key, 20)).ToArray();
-        var values = topGroups.Select(g => g.Count()).ToArray();
-
-        TopGroupsSeries =
-        [
-            new RowSeries<int>
-            {
-                Values = values,
-                Name = "Assignments",
-                Fill = new SolidColorPaint(SKColor.Parse("#2196F3")),
-                DataLabelsSize = 11,
-                DataLabelsPosition = DataLabelsPosition.End,
-                DataLabelsFormatter = p => p.Model.ToString()
-            }
-        ];
-
-        TopGroupsYAxes =
-        [
-            new Axis
-            {
-                Labels = labels,
-                TextSize = 11,
-                SeparatorsPaint = new SolidColorPaint(SKColor.Parse("#33888888"))
-            }
-        ];
-
-        TopGroupsXAxes =
-        [
-            new Axis
-            {
-                TextSize = 11,
-                SeparatorsPaint = new SolidColorPaint(SKColor.Parse("#33888888"))
-            }
-        ];
     }
 
     private void BuildRecentlyModified(
