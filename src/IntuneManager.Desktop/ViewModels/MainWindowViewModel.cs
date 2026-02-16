@@ -342,12 +342,8 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsAppAssignmentsCategory));
         OnPropertyChanged(nameof(ActiveColumns));
 
-        // Lazy-load Application Assignments when navigating to that category
-        if (value?.Name == "Application Assignments" && !_appAssignmentsLoaded)
-            _ = LoadAppAssignmentRowsAsync();
-
-        // Lazy-load assignments for Overview tab if not already loaded
-        if (value?.Name == "Overview" && !_appAssignmentsLoaded)
+        // Lazy-load assignments when navigating to tabs that require them
+        if ((value?.Name == "Application Assignments" || value?.Name == "Overview") && !_appAssignmentsLoaded)
             _ = LoadAppAssignmentRowsAsync();
     }
 
@@ -548,8 +544,10 @@ public partial class MainWindowViewModel : ViewModelBase
                     // Update status on UI thread periodically
                     if (processed % 10 == 0 || processed == total)
                     {
+                        var currentProcessed = processed;
+                        var currentTotal = total;
                         Dispatcher.UIThread.Post(() =>
-                            StatusText = $"Loading assignments... {processed}/{total} apps");
+                            StatusText = $"Loading assignments... {currentProcessed}/{currentTotal} apps");
                     }
                 }
                 finally
