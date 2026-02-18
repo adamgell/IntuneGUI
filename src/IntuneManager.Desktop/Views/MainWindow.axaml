@@ -200,7 +200,20 @@
                                   CanUserResizeColumns="True"
                                   GridLinesVisibility="Horizontal"
                                   BorderThickness="1"
-                                  BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" />
+                                  BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
+                            <DataGrid.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Refresh Item from Graph"
+                                              Command="{Binding RefreshSelectedItemCommand}"
+                                              IsEnabled="{Binding CanRefreshSelectedItem}" />
+                                    <Separator />
+                                    <MenuItem Header="Export Selected"
+                                              Command="{Binding ExportSelectedCommand}" />
+                                    <MenuItem Header="Copy Details to Clipboard"
+                                              Command="{Binding CopyDetailsToClipboardCommand}" />
+                                </ContextMenu>
+                            </DataGrid.ContextMenu>
+                        </DataGrid>
                     </DockPanel>
 
                     <!-- Overview Dashboard (spans center + detail columns) -->

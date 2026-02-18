@@ -719,12 +719,103 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    // --- Refresh single item from Graph ---
+
+    [RelayCommand]
+    private async Task RefreshSelectedItemAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (IsDeviceConfigCategory && SelectedConfiguration?.Id != null && _configProfileService != null)
+            {
+                StatusText = $"Refreshing {SelectedConfiguration.DisplayName}...";
+                var updated = await _configProfileService.GetDeviceConfigurationAsync(SelectedConfiguration.Id, cancellationToken);
+                if (updated != null)
+                {
+                    var idx = DeviceConfigurations.IndexOf(SelectedConfiguration);
+                    if (idx >= 0)
+                    {
+                        DeviceConfigurations[idx] = updated;
+                        SelectedConfiguration = updated;
+                    }
+                    DebugLog.Log("Graph", $"Refreshed device configuration: {updated.DisplayName}");
+                }
+            }
+            else if (IsCompliancePolicyCategory && SelectedCompliancePolicy?.Id != null && _compliancePolicyService != null)
+            {
+                StatusText = $"Refreshing {SelectedCompliancePolicy.DisplayName}...";
+                var updated = await _compliancePolicyService.GetCompliancePolicyAsync(SelectedCompliancePolicy.Id, cancellationToken);
+                if (updated != null)
+                {
+                    var idx = CompliancePolicies.IndexOf(SelectedCompliancePolicy);
+                    if (idx >= 0)
+                    {
+                        CompliancePolicies[idx] = updated;
+                        SelectedCompliancePolicy = updated;
+                    }
+                    DebugLog.Log("Graph", $"Refreshed compliance policy: {updated.DisplayName}");
+                }
+            }
+            else if (IsApplicationCategory && SelectedApplication?.Id != null && _applicationService != null)
+            {
+                StatusText = $"Refreshing {SelectedApplication.DisplayName}...";
+                var updated = await _applicationService.GetApplicationAsync(SelectedApplication.Id, cancellationToken);
+                if (updated != null)
+                {
+                    var idx = Applications.IndexOf(SelectedApplication);
+                    if (idx >= 0)
+                    {
+                        Applications[idx] = updated;
+                        SelectedApplication = updated;
+                    }
+                    DebugLog.Log("Graph", $"Refreshed application: {updated.DisplayName}");
+                }
+            }
+            else if (IsSettingsCatalogCategory && SelectedSettingsCatalogPolicy?.Id != null && _settingsCatalogService != null)
+            {
+                StatusText = $"Refreshing {SelectedSettingsCatalogPolicy.Name}...";
+                var updated = await _settingsCatalogService.GetSettingsCatalogPolicyAsync(SelectedSettingsCatalogPolicy.Id, cancellationToken);
+                if (updated != null)
+                {
+                    var idx = SettingsCatalogPolicies.IndexOf(SelectedSettingsCatalogPolicy);
+                    if (idx >= 0)
+                    {
+                        SettingsCatalogPolicies[idx] = updated;
+                        SelectedSettingsCatalogPolicy = updated;
+                    }
+                    DebugLog.Log("Graph", $"Refreshed settings catalog policy: {updated.Name}");
+                }
+            }
+            else
+            {
+                return;
+            }
+
+            StatusText = "Item refreshed";
+        }
+        catch (Exception ex)
+        {
+            DebugLog.LogError($"Failed to refresh item: {FormatGraphError(ex)}", ex);
+            SetError($"Refresh failed: {FormatGraphError(ex)}");
+        }
+    }
+
+    /// <summary>
+    /// Whether a single item is currently selected and can be refreshed.
+    /// </summary>
+    public bool CanRefreshSelectedItem =>
+        (IsDeviceConfigCategory && SelectedConfiguration != null) ||
+        (IsCompliancePolicyCategory && SelectedCompliancePolicy != null) ||
+        (IsApplicationCategory && SelectedApplication != null) ||
+        (IsSettingsCatalogCategory && SelectedSettingsCatalogPolicy != null);
+
     // --- Selection-changed handlers (load detail + assignments) ---
 
     partial void OnSelectedConfigurationChanged(DeviceConfiguration? value)
     {
         SelectedItemAssignments.Clear();
         SelectedItemTypeName = FriendlyODataType(value?.OdataType);
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
         if (value?.Id != null)
             _ = LoadConfigAssignmentsAsync(value.Id);
     }
@@ -733,6 +824,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         SelectedItemAssignments.Clear();
         SelectedItemTypeName = FriendlyODataType(value?.OdataType);
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
         if (value?.Id != null)
             _ = LoadCompliancePolicyAssignmentsAsync(value.Id);
     }
@@ -741,6 +833,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         SelectedItemAssignments.Clear();
         SelectedItemTypeName = value?.Platforms?.ToString() ?? "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
         if (value?.Id != null)
             _ = LoadSettingsCatalogAssignmentsAsync(value.Id);
     }
@@ -751,6 +844,7 @@ public partial class MainWindowViewModel : ViewModelBase
         var odataType = value?.OdataType;
         SelectedItemTypeName = FriendlyODataType(odataType);
         SelectedItemPlatform = InferPlatform(odataType);
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
         if (value?.Id != null)
             _ = LoadApplicationAssignmentsAsync(value.Id);
     }
