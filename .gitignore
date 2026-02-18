@@ -65,3 +65,9 @@ profiles.json
 
 # Example/test data
 example/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
