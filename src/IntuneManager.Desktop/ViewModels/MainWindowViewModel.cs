@@ -1043,22 +1043,21 @@ public partial class MainWindowViewModel : ViewModelBase
         new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
         new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
         new() { Header = "Built In", BindingPath = "IsBuiltIn", Width = 90, IsVisible = true },
-        new() { Header = "Version", BindingPath = "Version", Width = 90, IsVisible = true },
+        new() { Header = "Built In Role Definition", BindingPath = "IsBuiltInRoleDefinition", Width = 180, IsVisible = true },
         new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
     ];
 
     public ObservableCollection<DataGridColumnConfig> IntuneBrandingColumns { get; } =
     [
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
         new() { Header = "Profile Name", BindingPath = "ProfileName", IsStar = true, IsVisible = true },
-        new() { Header = "Company Portal Blocked", BindingPath = "IsCompanyPortalBlocked", Width = 140, IsVisible = true },
-        new() { Header = "Light Theme Logo URL", BindingPath = "LightThemeLogoRelativeUrl", Width = 220, IsVisible = true },
-        new() { Header = "Dark Theme Logo URL", BindingPath = "DarkThemeLogoRelativeUrl", Width = 220, IsVisible = false },
+        new() { Header = "Show Logo", BindingPath = "ShowLogo", Width = 110, IsVisible = true },
         new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
     ];
 
     public ObservableCollection<DataGridColumnConfig> AzureBrandingColumns { get; } =
     [
-        new() { Header = "Locale", BindingPath = "Locale", Width = 120, IsVisible = true },
+        new() { Header = "Localization ID", BindingPath = "Id", Width = 140, IsVisible = true },
         new() { Header = "Sign-in Text", BindingPath = "SignInPageText", IsStar = true, IsVisible = true },
         new() { Header = "Username Hint", BindingPath = "UsernameHintText", Width = 220, IsVisible = true },
         new() { Header = "Banner Logo URL", BindingPath = "BannerLogoRelativeUrl", Width = 220, IsVisible = false },
