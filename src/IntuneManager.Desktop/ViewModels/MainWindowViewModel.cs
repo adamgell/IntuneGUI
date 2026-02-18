@@ -619,7 +619,7 @@ public partial class MainWindowViewModel : ViewModelBase
         if (lower.Contains("ios") || lower.Contains("iphone")) return "iOS";
         if (lower.Contains("macos") || lower.Contains("mac")) return "macOS";
         if (lower.Contains("android")) return "Android";
-        if (lower.Contains("webapp") || lower.Contains("webapp")) return "Web";
+        if (lower.Contains("webapp")) return "Web";
         return "Cross-platform";
     }
 
@@ -957,7 +957,10 @@ public partial class MainWindowViewModel : ViewModelBase
                 items.Add(await MapAssignmentAsync(a.Target));
             SelectedItemAssignments = new ObservableCollection<AssignmentDisplayItem>(items);
         }
-        catch { /* swallow – non-critical */ }
+        catch (Exception ex)
+        {
+            DebugLog.LogError($"Failed to load configuration assignments: {FormatGraphError(ex)}", ex);
+        }
         finally { IsLoadingDetails = false; }
     }
 
@@ -973,7 +976,10 @@ public partial class MainWindowViewModel : ViewModelBase
                 items.Add(await MapAssignmentAsync(a.Target));
             SelectedItemAssignments = new ObservableCollection<AssignmentDisplayItem>(items);
         }
-        catch { /* swallow – non-critical */ }
+        catch (Exception ex)
+        {
+            DebugLog.LogError($"Failed to load compliance policy assignments: {FormatGraphError(ex)}", ex);
+        }
         finally { IsLoadingDetails = false; }
     }
 
@@ -989,7 +995,10 @@ public partial class MainWindowViewModel : ViewModelBase
                 items.Add(await MapAssignmentAsync(a.Target));
             SelectedItemAssignments = new ObservableCollection<AssignmentDisplayItem>(items);
         }
-        catch { /* swallow – non-critical */ }
+        catch (Exception ex)
+        {
+            DebugLog.LogError($"Failed to load settings catalog assignments: {FormatGraphError(ex)}", ex);
+        }
         finally { IsLoadingDetails = false; }
     }
 
@@ -1014,7 +1023,10 @@ public partial class MainWindowViewModel : ViewModelBase
             }
             SelectedItemAssignments = new ObservableCollection<AssignmentDisplayItem>(items);
         }
-        catch { /* swallow – non-critical */ }
+        catch (Exception ex)
+        {
+            DebugLog.LogError($"Failed to load application assignments: {FormatGraphError(ex)}", ex);
+        }
         finally { IsLoadingDetails = false; }
     }
 
@@ -1050,30 +1062,30 @@ public partial class MainWindowViewModel : ViewModelBase
     private async Task<string> ResolveGroupNameAsync(string? groupId)
     {
         if (string.IsNullOrEmpty(groupId)) return "Unknown Group";
+        if (!Guid.TryParse(groupId, out _)) return groupId; // Not a valid GUID — skip Graph call
         if (_groupNameCache.TryGetValue(groupId, out var cached)) return cached;
 
         try
         {
             if (_graphClient != null)
             {
-                var group = await _graphClient.Groups[groupId]
+                // Use $filter to avoid 404 ODataError for deleted/inaccessible groups
+                var response = await _graphClient.Groups
                     .GetAsync(req =>
                     {
+                        req.QueryParameters.Filter = $"id eq '{groupId}'";
                         req.QueryParameters.Select = new[] { "displayName" };
+                        req.QueryParameters.Top = 1;
                     });
+                var group = response?.Value?.FirstOrDefault();
                 var name = group?.DisplayName ?? groupId;
                 _groupNameCache[groupId] = name;
                 return name;
             }
         }
-        catch (ODataError ex)
+        catch (Exception ex)
         {
-            // Group may be deleted or inaccessible — cache the ID to avoid repeated failures
-            DebugLog.Log("Graph", $"Could not resolve group {groupId}: {ex.Error?.Message ?? ex.Message}");
-        }
-        catch
-        {
-            // Other failures — fall back to GUID
+            DebugLog.Log("Graph", $"Could not resolve group {groupId}: {FormatGraphError(ex)}");
         }
 
         _groupNameCache[groupId] = groupId;
@@ -1135,16 +1147,15 @@ public partial class MainWindowViewModel : ViewModelBase
                         appRows.Add(BuildAppRowNoAssignment(app));
                     }
 
+                    var currentProcessed = Interlocked.Increment(ref processed);
                     lock (rows)
                     {
                         rows.AddRange(appRows);
-                        processed++;
                     }
 
                     // Update status on UI thread periodically
-                    if (processed % 10 == 0 || processed == total)
+                    if (currentProcessed % 10 == 0 || currentProcessed == total)
                     {
-                        var currentProcessed = processed;
                         var currentTotal = total;
                         Dispatcher.UIThread.Post(() =>
                             StatusText = $"Loading assignments... {currentProcessed}/{currentTotal} apps");
@@ -1600,17 +1611,16 @@ public partial class MainWindowViewModel : ViewModelBase
 
                     var row = BuildGroupRow(group, counts);
 
+                    var currentProcessed = Interlocked.Increment(ref processed);
                     lock (rows)
                     {
                         rows.Add(row);
-                        processed++;
                     }
 
-                    if (processed % 10 == 0 || processed == total)
+                    if (currentProcessed % 10 == 0 || currentProcessed == total)
                     {
-                        var p = processed;
                         Dispatcher.UIThread.Post(() =>
-                            StatusText = $"Loading dynamic groups... {p}/{total}");
+                            StatusText = $"Loading dynamic groups... {currentProcessed}/{total}");
                     }
                 }
                 finally { semaphore.Release(); }
@@ -1672,17 +1682,16 @@ public partial class MainWindowViewModel : ViewModelBase
 
                     var row = BuildGroupRow(group, counts);
 
+                    var currentProcessed = Interlocked.Increment(ref processed);
                     lock (rows)
                     {
                         rows.Add(row);
-                        processed++;
                     }
 
-                    if (processed % 10 == 0 || processed == total)
+                    if (currentProcessed % 10 == 0 || currentProcessed == total)
                     {
-                        var p = processed;
                         Dispatcher.UIThread.Post(() =>
-                            StatusText = $"Loading assigned groups... {p}/{total}");
+                            StatusText = $"Loading assigned groups... {currentProcessed}/{total}");
                     }
                 }
                 finally { semaphore.Release(); }

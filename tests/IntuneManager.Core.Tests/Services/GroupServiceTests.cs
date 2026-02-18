@@ -5,24 +5,75 @@ namespace IntuneManager.Core.Tests.Services;
 
 public class GroupServiceTests
 {
-    [Theory]
-    [InlineData(true, false, null, "Security")]
-    [InlineData(true, true, null, "Mail-enabled Security")]
-    [InlineData(false, true, null, "Distribution")]
-    [InlineData(true, false, "Unified", "Microsoft 365")]
-    [InlineData(false, false, null, "Security")]
-    public void InferGroupType_ReturnsCorrectLabel(bool securityEnabled, bool mailEnabled, string? groupType, string expected)
+    [Fact]
+    public void InferGroupType_SecurityEnabledOnly_ReturnsSecurity()
     {
         var group = new Group
         {
-            SecurityEnabled = securityEnabled,
-            MailEnabled = mailEnabled,
-            GroupTypes = groupType != null ? [groupType] : []
+            SecurityEnabled = true,
+            MailEnabled = false,
+            GroupTypes = []
+        };
+
+        var result = GroupService.InferGroupType(group);
+        Assert.Equal("Security", result);
+    }
+
+    [Fact]
+    public void InferGroupType_MailEnabledSecurity_ReturnsMailEnabledSecurity()
+    {
+        var group = new Group
+        {
+            SecurityEnabled = true,
+            MailEnabled = true,
+            GroupTypes = []
+        };
+
+        var result = GroupService.InferGroupType(group);
+        Assert.Equal("Mail-enabled Security", result);
+    }
+
+    [Fact]
+    public void InferGroupType_DistributionGroup_ReturnsDistribution()
+    {
+        var group = new Group
+        {
+            SecurityEnabled = false,
+            MailEnabled = true,
+            GroupTypes = []
+        };
+
+        var result = GroupService.InferGroupType(group);
+        Assert.Equal("Distribution", result);
+    }
+
+    [Fact]
+    public void InferGroupType_UnifiedGroup_ReturnsMicrosoft365()
+    {
+        var group = new Group
+        {
+            SecurityEnabled = true,
+            MailEnabled = false,
+            GroupTypes = ["Unified"]
+        };
+
+        var result = GroupService.InferGroupType(group);
+        Assert.Equal("Microsoft 365", result);
+    }
+
+    [Fact]
+    public void InferGroupType_NoFlags_ReturnsSecurity()
+    {
+        var group = new Group
+        {
+            SecurityEnabled = false,
+            MailEnabled = false,
+            GroupTypes = []
         };
 
         var result = GroupService.InferGroupType(group);
 
-        Assert.Equal(expected, result);
+        Assert.Equal("Security", result);
     }
 
     [Fact]
