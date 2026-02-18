@@ -98,15 +98,15 @@ methods use interactive auth rather than throwing.
 ```
 
 ### Encryption Strategy
-**Decision:** DPAPI (Windows) / Keychain (macOS) / libsecret (Linux)
+**Decision:** ASP.NET DataProtection with file-system key ring
 
 **Rationale:**
-- Platform-native credential storage
-- No custom encryption keys to manage
-- OS-level security guarantees
+- Cross-platform encryption using a single consistent API
+- DPAPI-protected keys on Windows; file-system protected on macOS/Linux
+- Keys persist to `%LocalAppData%\IntuneManager\keys` directory
 
 **Implementation:**
-- Profile file encrypted via `Microsoft.AspNetCore.DataProtection` (DPAPI on Windows)
+- Profile file encrypted via `Microsoft.AspNetCore.DataProtection`
 - File is Base64-encoded with `INTUNEMANAGER_ENC:` prefix; plaintext files are migrated on next save
 - `ClientSecret` stored in the encrypted profile; never appears in plaintext on disk
 
