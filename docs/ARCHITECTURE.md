@@ -216,7 +216,7 @@ ViewModels/
 **Service Lifetime (actual):**
 - Singleton: `IAuthenticationProvider`, `IntuneGraphClientFactory`, `ProfileService`, `IProfileEncryptionService`, `ICacheService`
 - Transient: `IExportService`, `MainWindowViewModel`
-- **Not in DI:** Graph API services — created with `new XxxService(graphClient)` in `MainWindowViewModel.ConnectAsync` after authentication succeeds
+- **Not in DI:** Graph API services — created with `new XxxService(graphClient)` in `MainWindowViewModel.ConnectToProfile(...)` after authentication succeeds
 
 ---
 
