@@ -213,4 +213,65 @@ public class CacheServiceTests : IDisposable
         Assert.NotNull(result);
         Assert.Single(result);
     }
+
+    [Fact]
+    public void Corrupted_key_with_existing_db_deletes_orphaned_db_and_recovers()
+    {
+        // Arrange: write real data so the DB file actually exists on disk
+        _sut.Set("tenant1", "PreCorruption", new List<TestItem> { new("Old", 99) });
+        _sut.Dispose();
+
+        var passwordPath = Path.Combine(_tempDir, "cache-key.bin");
+        var dbPath = Path.Combine(_tempDir, "cache.db");
+
+        Assert.True(File.Exists(dbPath), "DB file must exist before corruption test");
+
+        // Corrupt the key — the existing DB is now permanently unreadable
+        File.WriteAllText(passwordPath, "corrupted-key-material");
+
+        // Act: create a new instance — should detect corruption, wipe orphaned files, start fresh
+        var dp = _sp.GetRequiredService<IDataProtectionProvider>();
+        using var sut2 = new CacheService(dp, _tempDir);
+
+        // Previously cached data is gone (DB was wiped)
+        Assert.Null(sut2.Get<TestItem>("tenant1", "PreCorruption"));
+
+        // New data can be stored and retrieved normally
+        sut2.Set("tenant1", "PostRecovery", new List<TestItem> { new("New", 1) });
+        var result = sut2.Get<TestItem>("tenant1", "PostRecovery");
+        Assert.NotNull(result);
+        Assert.Single(result);
+    }
+
+    [Fact]
+    public void Corrupted_key_deletes_key_file_and_db_from_disk()
+    {
+        // Arrange: ensure DB exists
+        _sut.Set("tenant1", "Anything", new List<TestItem> { new("X", 1) });
+        _sut.Dispose();
+
+        var passwordPath = Path.Combine(_tempDir, "cache-key.bin");
+        var dbPath = Path.Combine(_tempDir, "cache.db");
+
+        File.WriteAllText(passwordPath, "corrupted-key-material");
+
+        // Act
+        var dp = _sp.GetRequiredService<IDataProtectionProvider>();
+        using var sut2 = new CacheService(dp, _tempDir);
+        sut2.Dispose(); // close before inspecting files
+
+        // The OLD db is gone; a new key file was written
+        Assert.True(File.Exists(passwordPath), "New key file should have been created");
+        Assert.NotEqual("corrupted-key-material", File.ReadAllText(passwordPath));
+    }
+
+    [Fact]
+    public void CleanupExpired_returns_zero_when_nothing_is_expired()
+    {
+        _sut.Set("tenant1", "Fresh", new List<TestItem> { new("Good", 1) }, TimeSpan.FromHours(1));
+
+        var removed = _sut.CleanupExpired();
+
+        Assert.Equal(0, removed);
+    }
 }
