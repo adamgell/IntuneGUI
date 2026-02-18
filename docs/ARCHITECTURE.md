@@ -197,7 +197,7 @@ Views/
   RawJsonWindow.axaml
 
 ViewModels/
-  MainWindowViewModel.cs   (+ partial class files per feature area)
+  MainWindowViewModel.cs
   LoginViewModel.cs
   OverviewViewModel.cs
   GroupLookupViewModel.cs
