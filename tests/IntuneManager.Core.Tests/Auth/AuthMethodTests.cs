@@ -84,4 +84,38 @@ public class AuthMethodTests
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => provider.GetCredentialAsync(profile));
     }
+
+    [Fact]
+    public async Task InteractiveBrowserAuthProvider_ClientSecretWithNullSecret_Throws()
+    {
+        var provider = new InteractiveBrowserAuthProvider();
+        var profile = new TenantProfile
+        {
+            Name = "Test",
+            TenantId = Guid.NewGuid().ToString(),
+            ClientId = Guid.NewGuid().ToString(),
+            AuthMethod = AuthMethod.ClientSecret,
+            ClientSecret = null
+        };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => provider.GetCredentialAsync(profile));
+    }
+
+    [Fact]
+    public async Task InteractiveBrowserAuthProvider_ClientSecretWithWhitespaceSecret_Throws()
+    {
+        var provider = new InteractiveBrowserAuthProvider();
+        var profile = new TenantProfile
+        {
+            Name = "Test",
+            TenantId = Guid.NewGuid().ToString(),
+            ClientId = Guid.NewGuid().ToString(),
+            AuthMethod = AuthMethod.ClientSecret,
+            ClientSecret = "   "
+        };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => provider.GetCredentialAsync(profile));
+    }
 }
