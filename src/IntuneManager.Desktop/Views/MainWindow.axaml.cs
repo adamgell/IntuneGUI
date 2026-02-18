@@ -92,6 +92,10 @@ public partial class MainWindow : Window
             or nameof(MainWindowViewModel.IsEndpointSecurityCategory)
             or nameof(MainWindowViewModel.IsAdministrativeTemplatesCategory)
             or nameof(MainWindowViewModel.IsEnrollmentConfigurationsCategory)
+            or nameof(MainWindowViewModel.IsAppProtectionPoliciesCategory)
+            or nameof(MainWindowViewModel.IsManagedDeviceAppConfigurationsCategory)
+            or nameof(MainWindowViewModel.IsTargetedManagedAppConfigurationsCategory)
+            or nameof(MainWindowViewModel.IsTermsAndConditionsCategory)
             or nameof(MainWindowViewModel.IsConditionalAccessCategory)
             or nameof(MainWindowViewModel.IsAssignmentFiltersCategory)
             or nameof(MainWindowViewModel.IsPolicySetsCategory)
@@ -122,6 +126,10 @@ public partial class MainWindow : Window
             or nameof(MainWindowViewModel.FilteredEndpointSecurityIntents)
             or nameof(MainWindowViewModel.FilteredAdministrativeTemplates)
             or nameof(MainWindowViewModel.FilteredEnrollmentConfigurations)
+            or nameof(MainWindowViewModel.FilteredAppProtectionPolicies)
+            or nameof(MainWindowViewModel.FilteredManagedDeviceAppConfigurations)
+            or nameof(MainWindowViewModel.FilteredTargetedManagedAppConfigurations)
+            or nameof(MainWindowViewModel.FilteredTermsAndConditionsCollection)
             or nameof(MainWindowViewModel.FilteredConditionalAccessPolicies)
             or nameof(MainWindowViewModel.FilteredAssignmentFilters)
             or nameof(MainWindowViewModel.FilteredPolicySets)
@@ -152,6 +160,10 @@ public partial class MainWindow : Window
             nameof(MainWindowViewModel.FilteredEndpointSecurityIntents) => _vm.IsEndpointSecurityCategory,
             nameof(MainWindowViewModel.FilteredAdministrativeTemplates) => _vm.IsAdministrativeTemplatesCategory,
             nameof(MainWindowViewModel.FilteredEnrollmentConfigurations) => _vm.IsEnrollmentConfigurationsCategory,
+            nameof(MainWindowViewModel.FilteredAppProtectionPolicies) => _vm.IsAppProtectionPoliciesCategory,
+            nameof(MainWindowViewModel.FilteredManagedDeviceAppConfigurations) => _vm.IsManagedDeviceAppConfigurationsCategory,
+            nameof(MainWindowViewModel.FilteredTargetedManagedAppConfigurations) => _vm.IsTargetedManagedAppConfigurationsCategory,
+            nameof(MainWindowViewModel.FilteredTermsAndConditionsCollection) => _vm.IsTermsAndConditionsCategory,
             nameof(MainWindowViewModel.FilteredConditionalAccessPolicies) => _vm.IsConditionalAccessCategory,
             nameof(MainWindowViewModel.FilteredAssignmentFilters)   => _vm.IsAssignmentFiltersCategory,
             nameof(MainWindowViewModel.FilteredPolicySets)          => _vm.IsPolicySetsCategory,
@@ -224,6 +236,34 @@ public partial class MainWindow : Window
                 new Binding(nameof(_vm.FilteredEnrollmentConfigurations)) { Source = _vm });
             _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
                 new Binding(nameof(_vm.SelectedEnrollmentConfiguration)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
+        else if (_vm.IsAppProtectionPoliciesCategory)
+        {
+            _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
+                new Binding(nameof(_vm.FilteredAppProtectionPolicies)) { Source = _vm });
+            _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
+                new Binding(nameof(_vm.SelectedAppProtectionPolicy)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
+        else if (_vm.IsManagedDeviceAppConfigurationsCategory)
+        {
+            _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
+                new Binding(nameof(_vm.FilteredManagedDeviceAppConfigurations)) { Source = _vm });
+            _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
+                new Binding(nameof(_vm.SelectedManagedDeviceAppConfiguration)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
+        else if (_vm.IsTargetedManagedAppConfigurationsCategory)
+        {
+            _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
+                new Binding(nameof(_vm.FilteredTargetedManagedAppConfigurations)) { Source = _vm });
+            _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
+                new Binding(nameof(_vm.SelectedTargetedManagedAppConfiguration)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
+        else if (_vm.IsTermsAndConditionsCategory)
+        {
+            _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
+                new Binding(nameof(_vm.FilteredTermsAndConditionsCollection)) { Source = _vm });
+            _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
+                new Binding(nameof(_vm.SelectedTermsAndConditions)) { Source = _vm, Mode = BindingMode.TwoWay });
         }
         else if (_vm.IsConditionalAccessCategory)
         {

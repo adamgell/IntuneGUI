@@ -38,6 +38,10 @@ public partial class MainWindowViewModel : ViewModelBase
     private const string CacheKeyEndpointSecurity = "EndpointSecurityIntents";
     private const string CacheKeyAdministrativeTemplates = "AdministrativeTemplates";
     private const string CacheKeyEnrollmentConfigurations = "EnrollmentConfigurations";
+    private const string CacheKeyAppProtectionPolicies = "AppProtectionPolicies";
+    private const string CacheKeyManagedDeviceAppConfigurations = "ManagedDeviceAppConfigurations";
+    private const string CacheKeyTargetedManagedAppConfigurations = "TargetedManagedAppConfigurations";
+    private const string CacheKeyTermsAndConditions = "TermsAndConditions";
     private const string CacheKeyAppAssignments = "AppAssignments";
     private const string CacheKeyDynamicGroups = "DynamicGroups";
     private const string CacheKeyAssignedGroups = "AssignedGroups";
@@ -55,6 +59,9 @@ public partial class MainWindowViewModel : ViewModelBase
     private IEndpointSecurityService? _endpointSecurityService;
     private IAdministrativeTemplateService? _administrativeTemplateService;
     private IEnrollmentConfigurationService? _enrollmentConfigurationService;
+    private IAppProtectionPolicyService? _appProtectionPolicyService;
+    private IManagedAppConfigurationService? _managedAppConfigurationService;
+    private ITermsAndConditionsService? _termsAndConditionsService;
 
     [ObservableProperty]
     private ViewModelBase? _currentView;
@@ -94,6 +101,10 @@ public partial class MainWindowViewModel : ViewModelBase
         new NavCategory { Name = "Endpoint Security", Icon = "🛡" },
         new NavCategory { Name = "Administrative Templates", Icon = "🧾" },
         new NavCategory { Name = "Enrollment Configurations", Icon = "🪪" },
+        new NavCategory { Name = "App Protection Policies", Icon = "🔒" },
+        new NavCategory { Name = "Managed Device App Configurations", Icon = "📱" },
+        new NavCategory { Name = "Targeted Managed App Configurations", Icon = "🎯" },
+        new NavCategory { Name = "Terms and Conditions", Icon = "📜" },
         new NavCategory { Name = "Conditional Access", Icon = "🔐" },
         new NavCategory { Name = "Assignment Filters", Icon = "🧩" },
         new NavCategory { Name = "Policy Sets", Icon = "🗂" },
@@ -158,6 +169,42 @@ public partial class MainWindowViewModel : ViewModelBase
     private DeviceEnrollmentConfiguration? _selectedEnrollmentConfiguration;
 
     private bool _enrollmentConfigurationsLoaded;
+
+    // --- App Protection Policies ---
+    [ObservableProperty]
+    private ObservableCollection<ManagedAppPolicy> _appProtectionPolicies = [];
+
+    [ObservableProperty]
+    private ManagedAppPolicy? _selectedAppProtectionPolicy;
+
+    private bool _appProtectionPoliciesLoaded;
+
+    // --- Managed Device App Configurations ---
+    [ObservableProperty]
+    private ObservableCollection<ManagedDeviceMobileAppConfiguration> _managedDeviceAppConfigurations = [];
+
+    [ObservableProperty]
+    private ManagedDeviceMobileAppConfiguration? _selectedManagedDeviceAppConfiguration;
+
+    private bool _managedDeviceAppConfigurationsLoaded;
+
+    // --- Targeted Managed App Configurations ---
+    [ObservableProperty]
+    private ObservableCollection<TargetedManagedAppConfiguration> _targetedManagedAppConfigurations = [];
+
+    [ObservableProperty]
+    private TargetedManagedAppConfiguration? _selectedTargetedManagedAppConfiguration;
+
+    private bool _targetedManagedAppConfigurationsLoaded;
+
+    // --- Terms and Conditions ---
+    [ObservableProperty]
+    private ObservableCollection<TermsAndConditions> _termsAndConditionsCollection = [];
+
+    [ObservableProperty]
+    private TermsAndConditions? _selectedTermsAndConditions;
+
+    private bool _termsAndConditionsLoaded;
 
     // --- Conditional Access ---
     [ObservableProperty]
@@ -271,6 +318,10 @@ public partial class MainWindowViewModel : ViewModelBase
             ?? SelectedEndpointSecurityIntent as object
             ?? SelectedAdministrativeTemplate as object
             ?? SelectedEnrollmentConfiguration as object
+            ?? SelectedAppProtectionPolicy as object
+            ?? SelectedManagedDeviceAppConfiguration as object
+            ?? SelectedTargetedManagedAppConfiguration as object
+            ?? SelectedTermsAndConditions as object
             ?? SelectedConditionalAccessPolicy as object
             ?? SelectedAssignmentFilter as object
             ?? SelectedPolicySet as object;
@@ -286,6 +337,10 @@ public partial class MainWindowViewModel : ViewModelBase
             DeviceManagementIntent esi => esi.DisplayName ?? "Endpoint Security",
             GroupPolicyConfiguration at => at.DisplayName ?? "Administrative Template",
             DeviceEnrollmentConfiguration ec => ec.DisplayName ?? "Enrollment Configuration",
+            ManagedDeviceMobileAppConfiguration managedConfig => managedConfig.DisplayName ?? "Managed Device App Configuration",
+            TargetedManagedAppConfiguration targetedConfig => targetedConfig.DisplayName ?? "Targeted Managed App Configuration",
+            ManagedAppPolicy appProtection => appProtection.DisplayName ?? "App Protection Policy",
+            TermsAndConditions terms => terms.DisplayName ?? "Terms and Conditions",
             ConditionalAccessPolicy cap => cap.DisplayName ?? "Conditional Access Policy",
             DeviceAndAppManagementAssignmentFilter af => af.DisplayName ?? "Assignment Filter",
             PolicySet ps => ps.DisplayName ?? "Policy Set",
@@ -372,6 +427,44 @@ public partial class MainWindowViewModel : ViewModelBase
             Append(sb, "Last Modified", app.LastModifiedDateTime?.ToString("g"));
             Append(sb, "Publishing State", app.PublishingState?.ToString());
             AppendAssignments(sb);
+        }
+        else if (SelectedAppProtectionPolicy is { } appProtection)
+        {
+            sb.AppendLine("=== App Protection Policy ===");
+            Append(sb, "Name", appProtection.DisplayName);
+            Append(sb, "Description", appProtection.Description);
+            Append(sb, "Type", FriendlyODataType(appProtection.OdataType));
+            Append(sb, "ID", appProtection.Id);
+            Append(sb, "Version", appProtection.Version?.ToString());
+            Append(sb, "Last Modified", appProtection.LastModifiedDateTime?.ToString("g"));
+        }
+        else if (SelectedManagedDeviceAppConfiguration is { } managedConfig)
+        {
+            sb.AppendLine("=== Managed Device App Configuration ===");
+            Append(sb, "Name", managedConfig.DisplayName);
+            Append(sb, "Description", managedConfig.Description);
+            Append(sb, "ID", managedConfig.Id);
+            Append(sb, "Version", managedConfig.Version?.ToString());
+            Append(sb, "Last Modified", managedConfig.LastModifiedDateTime?.ToString("g"));
+        }
+        else if (SelectedTargetedManagedAppConfiguration is { } targetedConfig)
+        {
+            sb.AppendLine("=== Targeted Managed App Configuration ===");
+            Append(sb, "Name", targetedConfig.DisplayName);
+            Append(sb, "Description", targetedConfig.Description);
+            Append(sb, "ID", targetedConfig.Id);
+            Append(sb, "Version", targetedConfig.Version?.ToString());
+            Append(sb, "Last Modified", targetedConfig.LastModifiedDateTime?.ToString("g"));
+        }
+        else if (SelectedTermsAndConditions is { } terms)
+        {
+            sb.AppendLine("=== Terms and Conditions ===");
+            Append(sb, "Name", terms.DisplayName);
+            Append(sb, "Description", terms.Description);
+            Append(sb, "ID", terms.Id);
+            Append(sb, "Version", terms.Version?.ToString());
+            Append(sb, "Created", terms.CreatedDateTime?.ToString("g"));
+            Append(sb, "Last Modified", terms.LastModifiedDateTime?.ToString("g"));
         }
         else if (SelectedConditionalAccessPolicy is { } cap)
         {
@@ -528,6 +621,18 @@ public partial class MainWindowViewModel : ViewModelBase
     private ObservableCollection<DeviceEnrollmentConfiguration> _filteredEnrollmentConfigurations = [];
 
     [ObservableProperty]
+    private ObservableCollection<ManagedAppPolicy> _filteredAppProtectionPolicies = [];
+
+    [ObservableProperty]
+    private ObservableCollection<ManagedDeviceMobileAppConfiguration> _filteredManagedDeviceAppConfigurations = [];
+
+    [ObservableProperty]
+    private ObservableCollection<TargetedManagedAppConfiguration> _filteredTargetedManagedAppConfigurations = [];
+
+    [ObservableProperty]
+    private ObservableCollection<TermsAndConditions> _filteredTermsAndConditionsCollection = [];
+
+    [ObservableProperty]
     private ObservableCollection<ConditionalAccessPolicy> _filteredConditionalAccessPolicies = [];
 
     [ObservableProperty]
@@ -552,6 +657,10 @@ public partial class MainWindowViewModel : ViewModelBase
             FilteredEndpointSecurityIntents = new ObservableCollection<DeviceManagementIntent>(EndpointSecurityIntents);
             FilteredAdministrativeTemplates = new ObservableCollection<GroupPolicyConfiguration>(AdministrativeTemplates);
             FilteredEnrollmentConfigurations = new ObservableCollection<DeviceEnrollmentConfiguration>(EnrollmentConfigurations);
+            FilteredAppProtectionPolicies = new ObservableCollection<ManagedAppPolicy>(AppProtectionPolicies);
+            FilteredManagedDeviceAppConfigurations = new ObservableCollection<ManagedDeviceMobileAppConfiguration>(ManagedDeviceAppConfigurations);
+            FilteredTargetedManagedAppConfigurations = new ObservableCollection<TargetedManagedAppConfiguration>(TargetedManagedAppConfigurations);
+            FilteredTermsAndConditionsCollection = new ObservableCollection<TermsAndConditions>(TermsAndConditionsCollection);
             FilteredConditionalAccessPolicies = new ObservableCollection<ConditionalAccessPolicy>(ConditionalAccessPolicies);
             FilteredAssignmentFilters = new ObservableCollection<DeviceAndAppManagementAssignmentFilter>(AssignmentFilters);
             FilteredPolicySets = new ObservableCollection<PolicySet>(PolicySets);
@@ -626,6 +735,33 @@ public partial class MainWindowViewModel : ViewModelBase
                 Contains(c.Description, q) ||
                 Contains(c.Id, q) ||
                 Contains(c.OdataType, q)));
+
+        FilteredAppProtectionPolicies = new ObservableCollection<ManagedAppPolicy>(
+            AppProtectionPolicies.Where(p =>
+                Contains(p.DisplayName, q) ||
+                Contains(p.Description, q) ||
+                Contains(p.Id, q) ||
+                Contains(p.OdataType, q)));
+
+        FilteredManagedDeviceAppConfigurations = new ObservableCollection<ManagedDeviceMobileAppConfiguration>(
+            ManagedDeviceAppConfigurations.Where(c =>
+                Contains(c.DisplayName, q) ||
+                Contains(c.Description, q) ||
+                Contains(c.Id, q) ||
+                Contains(c.OdataType, q)));
+
+        FilteredTargetedManagedAppConfigurations = new ObservableCollection<TargetedManagedAppConfiguration>(
+            TargetedManagedAppConfigurations.Where(c =>
+                Contains(c.DisplayName, q) ||
+                Contains(c.Description, q) ||
+                Contains(c.Id, q) ||
+                Contains(c.OdataType, q)));
+
+        FilteredTermsAndConditionsCollection = new ObservableCollection<TermsAndConditions>(
+            TermsAndConditionsCollection.Where(t =>
+                Contains(t.DisplayName, q) ||
+                Contains(t.Description, q) ||
+                Contains(t.Id, q)));
 
         FilteredConditionalAccessPolicies = new ObservableCollection<ConditionalAccessPolicy>(
             ConditionalAccessPolicies.Where(p =>
@@ -726,6 +862,46 @@ public partial class MainWindowViewModel : ViewModelBase
         new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
     ];
 
+    public ObservableCollection<DataGridColumnConfig> AppProtectionPolicyColumns { get; } =
+    [
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+        new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
+        new() { Header = "Type", BindingPath = "Computed:ODataType", Width = 220, IsVisible = true },
+        new() { Header = "Version", BindingPath = "Version", Width = 90, IsVisible = true },
+        new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = true },
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+    ];
+
+    public ObservableCollection<DataGridColumnConfig> ManagedDeviceAppConfigurationColumns { get; } =
+    [
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+        new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
+        new() { Header = "Type", BindingPath = "Computed:ODataType", Width = 220, IsVisible = true },
+        new() { Header = "Version", BindingPath = "Version", Width = 90, IsVisible = true },
+        new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = true },
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+    ];
+
+    public ObservableCollection<DataGridColumnConfig> TargetedManagedAppConfigurationColumns { get; } =
+    [
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+        new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
+        new() { Header = "Type", BindingPath = "Computed:ODataType", Width = 220, IsVisible = true },
+        new() { Header = "Version", BindingPath = "Version", Width = 90, IsVisible = true },
+        new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = true },
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+    ];
+
+    public ObservableCollection<DataGridColumnConfig> TermsAndConditionsColumns { get; } =
+    [
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+        new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
+        new() { Header = "Version", BindingPath = "Version", Width = 90, IsVisible = true },
+        new() { Header = "Created", BindingPath = "CreatedDateTime", Width = 150, IsVisible = true },
+        new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = true },
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+    ];
+
     public ObservableCollection<DataGridColumnConfig> ConditionalAccessColumns { get; } =
     [
         new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
@@ -823,6 +999,10 @@ public partial class MainWindowViewModel : ViewModelBase
         "Endpoint Security" => EndpointSecurityColumns,
         "Administrative Templates" => AdministrativeTemplateColumns,
         "Enrollment Configurations" => EnrollmentConfigurationColumns,
+        "App Protection Policies" => AppProtectionPolicyColumns,
+        "Managed Device App Configurations" => ManagedDeviceAppConfigurationColumns,
+        "Targeted Managed App Configurations" => TargetedManagedAppConfigurationColumns,
+        "Terms and Conditions" => TermsAndConditionsColumns,
         "Conditional Access" => ConditionalAccessColumns,
         "Assignment Filters" => AssignmentFilterColumns,
         "Policy Sets" => PolicySetColumns,
@@ -914,6 +1094,10 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool IsEndpointSecurityCategory => SelectedCategory?.Name == "Endpoint Security";
     public bool IsAdministrativeTemplatesCategory => SelectedCategory?.Name == "Administrative Templates";
     public bool IsEnrollmentConfigurationsCategory => SelectedCategory?.Name == "Enrollment Configurations";
+    public bool IsAppProtectionPoliciesCategory => SelectedCategory?.Name == "App Protection Policies";
+    public bool IsManagedDeviceAppConfigurationsCategory => SelectedCategory?.Name == "Managed Device App Configurations";
+    public bool IsTargetedManagedAppConfigurationsCategory => SelectedCategory?.Name == "Targeted Managed App Configurations";
+    public bool IsTermsAndConditionsCategory => SelectedCategory?.Name == "Terms and Conditions";
     public bool IsConditionalAccessCategory => SelectedCategory?.Name == "Conditional Access";
     public bool IsAssignmentFiltersCategory => SelectedCategory?.Name == "Assignment Filters";
     public bool IsPolicySetsCategory => SelectedCategory?.Name == "Policy Sets";
@@ -931,6 +1115,10 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedEndpointSecurityIntent = null;
         SelectedAdministrativeTemplate = null;
         SelectedEnrollmentConfiguration = null;
+        SelectedAppProtectionPolicy = null;
+        SelectedManagedDeviceAppConfiguration = null;
+        SelectedTargetedManagedAppConfiguration = null;
+        SelectedTermsAndConditions = null;
         SelectedConditionalAccessPolicy = null;
         SelectedAssignmentFilter = null;
         SelectedPolicySet = null;
@@ -954,6 +1142,10 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsEndpointSecurityCategory));
         OnPropertyChanged(nameof(IsAdministrativeTemplatesCategory));
         OnPropertyChanged(nameof(IsEnrollmentConfigurationsCategory));
+        OnPropertyChanged(nameof(IsAppProtectionPoliciesCategory));
+        OnPropertyChanged(nameof(IsManagedDeviceAppConfigurationsCategory));
+        OnPropertyChanged(nameof(IsTargetedManagedAppConfigurationsCategory));
+        OnPropertyChanged(nameof(IsTermsAndConditionsCategory));
         OnPropertyChanged(nameof(IsConditionalAccessCategory));
         OnPropertyChanged(nameof(IsAssignmentFiltersCategory));
         OnPropertyChanged(nameof(IsPolicySetsCategory));
@@ -1098,6 +1290,62 @@ public partial class MainWindowViewModel : ViewModelBase
                 _ = LoadEnrollmentConfigurationsAsync();
             }
         }
+
+        if (value?.Name == "App Protection Policies" && !_appProtectionPoliciesLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<ManagedAppPolicy>(CacheKeyAppProtectionPolicies, rows =>
+            {
+                AppProtectionPolicies = new ObservableCollection<ManagedAppPolicy>(rows);
+                _appProtectionPoliciesLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} app protection policy(ies) from cache";
+            }))
+            {
+                _ = LoadAppProtectionPoliciesAsync();
+            }
+        }
+
+        if (value?.Name == "Managed Device App Configurations" && !_managedDeviceAppConfigurationsLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<ManagedDeviceMobileAppConfiguration>(CacheKeyManagedDeviceAppConfigurations, rows =>
+            {
+                ManagedDeviceAppConfigurations = new ObservableCollection<ManagedDeviceMobileAppConfiguration>(rows);
+                _managedDeviceAppConfigurationsLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} managed device app configuration(s) from cache";
+            }))
+            {
+                _ = LoadManagedDeviceAppConfigurationsAsync();
+            }
+        }
+
+        if (value?.Name == "Targeted Managed App Configurations" && !_targetedManagedAppConfigurationsLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<TargetedManagedAppConfiguration>(CacheKeyTargetedManagedAppConfigurations, rows =>
+            {
+                TargetedManagedAppConfigurations = new ObservableCollection<TargetedManagedAppConfiguration>(rows);
+                _targetedManagedAppConfigurationsLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} targeted managed app configuration(s) from cache";
+            }))
+            {
+                _ = LoadTargetedManagedAppConfigurationsAsync();
+            }
+        }
+
+        if (value?.Name == "Terms and Conditions" && !_termsAndConditionsLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<TermsAndConditions>(CacheKeyTermsAndConditions, rows =>
+            {
+                TermsAndConditionsCollection = new ObservableCollection<TermsAndConditions>(rows);
+                _termsAndConditionsLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} terms and conditions item(s) from cache";
+            }))
+            {
+                _ = LoadTermsAndConditionsAsync();
+            }
+        }
     }
 
     // --- Refresh single item from Graph ---
@@ -1212,6 +1460,66 @@ public partial class MainWindowViewModel : ViewModelBase
                     DebugLog.Log("Graph", $"Refreshed enrollment configuration: {updated.DisplayName}");
                 }
             }
+            else if (IsAppProtectionPoliciesCategory && SelectedAppProtectionPolicy?.Id != null && _appProtectionPolicyService != null)
+            {
+                StatusText = $"Refreshing {SelectedAppProtectionPolicy.DisplayName}...";
+                var updated = await _appProtectionPolicyService.GetAppProtectionPolicyAsync(SelectedAppProtectionPolicy.Id, cancellationToken);
+                if (updated != null)
+                {
+                    var idx = AppProtectionPolicies.IndexOf(SelectedAppProtectionPolicy);
+                    if (idx >= 0)
+                    {
+                        AppProtectionPolicies[idx] = updated;
+                        SelectedAppProtectionPolicy = updated;
+                    }
+                    DebugLog.Log("Graph", $"Refreshed app protection policy: {updated.DisplayName}");
+                }
+            }
+            else if (IsManagedDeviceAppConfigurationsCategory && SelectedManagedDeviceAppConfiguration?.Id != null && _managedAppConfigurationService != null)
+            {
+                StatusText = $"Refreshing {SelectedManagedDeviceAppConfiguration.DisplayName}...";
+                var updated = await _managedAppConfigurationService.GetManagedDeviceAppConfigurationAsync(SelectedManagedDeviceAppConfiguration.Id, cancellationToken);
+                if (updated != null)
+                {
+                    var idx = ManagedDeviceAppConfigurations.IndexOf(SelectedManagedDeviceAppConfiguration);
+                    if (idx >= 0)
+                    {
+                        ManagedDeviceAppConfigurations[idx] = updated;
+                        SelectedManagedDeviceAppConfiguration = updated;
+                    }
+                    DebugLog.Log("Graph", $"Refreshed managed device app configuration: {updated.DisplayName}");
+                }
+            }
+            else if (IsTargetedManagedAppConfigurationsCategory && SelectedTargetedManagedAppConfiguration?.Id != null && _managedAppConfigurationService != null)
+            {
+                StatusText = $"Refreshing {SelectedTargetedManagedAppConfiguration.DisplayName}...";
+                var updated = await _managedAppConfigurationService.GetTargetedManagedAppConfigurationAsync(SelectedTargetedManagedAppConfiguration.Id, cancellationToken);
+                if (updated != null)
+                {
+                    var idx = TargetedManagedAppConfigurations.IndexOf(SelectedTargetedManagedAppConfiguration);
+                    if (idx >= 0)
+                    {
+                        TargetedManagedAppConfigurations[idx] = updated;
+                        SelectedTargetedManagedAppConfiguration = updated;
+                    }
+                    DebugLog.Log("Graph", $"Refreshed targeted managed app configuration: {updated.DisplayName}");
+                }
+            }
+            else if (IsTermsAndConditionsCategory && SelectedTermsAndConditions?.Id != null && _termsAndConditionsService != null)
+            {
+                StatusText = $"Refreshing {SelectedTermsAndConditions.DisplayName}...";
+                var updated = await _termsAndConditionsService.GetTermsAndConditionsAsync(SelectedTermsAndConditions.Id, cancellationToken);
+                if (updated != null)
+                {
+                    var idx = TermsAndConditionsCollection.IndexOf(SelectedTermsAndConditions);
+                    if (idx >= 0)
+                    {
+                        TermsAndConditionsCollection[idx] = updated;
+                        SelectedTermsAndConditions = updated;
+                    }
+                    DebugLog.Log("Graph", $"Refreshed terms and conditions: {updated.DisplayName}");
+                }
+            }
             else if (IsConditionalAccessCategory && SelectedConditionalAccessPolicy?.Id != null && _conditionalAccessPolicyService != null)
             {
                 StatusText = $"Refreshing {SelectedConditionalAccessPolicy.DisplayName}...";
@@ -1282,6 +1590,10 @@ public partial class MainWindowViewModel : ViewModelBase
         (IsEndpointSecurityCategory && SelectedEndpointSecurityIntent != null) ||
         (IsAdministrativeTemplatesCategory && SelectedAdministrativeTemplate != null) ||
         (IsEnrollmentConfigurationsCategory && SelectedEnrollmentConfiguration != null) ||
+        (IsAppProtectionPoliciesCategory && SelectedAppProtectionPolicy != null) ||
+        (IsManagedDeviceAppConfigurationsCategory && SelectedManagedDeviceAppConfiguration != null) ||
+        (IsTargetedManagedAppConfigurationsCategory && SelectedTargetedManagedAppConfiguration != null) ||
+        (IsTermsAndConditionsCategory && SelectedTermsAndConditions != null) ||
         (IsConditionalAccessCategory && SelectedConditionalAccessPolicy != null) ||
         (IsAssignmentFiltersCategory && SelectedAssignmentFilter != null) ||
         (IsPolicySetsCategory && SelectedPolicySet != null);
@@ -1354,6 +1666,38 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         SelectedItemAssignments.Clear();
         SelectedItemTypeName = FriendlyODataType(value?.OdataType);
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedAppProtectionPolicyChanged(ManagedAppPolicy? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = FriendlyODataType(value?.OdataType);
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedManagedDeviceAppConfigurationChanged(ManagedDeviceMobileAppConfiguration? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = FriendlyODataType(value?.OdataType);
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedTargetedManagedAppConfigurationChanged(TargetedManagedAppConfiguration? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = FriendlyODataType(value?.OdataType);
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedTermsAndConditionsChanged(TermsAndConditions? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Terms and Conditions";
         SelectedItemPlatform = "";
         OnPropertyChanged(nameof(CanRefreshSelectedItem));
     }
@@ -2404,6 +2748,146 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    // --- App Protection Policies view ---
+
+    private async Task LoadAppProtectionPoliciesAsync()
+    {
+        if (_appProtectionPolicyService == null) return;
+
+        IsBusy = true;
+        StatusText = "Loading app protection policies...";
+
+        try
+        {
+            var policies = await _appProtectionPolicyService.ListAppProtectionPoliciesAsync();
+            AppProtectionPolicies = new ObservableCollection<ManagedAppPolicy>(policies);
+            _appProtectionPoliciesLoaded = true;
+            ApplyFilter();
+
+            if (ActiveProfile?.TenantId != null)
+            {
+                _cacheService.Set(ActiveProfile.TenantId, CacheKeyAppProtectionPolicies, policies);
+                DebugLog.Log("Cache", $"Saved {policies.Count} app protection policy(ies) to cache");
+            }
+
+            StatusText = $"Loaded {policies.Count} app protection policy(ies)";
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to load app protection policies: {FormatGraphError(ex)}");
+            StatusText = "Error loading app protection policies";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    // --- Managed Device App Configurations view ---
+
+    private async Task LoadManagedDeviceAppConfigurationsAsync()
+    {
+        if (_managedAppConfigurationService == null) return;
+
+        IsBusy = true;
+        StatusText = "Loading managed device app configurations...";
+
+        try
+        {
+            var configurations = await _managedAppConfigurationService.ListManagedDeviceAppConfigurationsAsync();
+            ManagedDeviceAppConfigurations = new ObservableCollection<ManagedDeviceMobileAppConfiguration>(configurations);
+            _managedDeviceAppConfigurationsLoaded = true;
+            ApplyFilter();
+
+            if (ActiveProfile?.TenantId != null)
+            {
+                _cacheService.Set(ActiveProfile.TenantId, CacheKeyManagedDeviceAppConfigurations, configurations);
+                DebugLog.Log("Cache", $"Saved {configurations.Count} managed device app configuration(s) to cache");
+            }
+
+            StatusText = $"Loaded {configurations.Count} managed device app configuration(s)";
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to load managed device app configurations: {FormatGraphError(ex)}");
+            StatusText = "Error loading managed device app configurations";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    // --- Targeted Managed App Configurations view ---
+
+    private async Task LoadTargetedManagedAppConfigurationsAsync()
+    {
+        if (_managedAppConfigurationService == null) return;
+
+        IsBusy = true;
+        StatusText = "Loading targeted managed app configurations...";
+
+        try
+        {
+            var configurations = await _managedAppConfigurationService.ListTargetedManagedAppConfigurationsAsync();
+            TargetedManagedAppConfigurations = new ObservableCollection<TargetedManagedAppConfiguration>(configurations);
+            _targetedManagedAppConfigurationsLoaded = true;
+            ApplyFilter();
+
+            if (ActiveProfile?.TenantId != null)
+            {
+                _cacheService.Set(ActiveProfile.TenantId, CacheKeyTargetedManagedAppConfigurations, configurations);
+                DebugLog.Log("Cache", $"Saved {configurations.Count} targeted managed app configuration(s) to cache");
+            }
+
+            StatusText = $"Loaded {configurations.Count} targeted managed app configuration(s)";
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to load targeted managed app configurations: {FormatGraphError(ex)}");
+            StatusText = "Error loading targeted managed app configurations";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    // --- Terms and Conditions view ---
+
+    private async Task LoadTermsAndConditionsAsync()
+    {
+        if (_termsAndConditionsService == null) return;
+
+        IsBusy = true;
+        StatusText = "Loading terms and conditions...";
+
+        try
+        {
+            var termsCollection = await _termsAndConditionsService.ListTermsAndConditionsAsync();
+            TermsAndConditionsCollection = new ObservableCollection<TermsAndConditions>(termsCollection);
+            _termsAndConditionsLoaded = true;
+            ApplyFilter();
+
+            if (ActiveProfile?.TenantId != null)
+            {
+                _cacheService.Set(ActiveProfile.TenantId, CacheKeyTermsAndConditions, termsCollection);
+                DebugLog.Log("Cache", $"Saved {termsCollection.Count} terms and conditions item(s) to cache");
+            }
+
+            StatusText = $"Loaded {termsCollection.Count} terms and conditions item(s)";
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to load terms and conditions: {FormatGraphError(ex)}");
+            StatusText = "Error loading terms and conditions";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     private static GroupRow BuildGroupRow(Microsoft.Graph.Beta.Models.Group group, GroupMemberCounts counts)
     {
         return new GroupRow
@@ -2458,12 +2942,18 @@ public partial class MainWindowViewModel : ViewModelBase
             _endpointSecurityService = new EndpointSecurityService(_graphClient);
             _administrativeTemplateService = new AdministrativeTemplateService(_graphClient);
             _enrollmentConfigurationService = new EnrollmentConfigurationService(_graphClient);
+            _appProtectionPolicyService = new AppProtectionPolicyService(_graphClient);
+            _managedAppConfigurationService = new ManagedAppConfigurationService(_graphClient);
+            _termsAndConditionsService = new TermsAndConditionsService(_graphClient);
             _importService = new ImportService(
                 _configProfileService,
                 _compliancePolicyService,
                 _endpointSecurityService,
                 _administrativeTemplateService,
-                _enrollmentConfigurationService);
+                _enrollmentConfigurationService,
+                _appProtectionPolicyService,
+                _managedAppConfigurationService,
+                _termsAndConditionsService);
 
             RefreshSwitcherProfiles();
             SelectedSwitchProfile = profile;
@@ -2474,9 +2964,9 @@ public partial class MainWindowViewModel : ViewModelBase
             StatusText = $"Connected to {profile.Name}";
             DebugLog.Log("Auth", $"Connected to {profile.Name}");
 
-            // Try loading cached data — if all 7 types are cached, skip Graph refresh
+            // Try loading cached data — if all primary types are cached, skip Graph refresh
             var cachedCount = TryLoadFromCache(profile.TenantId ?? "");
-            if (cachedCount >= 7)
+            if (cachedCount >= 14)
             {
                 DebugLog.Log("Cache", "All data loaded from cache — skipping Graph refresh");
                 IsBusy = false;
@@ -2484,7 +2974,7 @@ public partial class MainWindowViewModel : ViewModelBase
             else
             {
                 if (cachedCount > 0)
-                    DebugLog.Log("Cache", $"Partial cache hit ({cachedCount}/7) — refreshing from Graph");
+                    DebugLog.Log("Cache", $"Partial cache hit ({cachedCount}/14) — refreshing from Graph");
                 await RefreshAsync(CancellationToken.None);
             }
         }
@@ -2583,6 +3073,10 @@ public partial class MainWindowViewModel : ViewModelBase
         var loadEndpointSecurity = IsEndpointSecurityCategory;
         var loadAdministrativeTemplates = IsAdministrativeTemplatesCategory;
         var loadEnrollmentConfigurations = IsEnrollmentConfigurationsCategory;
+        var loadAppProtectionPolicies = IsAppProtectionPoliciesCategory;
+        var loadManagedDeviceAppConfigurations = IsManagedDeviceAppConfigurationsCategory;
+        var loadTargetedManagedAppConfigurations = IsTargetedManagedAppConfigurationsCategory;
+        var loadTermsAndConditions = IsTermsAndConditionsCategory;
 
         try
         {
@@ -2746,6 +3240,98 @@ public partial class MainWindowViewModel : ViewModelBase
                 DebugLog.Log("Graph", "Skipping enrollment configurations refresh (lazy-load when tab selected)");
             }
 
+            if (_appProtectionPolicyService != null && loadAppProtectionPolicies)
+            {
+                try
+                {
+                    StatusText = "Loading app protection policies...";
+                    var policies = await _appProtectionPolicyService.ListAppProtectionPoliciesAsync(cancellationToken);
+                    AppProtectionPolicies = new ObservableCollection<ManagedAppPolicy>(policies);
+                    _appProtectionPoliciesLoaded = true;
+                    DebugLog.Log("Graph", $"Loaded {policies.Count} app protection policy(ies)");
+                }
+                catch (Exception ex)
+                {
+                    _appProtectionPoliciesLoaded = false;
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load app protection policies: {detail}", ex);
+                    errors.Add($"App Protection Policies: {detail}");
+                }
+            }
+            else if (_appProtectionPolicyService != null)
+            {
+                DebugLog.Log("Graph", "Skipping app protection policies refresh (lazy-load when tab selected)");
+            }
+
+            if (_managedAppConfigurationService != null && loadManagedDeviceAppConfigurations)
+            {
+                try
+                {
+                    StatusText = "Loading managed device app configurations...";
+                    var configurations = await _managedAppConfigurationService.ListManagedDeviceAppConfigurationsAsync(cancellationToken);
+                    ManagedDeviceAppConfigurations = new ObservableCollection<ManagedDeviceMobileAppConfiguration>(configurations);
+                    _managedDeviceAppConfigurationsLoaded = true;
+                    DebugLog.Log("Graph", $"Loaded {configurations.Count} managed device app configuration(s)");
+                }
+                catch (Exception ex)
+                {
+                    _managedDeviceAppConfigurationsLoaded = false;
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load managed device app configurations: {detail}", ex);
+                    errors.Add($"Managed Device App Configurations: {detail}");
+                }
+            }
+            else if (_managedAppConfigurationService != null)
+            {
+                DebugLog.Log("Graph", "Skipping managed device app configurations refresh (lazy-load when tab selected)");
+            }
+
+            if (_managedAppConfigurationService != null && loadTargetedManagedAppConfigurations)
+            {
+                try
+                {
+                    StatusText = "Loading targeted managed app configurations...";
+                    var configurations = await _managedAppConfigurationService.ListTargetedManagedAppConfigurationsAsync(cancellationToken);
+                    TargetedManagedAppConfigurations = new ObservableCollection<TargetedManagedAppConfiguration>(configurations);
+                    _targetedManagedAppConfigurationsLoaded = true;
+                    DebugLog.Log("Graph", $"Loaded {configurations.Count} targeted managed app configuration(s)");
+                }
+                catch (Exception ex)
+                {
+                    _targetedManagedAppConfigurationsLoaded = false;
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load targeted managed app configurations: {detail}", ex);
+                    errors.Add($"Targeted Managed App Configurations: {detail}");
+                }
+            }
+            else if (_managedAppConfigurationService != null)
+            {
+                DebugLog.Log("Graph", "Skipping targeted managed app configurations refresh (lazy-load when tab selected)");
+            }
+
+            if (_termsAndConditionsService != null && loadTermsAndConditions)
+            {
+                try
+                {
+                    StatusText = "Loading terms and conditions...";
+                    var termsCollection = await _termsAndConditionsService.ListTermsAndConditionsAsync(cancellationToken);
+                    TermsAndConditionsCollection = new ObservableCollection<TermsAndConditions>(termsCollection);
+                    _termsAndConditionsLoaded = true;
+                    DebugLog.Log("Graph", $"Loaded {termsCollection.Count} terms and conditions item(s)");
+                }
+                catch (Exception ex)
+                {
+                    _termsAndConditionsLoaded = false;
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load terms and conditions: {detail}", ex);
+                    errors.Add($"Terms and Conditions: {detail}");
+                }
+            }
+            else if (_termsAndConditionsService != null)
+            {
+                DebugLog.Log("Graph", "Skipping terms and conditions refresh (lazy-load when tab selected)");
+            }
+
             if (_assignmentFilterService != null && loadAssignmentFilters)
             {
                 try
@@ -2792,8 +3378,8 @@ public partial class MainWindowViewModel : ViewModelBase
                 DebugLog.Log("Graph", "Skipping policy sets refresh (lazy-load when tab selected)");
             }
 
-            var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count + EndpointSecurityIntents.Count + AdministrativeTemplates.Count + EnrollmentConfigurations.Count + ConditionalAccessPolicies.Count + AssignmentFilters.Count + PolicySets.Count;
-            StatusText = $"Loaded {totalItems} item(s) ({DeviceConfigurations.Count} configs, {CompliancePolicies.Count} compliance, {Applications.Count} apps, {SettingsCatalogPolicies.Count} settings catalog, {EndpointSecurityIntents.Count} endpoint security, {AdministrativeTemplates.Count} admin templates, {EnrollmentConfigurations.Count} enrollment configs, {ConditionalAccessPolicies.Count} conditional access, {AssignmentFilters.Count} filters, {PolicySets.Count} policy sets)";
+            var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count + EndpointSecurityIntents.Count + AdministrativeTemplates.Count + EnrollmentConfigurations.Count + AppProtectionPolicies.Count + ManagedDeviceAppConfigurations.Count + TargetedManagedAppConfigurations.Count + TermsAndConditionsCollection.Count + ConditionalAccessPolicies.Count + AssignmentFilters.Count + PolicySets.Count;
+            StatusText = $"Loaded {totalItems} item(s) ({DeviceConfigurations.Count} configs, {CompliancePolicies.Count} compliance, {Applications.Count} apps, {SettingsCatalogPolicies.Count} settings catalog, {EndpointSecurityIntents.Count} endpoint security, {AdministrativeTemplates.Count} admin templates, {EnrollmentConfigurations.Count} enrollment configs, {AppProtectionPolicies.Count} app protection, {ManagedDeviceAppConfigurations.Count} managed device app configs, {TargetedManagedAppConfigurations.Count} targeted app configs, {TermsAndConditionsCollection.Count} terms, {ConditionalAccessPolicies.Count} conditional access, {AssignmentFilters.Count} filters, {PolicySets.Count} policy sets)";
 
             if (errors.Count > 0)
                 SetError($"Some data failed to load — {string.Join("; ", errors)}");
@@ -2891,6 +3477,30 @@ public partial class MainWindowViewModel : ViewModelBase
                 StatusText = $"Exporting {SelectedEnrollmentConfiguration.DisplayName}...";
                 await _exportService.ExportEnrollmentConfigurationAsync(
                     SelectedEnrollmentConfiguration, outputPath, migrationTable, cancellationToken);
+            }
+            else if (IsAppProtectionPoliciesCategory && SelectedAppProtectionPolicy != null)
+            {
+                StatusText = $"Exporting {SelectedAppProtectionPolicy.DisplayName}...";
+                await _exportService.ExportAppProtectionPolicyAsync(
+                    SelectedAppProtectionPolicy, outputPath, migrationTable, cancellationToken);
+            }
+            else if (IsManagedDeviceAppConfigurationsCategory && SelectedManagedDeviceAppConfiguration != null)
+            {
+                StatusText = $"Exporting {SelectedManagedDeviceAppConfiguration.DisplayName}...";
+                await _exportService.ExportManagedDeviceAppConfigurationAsync(
+                    SelectedManagedDeviceAppConfiguration, outputPath, migrationTable, cancellationToken);
+            }
+            else if (IsTargetedManagedAppConfigurationsCategory && SelectedTargetedManagedAppConfiguration != null)
+            {
+                StatusText = $"Exporting {SelectedTargetedManagedAppConfiguration.DisplayName}...";
+                await _exportService.ExportTargetedManagedAppConfigurationAsync(
+                    SelectedTargetedManagedAppConfiguration, outputPath, migrationTable, cancellationToken);
+            }
+            else if (IsTermsAndConditionsCategory && SelectedTermsAndConditions != null)
+            {
+                StatusText = $"Exporting {SelectedTermsAndConditions.DisplayName}...";
+                await _exportService.ExportTermsAndConditionsAsync(
+                    SelectedTermsAndConditions, outputPath, migrationTable, cancellationToken);
             }
             else
             {
@@ -3005,6 +3615,50 @@ public partial class MainWindowViewModel : ViewModelBase
                 }
             }
 
+            // Export app protection policies
+            if (AppProtectionPolicies.Any())
+            {
+                StatusText = "Exporting app protection policies...";
+                foreach (var policy in AppProtectionPolicies)
+                {
+                    await _exportService.ExportAppProtectionPolicyAsync(policy, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
+            // Export managed device app configurations
+            if (ManagedDeviceAppConfigurations.Any())
+            {
+                StatusText = "Exporting managed device app configurations...";
+                foreach (var configuration in ManagedDeviceAppConfigurations)
+                {
+                    await _exportService.ExportManagedDeviceAppConfigurationAsync(configuration, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
+            // Export targeted managed app configurations
+            if (TargetedManagedAppConfigurations.Any())
+            {
+                StatusText = "Exporting targeted managed app configurations...";
+                foreach (var configuration in TargetedManagedAppConfigurations)
+                {
+                    await _exportService.ExportTargetedManagedAppConfigurationAsync(configuration, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
+            // Export terms and conditions
+            if (TermsAndConditionsCollection.Any())
+            {
+                StatusText = "Exporting terms and conditions...";
+                foreach (var termsAndConditions in TermsAndConditionsCollection)
+                {
+                    await _exportService.ExportTermsAndConditionsAsync(termsAndConditions, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
             await _exportService.SaveMigrationTableAsync(migrationTable, outputPath, cancellationToken);
             StatusText = $"Exported {count} item(s) to {outputPath}";
         }
@@ -3076,6 +3730,42 @@ public partial class MainWindowViewModel : ViewModelBase
             foreach (var config in enrollmentConfigs)
             {
                 await _importService.ImportEnrollmentConfigurationAsync(config, migrationTable, cancellationToken);
+                imported++;
+                StatusText = $"Imported {imported} item(s)...";
+            }
+
+            // Import app protection policies
+            var appProtectionPolicies = await _importService.ReadAppProtectionPoliciesFromFolderAsync(folderPath, cancellationToken);
+            foreach (var policy in appProtectionPolicies)
+            {
+                await _importService.ImportAppProtectionPolicyAsync(policy, migrationTable, cancellationToken);
+                imported++;
+                StatusText = $"Imported {imported} item(s)...";
+            }
+
+            // Import managed device app configurations
+            var managedDeviceAppConfigs = await _importService.ReadManagedDeviceAppConfigurationsFromFolderAsync(folderPath, cancellationToken);
+            foreach (var configuration in managedDeviceAppConfigs)
+            {
+                await _importService.ImportManagedDeviceAppConfigurationAsync(configuration, migrationTable, cancellationToken);
+                imported++;
+                StatusText = $"Imported {imported} item(s)...";
+            }
+
+            // Import targeted managed app configurations
+            var targetedAppConfigs = await _importService.ReadTargetedManagedAppConfigurationsFromFolderAsync(folderPath, cancellationToken);
+            foreach (var configuration in targetedAppConfigs)
+            {
+                await _importService.ImportTargetedManagedAppConfigurationAsync(configuration, migrationTable, cancellationToken);
+                imported++;
+                StatusText = $"Imported {imported} item(s)...";
+            }
+
+            // Import terms and conditions
+            var termsCollection = await _importService.ReadTermsAndConditionsFromFolderAsync(folderPath, cancellationToken);
+            foreach (var termsAndConditions in termsCollection)
+            {
+                await _importService.ImportTermsAndConditionsAsync(termsAndConditions, migrationTable, cancellationToken);
                 imported++;
                 StatusText = $"Imported {imported} item(s)...";
             }
@@ -3178,6 +3868,46 @@ public partial class MainWindowViewModel : ViewModelBase
                 UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyEnrollmentConfigurations);
             }
 
+            var appProtectionPolicies = _cacheService.Get<ManagedAppPolicy>(tenantId, CacheKeyAppProtectionPolicies);
+            if (appProtectionPolicies != null)
+            {
+                AppProtectionPolicies = new ObservableCollection<ManagedAppPolicy>(appProtectionPolicies);
+                _appProtectionPoliciesLoaded = true;
+                DebugLog.Log("Cache", $"Loaded {appProtectionPolicies.Count} app protection policy(ies) from cache");
+                typesLoaded++;
+                UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyAppProtectionPolicies);
+            }
+
+            var managedDeviceAppConfigurations = _cacheService.Get<ManagedDeviceMobileAppConfiguration>(tenantId, CacheKeyManagedDeviceAppConfigurations);
+            if (managedDeviceAppConfigurations != null)
+            {
+                ManagedDeviceAppConfigurations = new ObservableCollection<ManagedDeviceMobileAppConfiguration>(managedDeviceAppConfigurations);
+                _managedDeviceAppConfigurationsLoaded = true;
+                DebugLog.Log("Cache", $"Loaded {managedDeviceAppConfigurations.Count} managed device app configuration(s) from cache");
+                typesLoaded++;
+                UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyManagedDeviceAppConfigurations);
+            }
+
+            var targetedManagedAppConfigurations = _cacheService.Get<TargetedManagedAppConfiguration>(tenantId, CacheKeyTargetedManagedAppConfigurations);
+            if (targetedManagedAppConfigurations != null)
+            {
+                TargetedManagedAppConfigurations = new ObservableCollection<TargetedManagedAppConfiguration>(targetedManagedAppConfigurations);
+                _targetedManagedAppConfigurationsLoaded = true;
+                DebugLog.Log("Cache", $"Loaded {targetedManagedAppConfigurations.Count} targeted managed app configuration(s) from cache");
+                typesLoaded++;
+                UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyTargetedManagedAppConfigurations);
+            }
+
+            var termsCollection = _cacheService.Get<TermsAndConditions>(tenantId, CacheKeyTermsAndConditions);
+            if (termsCollection != null)
+            {
+                TermsAndConditionsCollection = new ObservableCollection<TermsAndConditions>(termsCollection);
+                _termsAndConditionsLoaded = true;
+                DebugLog.Log("Cache", $"Loaded {termsCollection.Count} terms and conditions item(s) from cache");
+                typesLoaded++;
+                UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyTermsAndConditions);
+            }
+
             var conditionalAccessPolicies = _cacheService.Get<ConditionalAccessPolicy>(tenantId, CacheKeyConditionalAccess);
             if (conditionalAccessPolicies != null)
             {
@@ -3210,7 +3940,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
             if (typesLoaded > 0)
             {
-                var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count + EndpointSecurityIntents.Count + AdministrativeTemplates.Count + EnrollmentConfigurations.Count + ConditionalAccessPolicies.Count + AssignmentFilters.Count + PolicySets.Count;
+                var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count + EndpointSecurityIntents.Count + AdministrativeTemplates.Count + EnrollmentConfigurations.Count + AppProtectionPolicies.Count + ManagedDeviceAppConfigurations.Count + TargetedManagedAppConfigurations.Count + TermsAndConditionsCollection.Count + ConditionalAccessPolicies.Count + AssignmentFilters.Count + PolicySets.Count;
                 var ageText = FormatCacheAge(oldestCacheTime);
                 CacheStatusText = oldestCacheTime.HasValue
                     ? $"Cache: {oldestCacheTime.Value.ToLocalTime():MMM dd, h:mm tt}"
@@ -3330,6 +4060,18 @@ public partial class MainWindowViewModel : ViewModelBase
             if (EnrollmentConfigurations.Count > 0)
                 _cacheService.Set(tenantId, CacheKeyEnrollmentConfigurations, EnrollmentConfigurations.ToList());
 
+            if (AppProtectionPolicies.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyAppProtectionPolicies, AppProtectionPolicies.ToList());
+
+            if (ManagedDeviceAppConfigurations.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyManagedDeviceAppConfigurations, ManagedDeviceAppConfigurations.ToList());
+
+            if (TargetedManagedAppConfigurations.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyTargetedManagedAppConfigurations, TargetedManagedAppConfigurations.ToList());
+
+            if (TermsAndConditionsCollection.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyTermsAndConditions, TermsAndConditionsCollection.ToList());
+
             if (ConditionalAccessPolicies.Count > 0)
                 _cacheService.Set(tenantId, CacheKeyConditionalAccess, ConditionalAccessPolicies.ToList());
 
@@ -3378,6 +4120,10 @@ public partial class MainWindowViewModel : ViewModelBase
         _endpointSecurityLoaded = false;
         _administrativeTemplatesLoaded = false;
         _enrollmentConfigurationsLoaded = false;
+        _appProtectionPoliciesLoaded = false;
+        _managedDeviceAppConfigurationsLoaded = false;
+        _targetedManagedAppConfigurationsLoaded = false;
+        _termsAndConditionsLoaded = false;
         _assignmentFiltersLoaded = false;
         _policySetsLoaded = false;
         SettingsCatalogPolicies.Clear();
@@ -3388,6 +4134,14 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedAdministrativeTemplate = null;
         EnrollmentConfigurations.Clear();
         SelectedEnrollmentConfiguration = null;
+        AppProtectionPolicies.Clear();
+        SelectedAppProtectionPolicy = null;
+        ManagedDeviceAppConfigurations.Clear();
+        SelectedManagedDeviceAppConfiguration = null;
+        TargetedManagedAppConfigurations.Clear();
+        SelectedTargetedManagedAppConfiguration = null;
+        TermsAndConditionsCollection.Clear();
+        SelectedTermsAndConditions = null;
         ConditionalAccessPolicies.Clear();
         SelectedConditionalAccessPolicy = null;
         AssignmentFilters.Clear();
@@ -3414,6 +4168,9 @@ public partial class MainWindowViewModel : ViewModelBase
         _endpointSecurityService = null;
         _administrativeTemplateService = null;
         _enrollmentConfigurationService = null;
+        _appProtectionPolicyService = null;
+        _managedAppConfigurationService = null;
+        _termsAndConditionsService = null;
         _importService = null;
         _groupNameCache.Clear();
         CacheStatusText = "";
