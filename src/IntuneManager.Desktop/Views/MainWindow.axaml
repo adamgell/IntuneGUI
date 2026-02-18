@@ -18,6 +18,20 @@
     </Design.DataContext>
 
     <DockPanel>
+        <!-- Menu Bar -->
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Refresh" Command="{Binding RefreshCommand}" InputGesture="F5" />
+                <Separator />
+                <MenuItem Header="_Disconnect" Command="{Binding DisconnectCommand}" />
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="Check for _Updates..." x:Name="MenuCheckUpdates" Click="OnCheckForUpdatesClick" />
+                <Separator />
+                <MenuItem Header="_About IntuneManager" x:Name="MenuAbout" Click="OnAboutClick" />
+            </MenuItem>
+        </Menu>
+
         <!-- Status Bar -->
         <Border DockPanel.Dock="Bottom" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
                 Padding="8,6" MinHeight="36">

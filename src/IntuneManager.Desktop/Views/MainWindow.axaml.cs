@@ -1,6 +1,8 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Collections.Specialized;
 using Avalonia;
@@ -353,5 +355,41 @@ public partial class MainWindow : Window
         {
             _debugLogWindow.Activate();
         }
+    }
+
+    private void OnCheckForUpdatesClick(object? sender, RoutedEventArgs e)
+    {
+        OpenUrl("https://github.com/adamgell/IntuneGUI/releases");
+    }
+
+    private async void OnAboutClick(object? sender, RoutedEventArgs e)
+    {
+        var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+        var versionText = version != null ? $"v{version.Major}.{version.Minor}.{version.Build}" : "dev";
+
+        var box = MessageBoxManager.GetMessageBoxStandard(
+            "About IntuneManager",
+            $"IntuneManager {versionText}\n\n" +
+            "A .NET 8 / Avalonia desktop app for managing\n" +
+            "Microsoft Intune configurations across clouds.\n\n" +
+            "https://github.com/adamgell/IntuneGUI",
+            ButtonEnum.Ok,
+            MsBox.Avalonia.Enums.Icon.Info);
+
+        await box.ShowAsPopupAsync(this);
+    }
+
+    private static void OpenUrl(string url)
+    {
+        try
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                Process.Start("open", url);
+            else
+                Process.Start("xdg-open", url);
+        }
+        catch { /* best effort */ }
     }
 }
