@@ -171,4 +171,46 @@ public class CacheServiceTests : IDisposable
         Assert.Single(result);
         Assert.Equal("Durable", result[0].Name);
     }
+
+    [Fact]
+    public void Get_deserialization_failure_returns_null_and_deletes_entry()
+    {
+        _sut.Set("tenant1", "Mismatched", new List<string> { "not-an-object" });
+
+        var result = _sut.Get<TestItem>("tenant1", "Mismatched");
+
+        Assert.Null(result);
+        Assert.Null(_sut.Get<string>("tenant1", "Mismatched"));
+    }
+
+    [Fact]
+    public void GetMetadata_returns_null_for_expired_entry()
+    {
+        _sut.Set("tenant1", "SoonExpired", new List<TestItem> { new("X", 1) }, TimeSpan.Zero);
+        Thread.Sleep(10);
+
+        var meta = _sut.GetMetadata("tenant1", "SoonExpired");
+
+        Assert.Null(meta);
+    }
+
+    [Fact]
+    public void Corrupted_password_file_is_regenerated()
+    {
+        _sut.Dispose();
+
+        var passwordPath = Path.Combine(_tempDir, "cache-key.bin");
+        var dbPath = Path.Combine(_tempDir, "cache.db");
+        File.WriteAllText(passwordPath, "corrupted-key-material");
+        if (File.Exists(dbPath))
+            File.Delete(dbPath);
+
+        var dp = _sp.GetRequiredService<IDataProtectionProvider>();
+        using var sut2 = new CacheService(dp, _tempDir);
+        sut2.Set("tenant1", "AfterCorruption", new List<TestItem> { new("Ok", 1) });
+
+        var result = sut2.Get<TestItem>("tenant1", "AfterCorruption");
+        Assert.NotNull(result);
+        Assert.Single(result);
+    }
 }
