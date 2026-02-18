@@ -205,6 +205,10 @@ public partial class MainWindow : Window
             {
                 binding = new Binding("OdataType") { Converter = PlatformConverter.Instance };
             }
+            else if (col.BindingPath == "Computed:RoleScopeTags")
+            {
+                binding = new Binding("RoleScopeTagIds") { Converter = StringListConverter.Instance };
+            }
             else
             {
                 binding = new Binding(col.BindingPath);

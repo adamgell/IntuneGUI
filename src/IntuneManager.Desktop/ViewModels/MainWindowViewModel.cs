@@ -15,6 +15,7 @@ using IntuneManager.Core.Models;
 using IntuneManager.Core.Services;
 using Microsoft.Graph.Beta;
 using Microsoft.Graph.Beta.Models;
+using Microsoft.Graph.Beta.Models.ODataErrors;
 
 namespace IntuneManager.Desktop.ViewModels;
 
@@ -207,6 +208,7 @@ public partial class MainWindowViewModel : ViewModelBase
             Append(sb, "Technologies", sc.Technologies?.ToString());
             Append(sb, "ID", sc.Id);
             Append(sb, "Is Assigned", sc.IsAssigned?.ToString());
+            Append(sb, "Role Scope Tags", sc.RoleScopeTagIds != null ? string.Join(", ", sc.RoleScopeTagIds) : "");
             Append(sb, "Created", sc.CreatedDateTime?.ToString("g"));
             Append(sb, "Last Modified", sc.LastModifiedDateTime?.ToString("g"));
             AppendAssignments(sb);
@@ -470,7 +472,7 @@ public partial class MainWindowViewModel : ViewModelBase
         new() { Header = "Is Assigned", BindingPath = "IsAssigned", Width = 90, IsVisible = true },
         new() { Header = "Created", BindingPath = "CreatedDateTime", Width = 150, IsVisible = false },
         new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = true },
-        new() { Header = "Role Scope Tags", BindingPath = "RoleScopeTagIds", Width = 120, IsVisible = false }
+        new() { Header = "Role Scope Tags", BindingPath = "Computed:RoleScopeTags", Width = 120, IsVisible = false }
     ];
 
     public ObservableCollection<DataGridColumnConfig> DynamicGroupColumns { get; } =
@@ -932,7 +934,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            SetError($"Failed to load Application Assignments: {ex.Message}");
+            SetError($"Failed to load Application Assignments: {FormatGraphError(ex)}");
             StatusText = "Error loading Application Assignments";
         }
         finally
@@ -1371,7 +1373,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            SetError($"Failed to load dynamic groups: {ex.Message}");
+            SetError($"Failed to load dynamic groups: {FormatGraphError(ex)}");
             StatusText = "Error loading dynamic groups";
         }
         finally
@@ -1435,7 +1437,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            SetError($"Failed to load assigned groups: {ex.Message}");
+            SetError($"Failed to load assigned groups: {FormatGraphError(ex)}");
             StatusText = "Error loading assigned groups";
         }
         finally
@@ -1506,8 +1508,8 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            DebugLog.LogError($"Connection to {profile.Name} failed", ex);
-            SetError($"Connection failed: {ex.Message}");
+            DebugLog.LogError($"Connection to {profile.Name} failed: {FormatGraphError(ex)}", ex);
+            SetError($"Connection failed: {FormatGraphError(ex)}");
             StatusText = "Connection failed";
             DisconnectInternal();
         }
@@ -1554,48 +1556,120 @@ public partial class MainWindowViewModel : ViewModelBase
 
     // --- Refresh (loads data for the selected category) ---
 
+    /// <summary>
+    /// Extracts a human-readable error message from an ODataError, including
+    /// the response status code, error code, and inner error details.
+    /// </summary>
+    private static string FormatODataError(ODataError odataError)
+    {
+        var sb = new StringBuilder();
+        sb.Append($"HTTP {odataError.ResponseStatusCode}");
+
+        if (odataError.Error != null)
+        {
+            if (!string.IsNullOrEmpty(odataError.Error.Code))
+                sb.Append($" [{odataError.Error.Code}]");
+            if (!string.IsNullOrEmpty(odataError.Error.Message))
+                sb.Append($": {odataError.Error.Message}");
+        }
+        else if (!string.IsNullOrEmpty(odataError.Message))
+        {
+            sb.Append($": {odataError.Message}");
+        }
+
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Formats any exception for display, with special handling for ODataError.
+    /// </summary>
+    private static string FormatGraphError(Exception ex)
+    {
+        return ex is ODataError odata ? FormatODataError(odata) : ex.Message;
+    }
+
     [RelayCommand]
     private async Task RefreshAsync(CancellationToken cancellationToken)
     {
         ClearError();
         IsBusy = true;
+        var errors = new List<string>();
 
         try
         {
             if (_configProfileService != null)
             {
-                StatusText = "Loading device configurations...";
-                var configs = await _configProfileService.ListDeviceConfigurationsAsync(cancellationToken);
-                DeviceConfigurations = new ObservableCollection<DeviceConfiguration>(configs);
-                DebugLog.Log("Graph", $"Loaded {configs.Count} device configuration(s)");
+                try
+                {
+                    StatusText = "Loading device configurations...";
+                    var configs = await _configProfileService.ListDeviceConfigurationsAsync(cancellationToken);
+                    DeviceConfigurations = new ObservableCollection<DeviceConfiguration>(configs);
+                    DebugLog.Log("Graph", $"Loaded {configs.Count} device configuration(s)");
+                }
+                catch (Exception ex)
+                {
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load device configurations: {detail}", ex);
+                    errors.Add($"Device Configs: {detail}");
+                }
             }
 
             if (_compliancePolicyService != null)
             {
-                StatusText = "Loading compliance policies...";
-                var policies = await _compliancePolicyService.ListCompliancePoliciesAsync(cancellationToken);
-                CompliancePolicies = new ObservableCollection<DeviceCompliancePolicy>(policies);
-                DebugLog.Log("Graph", $"Loaded {policies.Count} compliance policy(ies)");
+                try
+                {
+                    StatusText = "Loading compliance policies...";
+                    var policies = await _compliancePolicyService.ListCompliancePoliciesAsync(cancellationToken);
+                    CompliancePolicies = new ObservableCollection<DeviceCompliancePolicy>(policies);
+                    DebugLog.Log("Graph", $"Loaded {policies.Count} compliance policy(ies)");
+                }
+                catch (Exception ex)
+                {
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load compliance policies: {detail}", ex);
+                    errors.Add($"Compliance Policies: {detail}");
+                }
             }
 
             if (_applicationService != null)
             {
-                StatusText = "Loading applications...";
-                var apps = await _applicationService.ListApplicationsAsync(cancellationToken);
-                Applications = new ObservableCollection<MobileApp>(apps);
-                DebugLog.Log("Graph", $"Loaded {apps.Count} application(s)");
+                try
+                {
+                    StatusText = "Loading applications...";
+                    var apps = await _applicationService.ListApplicationsAsync(cancellationToken);
+                    Applications = new ObservableCollection<MobileApp>(apps);
+                    DebugLog.Log("Graph", $"Loaded {apps.Count} application(s)");
+                }
+                catch (Exception ex)
+                {
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load applications: {detail}", ex);
+                    errors.Add($"Applications: {detail}");
+                }
             }
 
             if (_settingsCatalogService != null)
             {
-                StatusText = "Loading settings catalog policies...";
-                var settingsPolicies = await _settingsCatalogService.ListSettingsCatalogPoliciesAsync(cancellationToken);
-                SettingsCatalogPolicies = new ObservableCollection<DeviceManagementConfigurationPolicy>(settingsPolicies);
-                DebugLog.Log("Graph", $"Loaded {settingsPolicies.Count} settings catalog policy(ies)");
+                try
+                {
+                    StatusText = "Loading settings catalog policies...";
+                    var settingsPolicies = await _settingsCatalogService.ListSettingsCatalogPoliciesAsync(cancellationToken);
+                    SettingsCatalogPolicies = new ObservableCollection<DeviceManagementConfigurationPolicy>(settingsPolicies);
+                    DebugLog.Log("Graph", $"Loaded {settingsPolicies.Count} settings catalog policy(ies)");
+                }
+                catch (Exception ex)
+                {
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load settings catalog: {detail}", ex);
+                    errors.Add($"Settings Catalog: {detail}");
+                }
             }
 
             var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count;
             StatusText = $"Loaded {totalItems} item(s) ({DeviceConfigurations.Count} configs, {CompliancePolicies.Count} policies, {Applications.Count} apps, {SettingsCatalogPolicies.Count} settings catalog)";
+
+            if (errors.Count > 0)
+                SetError($"Some data failed to load — {string.Join("; ", errors)}");
 
             ApplyFilter();
 
@@ -1606,7 +1680,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            SetError($"Failed to load data: {ex.Message}");
+            SetError($"Failed to load data: {FormatGraphError(ex)}");
             StatusText = "Error loading data";
         }
         finally
@@ -1666,7 +1740,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            SetError($"Export failed: {ex.Message}");
+            SetError($"Export failed: {FormatGraphError(ex)}");
             StatusText = "Export failed";
         }
         finally
@@ -1734,7 +1808,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            SetError($"Export failed: {ex.Message}");
+            SetError($"Export failed: {FormatGraphError(ex)}");
             StatusText = "Export failed";
         }
         finally
@@ -1785,7 +1859,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            SetError($"Import failed: {ex.Message}");
+            SetError($"Import failed: {FormatGraphError(ex)}");
             StatusText = "Import failed";
         }
         finally

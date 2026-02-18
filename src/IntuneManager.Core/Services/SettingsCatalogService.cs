@@ -21,6 +21,12 @@ public class SettingsCatalogService : ISettingsCatalogService
             .GetAsync(req =>
             {
                 req.QueryParameters.Top = 999;
+                req.QueryParameters.Select = new[]
+                {
+                    "id", "name", "description", "platforms", "technologies",
+                    "createdDateTime", "lastModifiedDateTime", "settingCount",
+                    "roleScopeTagIds", "isAssigned", "templateReference"
+                };
             }, cancellationToken);
 
         while (response != null)
