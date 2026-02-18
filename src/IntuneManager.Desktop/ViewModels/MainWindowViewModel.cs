@@ -98,7 +98,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private NavCategory? _selectedCategory;
 
-    public ObservableCollection<NavCategory> NavCategories { get; } =
+    public ObservableCollection<NavCategory> NavCategories { get; } = [];
+
+    private static List<NavCategory> BuildDefaultNavCategories() =>
     [
         new NavCategory { Name = "Overview", Icon = "📊" },
         new NavCategory { Name = "Device Configurations", Icon = "⚙" },
@@ -123,6 +125,26 @@ public partial class MainWindowViewModel : ViewModelBase
         new NavCategory { Name = "Dynamic Groups", Icon = "🔄" },
         new NavCategory { Name = "Assigned Groups", Icon = "👥" }
     ];
+
+    private void EnsureNavCategories()
+    {
+        var expected = BuildDefaultNavCategories();
+
+        var isSame = NavCategories.Count == expected.Count &&
+                     NavCategories.Select(c => c.Name).SequenceEqual(expected.Select(c => c.Name));
+
+        if (isSame)
+        {
+            DebugLog.Log("App", $"Nav categories active ({NavCategories.Count})");
+            return;
+        }
+
+        NavCategories.Clear();
+        foreach (var category in expected)
+            NavCategories.Add(category);
+
+        DebugLog.Log("App", $"Nav categories rebuilt ({NavCategories.Count}): {string.Join(", ", NavCategories.Select(c => c.Name))}");
+    }
 
     // --- Overview dashboard ---
     public OverviewViewModel Overview { get; } = new();
@@ -1217,8 +1239,10 @@ public partial class MainWindowViewModel : ViewModelBase
         LoginViewModel.LoginSucceeded += OnLoginSucceeded;
 
         CurrentView = LoginViewModel;
+        EnsureNavCategories();
 
         DebugLog.Log("App", "Intune Commander started");
+        DebugLog.Log("App", $"Nav categories loaded ({NavCategories.Count}): {string.Join(", ", NavCategories.Select(c => c.Name))}");
 
         // Load profiles asynchronously — never block the UI thread
         _ = LoadProfilesAsync();
@@ -3435,6 +3459,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
             RefreshSwitcherProfiles();
             SelectedSwitchProfile = profile;
+            EnsureNavCategories();
+            DebugLog.Log("App", $"Connected nav categories ({NavCategories.Count}): {string.Join(", ", NavCategories.Select(c => c.Name))}");
 
             // Default to first nav category
             SelectedCategory = NavCategories.FirstOrDefault();
