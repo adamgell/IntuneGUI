@@ -13,8 +13,8 @@ using CommunityToolkit.Mvvm.Input;
 using IntuneManager.Core.Auth;
 using IntuneManager.Core.Models;
 using IntuneManager.Core.Services;
-using Microsoft.Graph;
-using Microsoft.Graph.Models;
+using Microsoft.Graph.Beta;
+using Microsoft.Graph.Beta.Models;
 
 namespace IntuneManager.Desktop.ViewModels;
 
@@ -30,6 +30,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private ICompliancePolicyService? _compliancePolicyService;
     private IApplicationService? _applicationService;
     private IGroupService? _groupService;
+    private ISettingsCatalogService? _settingsCatalogService;
 
     [ObservableProperty]
     private ViewModelBase? _currentView;
@@ -57,6 +58,7 @@ public partial class MainWindowViewModel : ViewModelBase
         new NavCategory { Name = "Compliance Policies", Icon = "✓" },
         new NavCategory { Name = "Applications", Icon = "📦" },
         new NavCategory { Name = "Application Assignments", Icon = "📋" },
+        new NavCategory { Name = "Settings Catalog", Icon = "⚙" },
         new NavCategory { Name = "Dynamic Groups", Icon = "🔄" },
         new NavCategory { Name = "Assigned Groups", Icon = "👥" }
     ];
@@ -84,6 +86,13 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
     private MobileApp? _selectedApplication;
+
+    // --- Settings Catalog ---
+    [ObservableProperty]
+    private ObservableCollection<DeviceManagementConfigurationPolicy> _settingsCatalogPolicies = [];
+
+    [ObservableProperty]
+    private DeviceManagementConfigurationPolicy? _selectedSettingsCatalogPolicy;
 
     // --- Application Assignments (flattened view) ---
     [ObservableProperty]
@@ -182,6 +191,19 @@ public partial class MainWindowViewModel : ViewModelBase
             Append(sb, "Created", pol.CreatedDateTime?.ToString("g"));
             Append(sb, "Last Modified", pol.LastModifiedDateTime?.ToString("g"));
             Append(sb, "Version", pol.Version?.ToString());
+            AppendAssignments(sb);
+        }
+        else if (SelectedSettingsCatalogPolicy is { } sc)
+        {
+            sb.AppendLine("=== Settings Catalog Policy ===");
+            Append(sb, "Name", sc.Name);
+            Append(sb, "Description", sc.Description);
+            Append(sb, "Platforms", sc.Platforms?.ToString());
+            Append(sb, "Technologies", sc.Technologies?.ToString());
+            Append(sb, "ID", sc.Id);
+            Append(sb, "Is Assigned", sc.IsAssigned?.ToString());
+            Append(sb, "Created", sc.CreatedDateTime?.ToString("g"));
+            Append(sb, "Last Modified", sc.LastModifiedDateTime?.ToString("g"));
             AppendAssignments(sb);
         }
         else if (SelectedApplication is { } app)
@@ -324,6 +346,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private ObservableCollection<GroupRow> _filteredAssignedGroupRows = [];
 
+    [ObservableProperty]
+    private ObservableCollection<DeviceManagementConfigurationPolicy> _filteredSettingsCatalogPolicies = [];
+
     private void ApplyFilter()
     {
         var q = SearchText.Trim();
@@ -336,6 +361,7 @@ public partial class MainWindowViewModel : ViewModelBase
             FilteredAppAssignmentRows = new ObservableCollection<AppAssignmentRow>(AppAssignmentRows);
             FilteredDynamicGroupRows = new ObservableCollection<GroupRow>(DynamicGroupRows);
             FilteredAssignedGroupRows = new ObservableCollection<GroupRow>(AssignedGroupRows);
+            FilteredSettingsCatalogPolicies = new ObservableCollection<DeviceManagementConfigurationPolicy>(SettingsCatalogPolicies);
             return;
         }
 
@@ -381,6 +407,13 @@ public partial class MainWindowViewModel : ViewModelBase
                 Contains(g.Description, q) ||
                 Contains(g.GroupType, q) ||
                 Contains(g.GroupId, q)));
+
+        FilteredSettingsCatalogPolicies = new ObservableCollection<DeviceManagementConfigurationPolicy>(
+            SettingsCatalogPolicies.Where(p =>
+                Contains(p.Name, q) ||
+                Contains(p.Description, q) ||
+                Contains(p.Platforms?.ToString(), q) ||
+                Contains(p.Technologies?.ToString(), q)));
     }
 
     private static bool Contains(string? source, string search)
@@ -421,6 +454,18 @@ public partial class MainWindowViewModel : ViewModelBase
         new() { Header = "Created", BindingPath = "CreatedDateTime", Width = 150, IsVisible = false },
         new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = false },
         new() { Header = "Publishing State", BindingPath = "PublishingState", Width = 120, IsVisible = false }
+    ];
+
+    public ObservableCollection<DataGridColumnConfig> SettingsCatalogColumns { get; } =
+    [
+        new() { Header = "Name", BindingPath = "Name", IsStar = true, IsVisible = true },
+        new() { Header = "Platforms", BindingPath = "Platforms", Width = 120, IsVisible = true },
+        new() { Header = "Technologies", BindingPath = "Technologies", Width = 140, IsVisible = true },
+        new() { Header = "Description", BindingPath = "Description", Width = 200, IsVisible = false },
+        new() { Header = "Is Assigned", BindingPath = "IsAssigned", Width = 90, IsVisible = true },
+        new() { Header = "Created", BindingPath = "CreatedDateTime", Width = 150, IsVisible = false },
+        new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = true },
+        new() { Header = "Role Scope Tags", BindingPath = "RoleScopeTagIds", Width = 120, IsVisible = false }
     ];
 
     public ObservableCollection<DataGridColumnConfig> DynamicGroupColumns { get; } =
@@ -494,6 +539,7 @@ public partial class MainWindowViewModel : ViewModelBase
         "Compliance Policies" => CompliancePolicyColumns,
         "Applications" => ApplicationColumns,
         "Application Assignments" => AppAssignmentColumns,
+        "Settings Catalog" => SettingsCatalogColumns,
         "Dynamic Groups" => DynamicGroupColumns,
         "Assigned Groups" => AssignedGroupColumns,
         _ => null
@@ -573,6 +619,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool IsCompliancePolicyCategory => SelectedCategory?.Name == "Compliance Policies";
     public bool IsApplicationCategory => SelectedCategory?.Name == "Applications";
     public bool IsAppAssignmentsCategory => SelectedCategory?.Name == "Application Assignments";
+    public bool IsSettingsCatalogCategory => SelectedCategory?.Name == "Settings Catalog";
     public bool IsDynamicGroupsCategory => SelectedCategory?.Name == "Dynamic Groups";
     public bool IsAssignedGroupsCategory => SelectedCategory?.Name == "Assigned Groups";
 
@@ -583,6 +630,7 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedCompliancePolicy = null;
         SelectedApplication = null;
         SelectedAppAssignmentRow = null;
+        SelectedSettingsCatalogPolicy = null;
         SelectedDynamicGroupRow = null;
         SelectedAssignedGroupRow = null;
         SelectedItemAssignments.Clear();
@@ -598,6 +646,7 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsCompliancePolicyCategory));
         OnPropertyChanged(nameof(IsApplicationCategory));
         OnPropertyChanged(nameof(IsAppAssignmentsCategory));
+        OnPropertyChanged(nameof(IsSettingsCatalogCategory));
         OnPropertyChanged(nameof(IsDynamicGroupsCategory));
         OnPropertyChanged(nameof(IsAssignedGroupsCategory));
         OnPropertyChanged(nameof(ActiveColumns));
@@ -633,6 +682,14 @@ public partial class MainWindowViewModel : ViewModelBase
             _ = LoadCompliancePolicyAssignmentsAsync(value.Id);
     }
 
+    partial void OnSelectedSettingsCatalogPolicyChanged(DeviceManagementConfigurationPolicy? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = value?.Platforms?.ToString() ?? "";
+        if (value?.Id != null)
+            _ = LoadSettingsCatalogAssignmentsAsync(value.Id);
+    }
+
     partial void OnSelectedApplicationChanged(MobileApp? value)
     {
         SelectedItemAssignments.Clear();
@@ -666,6 +723,22 @@ public partial class MainWindowViewModel : ViewModelBase
         try
         {
             var assignments = await _compliancePolicyService.GetAssignmentsAsync(policyId);
+            var items = new List<AssignmentDisplayItem>();
+            foreach (var a in assignments)
+                items.Add(await MapAssignmentAsync(a.Target));
+            SelectedItemAssignments = new ObservableCollection<AssignmentDisplayItem>(items);
+        }
+        catch { /* swallow – non-critical */ }
+        finally { IsLoadingDetails = false; }
+    }
+
+    private async Task LoadSettingsCatalogAssignmentsAsync(string policyId)
+    {
+        if (_settingsCatalogService == null) return;
+        IsLoadingDetails = true;
+        try
+        {
+            var assignments = await _settingsCatalogService.GetAssignmentsAsync(policyId);
             var items = new List<AssignmentDisplayItem>();
             foreach (var a in assignments)
                 items.Add(await MapAssignmentAsync(a.Target));
@@ -1364,7 +1437,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
-    private static GroupRow BuildGroupRow(Microsoft.Graph.Models.Group group, GroupMemberCounts counts)
+    private static GroupRow BuildGroupRow(Microsoft.Graph.Beta.Models.Group group, GroupMemberCounts counts)
     {
         return new GroupRow
         {
@@ -1409,6 +1482,7 @@ public partial class MainWindowViewModel : ViewModelBase
             _compliancePolicyService = new CompliancePolicyService(_graphClient);
             _applicationService = new ApplicationService(_graphClient);
             _groupService = new GroupService(_graphClient);
+            _settingsCatalogService = new SettingsCatalogService(_graphClient);
             _importService = new ImportService(_configProfileService, _compliancePolicyService);
 
             RefreshSwitcherProfiles();
@@ -1498,8 +1572,15 @@ public partial class MainWindowViewModel : ViewModelBase
                 Applications = new ObservableCollection<MobileApp>(apps);
             }
 
-            var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count;
-            StatusText = $"Loaded {totalItems} item(s) ({DeviceConfigurations.Count} configs, {CompliancePolicies.Count} policies, {Applications.Count} apps)";
+            if (_settingsCatalogService != null)
+            {
+                StatusText = "Loading settings catalog policies...";
+                var settingsPolicies = await _settingsCatalogService.ListSettingsCatalogPoliciesAsync(cancellationToken);
+                SettingsCatalogPolicies = new ObservableCollection<DeviceManagementConfigurationPolicy>(settingsPolicies);
+            }
+
+            var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count;
+            StatusText = $"Loaded {totalItems} item(s) ({DeviceConfigurations.Count} configs, {CompliancePolicies.Count} policies, {Applications.Count} apps, {SettingsCatalogPolicies.Count} settings catalog)";
 
             ApplyFilter();
 
@@ -1725,6 +1806,8 @@ public partial class MainWindowViewModel : ViewModelBase
         AppAssignmentRows.Clear();
         SelectedAppAssignmentRow = null;
         _appAssignmentsLoaded = false;
+        SettingsCatalogPolicies.Clear();
+        SelectedSettingsCatalogPolicy = null;
         DynamicGroupRows.Clear();
         SelectedDynamicGroupRow = null;
         _dynamicGroupsLoaded = false;
@@ -1738,6 +1821,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _compliancePolicyService = null;
         _applicationService = null;
         _groupService = null;
+        _settingsCatalogService = null;
         _importService = null;
     }
 }
