@@ -89,6 +89,9 @@ public partial class MainWindow : Window
             or nameof(MainWindowViewModel.IsApplicationCategory)
             or nameof(MainWindowViewModel.IsAppAssignmentsCategory)
             or nameof(MainWindowViewModel.IsSettingsCatalogCategory)
+            or nameof(MainWindowViewModel.IsEndpointSecurityCategory)
+            or nameof(MainWindowViewModel.IsAdministrativeTemplatesCategory)
+            or nameof(MainWindowViewModel.IsEnrollmentConfigurationsCategory)
             or nameof(MainWindowViewModel.IsConditionalAccessCategory)
             or nameof(MainWindowViewModel.IsAssignmentFiltersCategory)
             or nameof(MainWindowViewModel.IsPolicySetsCategory)
@@ -116,6 +119,9 @@ public partial class MainWindow : Window
             or nameof(MainWindowViewModel.FilteredApplications)
             or nameof(MainWindowViewModel.FilteredAppAssignmentRows)
             or nameof(MainWindowViewModel.FilteredSettingsCatalogPolicies)
+            or nameof(MainWindowViewModel.FilteredEndpointSecurityIntents)
+            or nameof(MainWindowViewModel.FilteredAdministrativeTemplates)
+            or nameof(MainWindowViewModel.FilteredEnrollmentConfigurations)
             or nameof(MainWindowViewModel.FilteredConditionalAccessPolicies)
             or nameof(MainWindowViewModel.FilteredAssignmentFilters)
             or nameof(MainWindowViewModel.FilteredPolicySets)
@@ -143,6 +149,9 @@ public partial class MainWindow : Window
             nameof(MainWindowViewModel.FilteredApplications)        => _vm.IsApplicationCategory,
             nameof(MainWindowViewModel.FilteredAppAssignmentRows)   => _vm.IsAppAssignmentsCategory,
             nameof(MainWindowViewModel.FilteredSettingsCatalogPolicies) => _vm.IsSettingsCatalogCategory,
+            nameof(MainWindowViewModel.FilteredEndpointSecurityIntents) => _vm.IsEndpointSecurityCategory,
+            nameof(MainWindowViewModel.FilteredAdministrativeTemplates) => _vm.IsAdministrativeTemplatesCategory,
+            nameof(MainWindowViewModel.FilteredEnrollmentConfigurations) => _vm.IsEnrollmentConfigurationsCategory,
             nameof(MainWindowViewModel.FilteredConditionalAccessPolicies) => _vm.IsConditionalAccessCategory,
             nameof(MainWindowViewModel.FilteredAssignmentFilters)   => _vm.IsAssignmentFiltersCategory,
             nameof(MainWindowViewModel.FilteredPolicySets)          => _vm.IsPolicySetsCategory,
@@ -194,6 +203,27 @@ public partial class MainWindow : Window
                 new Binding(nameof(_vm.FilteredSettingsCatalogPolicies)) { Source = _vm });
             _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
                 new Binding(nameof(_vm.SelectedSettingsCatalogPolicy)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
+        else if (_vm.IsEndpointSecurityCategory)
+        {
+            _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
+                new Binding(nameof(_vm.FilteredEndpointSecurityIntents)) { Source = _vm });
+            _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
+                new Binding(nameof(_vm.SelectedEndpointSecurityIntent)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
+        else if (_vm.IsAdministrativeTemplatesCategory)
+        {
+            _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
+                new Binding(nameof(_vm.FilteredAdministrativeTemplates)) { Source = _vm });
+            _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
+                new Binding(nameof(_vm.SelectedAdministrativeTemplate)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
+        else if (_vm.IsEnrollmentConfigurationsCategory)
+        {
+            _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
+                new Binding(nameof(_vm.FilteredEnrollmentConfigurations)) { Source = _vm });
+            _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
+                new Binding(nameof(_vm.SelectedEnrollmentConfiguration)) { Source = _vm, Mode = BindingMode.TwoWay });
         }
         else if (_vm.IsConditionalAccessCategory)
         {

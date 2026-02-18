@@ -35,6 +35,9 @@ public partial class MainWindowViewModel : ViewModelBase
     private const string CacheKeyConditionalAccess = "ConditionalAccessPolicies";
     private const string CacheKeyAssignmentFilters = "AssignmentFilters";
     private const string CacheKeyPolicySets = "PolicySets";
+    private const string CacheKeyEndpointSecurity = "EndpointSecurityIntents";
+    private const string CacheKeyAdministrativeTemplates = "AdministrativeTemplates";
+    private const string CacheKeyEnrollmentConfigurations = "EnrollmentConfigurations";
     private const string CacheKeyAppAssignments = "AppAssignments";
     private const string CacheKeyDynamicGroups = "DynamicGroups";
     private const string CacheKeyAssignedGroups = "AssignedGroups";
@@ -49,6 +52,9 @@ public partial class MainWindowViewModel : ViewModelBase
     private IConditionalAccessPolicyService? _conditionalAccessPolicyService;
     private IAssignmentFilterService? _assignmentFilterService;
     private IPolicySetService? _policySetService;
+    private IEndpointSecurityService? _endpointSecurityService;
+    private IAdministrativeTemplateService? _administrativeTemplateService;
+    private IEnrollmentConfigurationService? _enrollmentConfigurationService;
 
     [ObservableProperty]
     private ViewModelBase? _currentView;
@@ -85,6 +91,9 @@ public partial class MainWindowViewModel : ViewModelBase
         new NavCategory { Name = "Applications", Icon = "📦" },
         new NavCategory { Name = "Application Assignments", Icon = "📋" },
         new NavCategory { Name = "Settings Catalog", Icon = "⚙" },
+        new NavCategory { Name = "Endpoint Security", Icon = "🛡" },
+        new NavCategory { Name = "Administrative Templates", Icon = "🧾" },
+        new NavCategory { Name = "Enrollment Configurations", Icon = "🪪" },
         new NavCategory { Name = "Conditional Access", Icon = "🔐" },
         new NavCategory { Name = "Assignment Filters", Icon = "🧩" },
         new NavCategory { Name = "Policy Sets", Icon = "🗂" },
@@ -122,6 +131,33 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
     private DeviceManagementConfigurationPolicy? _selectedSettingsCatalogPolicy;
+
+    // --- Endpoint Security ---
+    [ObservableProperty]
+    private ObservableCollection<DeviceManagementIntent> _endpointSecurityIntents = [];
+
+    [ObservableProperty]
+    private DeviceManagementIntent? _selectedEndpointSecurityIntent;
+
+    private bool _endpointSecurityLoaded;
+
+    // --- Administrative Templates ---
+    [ObservableProperty]
+    private ObservableCollection<GroupPolicyConfiguration> _administrativeTemplates = [];
+
+    [ObservableProperty]
+    private GroupPolicyConfiguration? _selectedAdministrativeTemplate;
+
+    private bool _administrativeTemplatesLoaded;
+
+    // --- Enrollment Configurations ---
+    [ObservableProperty]
+    private ObservableCollection<DeviceEnrollmentConfiguration> _enrollmentConfigurations = [];
+
+    [ObservableProperty]
+    private DeviceEnrollmentConfiguration? _selectedEnrollmentConfiguration;
+
+    private bool _enrollmentConfigurationsLoaded;
 
     // --- Conditional Access ---
     [ObservableProperty]
@@ -232,6 +268,9 @@ public partial class MainWindowViewModel : ViewModelBase
             ?? SelectedCompliancePolicy as object
             ?? SelectedSettingsCatalogPolicy as object
             ?? SelectedApplication as object
+            ?? SelectedEndpointSecurityIntent as object
+            ?? SelectedAdministrativeTemplate as object
+            ?? SelectedEnrollmentConfiguration as object
             ?? SelectedConditionalAccessPolicy as object
             ?? SelectedAssignmentFilter as object
             ?? SelectedPolicySet as object;
@@ -244,6 +283,9 @@ public partial class MainWindowViewModel : ViewModelBase
             DeviceCompliancePolicy pol => pol.DisplayName ?? "Compliance Policy",
             DeviceManagementConfigurationPolicy sc => sc.Name ?? "Settings Catalog Policy",
             MobileApp app => app.DisplayName ?? "Application",
+            DeviceManagementIntent esi => esi.DisplayName ?? "Endpoint Security",
+            GroupPolicyConfiguration at => at.DisplayName ?? "Administrative Template",
+            DeviceEnrollmentConfiguration ec => ec.DisplayName ?? "Enrollment Configuration",
             ConditionalAccessPolicy cap => cap.DisplayName ?? "Conditional Access Policy",
             DeviceAndAppManagementAssignmentFilter af => af.DisplayName ?? "Assignment Filter",
             PolicySet ps => ps.DisplayName ?? "Policy Set",
@@ -477,6 +519,15 @@ public partial class MainWindowViewModel : ViewModelBase
     private ObservableCollection<DeviceManagementConfigurationPolicy> _filteredSettingsCatalogPolicies = [];
 
     [ObservableProperty]
+    private ObservableCollection<DeviceManagementIntent> _filteredEndpointSecurityIntents = [];
+
+    [ObservableProperty]
+    private ObservableCollection<GroupPolicyConfiguration> _filteredAdministrativeTemplates = [];
+
+    [ObservableProperty]
+    private ObservableCollection<DeviceEnrollmentConfiguration> _filteredEnrollmentConfigurations = [];
+
+    [ObservableProperty]
     private ObservableCollection<ConditionalAccessPolicy> _filteredConditionalAccessPolicies = [];
 
     [ObservableProperty]
@@ -498,6 +549,9 @@ public partial class MainWindowViewModel : ViewModelBase
             FilteredDynamicGroupRows = new ObservableCollection<GroupRow>(DynamicGroupRows);
             FilteredAssignedGroupRows = new ObservableCollection<GroupRow>(AssignedGroupRows);
             FilteredSettingsCatalogPolicies = new ObservableCollection<DeviceManagementConfigurationPolicy>(SettingsCatalogPolicies);
+            FilteredEndpointSecurityIntents = new ObservableCollection<DeviceManagementIntent>(EndpointSecurityIntents);
+            FilteredAdministrativeTemplates = new ObservableCollection<GroupPolicyConfiguration>(AdministrativeTemplates);
+            FilteredEnrollmentConfigurations = new ObservableCollection<DeviceEnrollmentConfiguration>(EnrollmentConfigurations);
             FilteredConditionalAccessPolicies = new ObservableCollection<ConditionalAccessPolicy>(ConditionalAccessPolicies);
             FilteredAssignmentFilters = new ObservableCollection<DeviceAndAppManagementAssignmentFilter>(AssignmentFilters);
             FilteredPolicySets = new ObservableCollection<PolicySet>(PolicySets);
@@ -553,6 +607,25 @@ public partial class MainWindowViewModel : ViewModelBase
                 Contains(p.Description, q) ||
                 Contains(p.Platforms?.ToString(), q) ||
                 Contains(p.Technologies?.ToString(), q)));
+
+        FilteredEndpointSecurityIntents = new ObservableCollection<DeviceManagementIntent>(
+            EndpointSecurityIntents.Where(i =>
+                Contains(i.DisplayName, q) ||
+                Contains(i.Description, q) ||
+                Contains(i.Id, q)));
+
+        FilteredAdministrativeTemplates = new ObservableCollection<GroupPolicyConfiguration>(
+            AdministrativeTemplates.Where(t =>
+                Contains(t.DisplayName, q) ||
+                Contains(t.Description, q) ||
+                Contains(t.Id, q)));
+
+        FilteredEnrollmentConfigurations = new ObservableCollection<DeviceEnrollmentConfiguration>(
+            EnrollmentConfigurations.Where(c =>
+                Contains(c.DisplayName, q) ||
+                Contains(c.Description, q) ||
+                Contains(c.Id, q) ||
+                Contains(c.OdataType, q)));
 
         FilteredConditionalAccessPolicies = new ObservableCollection<ConditionalAccessPolicy>(
             ConditionalAccessPolicies.Where(p =>
@@ -624,6 +697,33 @@ public partial class MainWindowViewModel : ViewModelBase
         new() { Header = "Created", BindingPath = "CreatedDateTime", Width = 150, IsVisible = false },
         new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = true },
         new() { Header = "Role Scope Tags", BindingPath = "Computed:RoleScopeTags", Width = 120, IsVisible = false }
+    ];
+
+    public ObservableCollection<DataGridColumnConfig> EndpointSecurityColumns { get; } =
+    [
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+        new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
+        new() { Header = "Is Assigned", BindingPath = "IsAssigned", Width = 90, IsVisible = true },
+        new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = true },
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+    ];
+
+    public ObservableCollection<DataGridColumnConfig> AdministrativeTemplateColumns { get; } =
+    [
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+        new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
+        new() { Header = "Ingestion Type", BindingPath = "PolicyConfigurationIngestionType", Width = 140, IsVisible = true },
+        new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = true },
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+    ];
+
+    public ObservableCollection<DataGridColumnConfig> EnrollmentConfigurationColumns { get; } =
+    [
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+        new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
+        new() { Header = "Type", BindingPath = "Computed:ODataType", Width = 200, IsVisible = true },
+        new() { Header = "Priority", BindingPath = "Priority", Width = 90, IsVisible = true },
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
     ];
 
     public ObservableCollection<DataGridColumnConfig> ConditionalAccessColumns { get; } =
@@ -720,6 +820,9 @@ public partial class MainWindowViewModel : ViewModelBase
         "Applications" => ApplicationColumns,
         "Application Assignments" => AppAssignmentColumns,
         "Settings Catalog" => SettingsCatalogColumns,
+        "Endpoint Security" => EndpointSecurityColumns,
+        "Administrative Templates" => AdministrativeTemplateColumns,
+        "Enrollment Configurations" => EnrollmentConfigurationColumns,
         "Conditional Access" => ConditionalAccessColumns,
         "Assignment Filters" => AssignmentFilterColumns,
         "Policy Sets" => PolicySetColumns,
@@ -808,6 +911,9 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool IsApplicationCategory => SelectedCategory?.Name == "Applications";
     public bool IsAppAssignmentsCategory => SelectedCategory?.Name == "Application Assignments";
     public bool IsSettingsCatalogCategory => SelectedCategory?.Name == "Settings Catalog";
+    public bool IsEndpointSecurityCategory => SelectedCategory?.Name == "Endpoint Security";
+    public bool IsAdministrativeTemplatesCategory => SelectedCategory?.Name == "Administrative Templates";
+    public bool IsEnrollmentConfigurationsCategory => SelectedCategory?.Name == "Enrollment Configurations";
     public bool IsConditionalAccessCategory => SelectedCategory?.Name == "Conditional Access";
     public bool IsAssignmentFiltersCategory => SelectedCategory?.Name == "Assignment Filters";
     public bool IsPolicySetsCategory => SelectedCategory?.Name == "Policy Sets";
@@ -822,6 +928,9 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedApplication = null;
         SelectedAppAssignmentRow = null;
         SelectedSettingsCatalogPolicy = null;
+        SelectedEndpointSecurityIntent = null;
+        SelectedAdministrativeTemplate = null;
+        SelectedEnrollmentConfiguration = null;
         SelectedConditionalAccessPolicy = null;
         SelectedAssignmentFilter = null;
         SelectedPolicySet = null;
@@ -842,6 +951,9 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsApplicationCategory));
         OnPropertyChanged(nameof(IsAppAssignmentsCategory));
         OnPropertyChanged(nameof(IsSettingsCatalogCategory));
+        OnPropertyChanged(nameof(IsEndpointSecurityCategory));
+        OnPropertyChanged(nameof(IsAdministrativeTemplatesCategory));
+        OnPropertyChanged(nameof(IsEnrollmentConfigurationsCategory));
         OnPropertyChanged(nameof(IsConditionalAccessCategory));
         OnPropertyChanged(nameof(IsAssignmentFiltersCategory));
         OnPropertyChanged(nameof(IsPolicySetsCategory));
@@ -944,6 +1056,48 @@ public partial class MainWindowViewModel : ViewModelBase
                 _ = LoadPolicySetsAsync();
             }
         }
+
+        if (value?.Name == "Endpoint Security" && !_endpointSecurityLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<DeviceManagementIntent>(CacheKeyEndpointSecurity, rows =>
+            {
+                EndpointSecurityIntents = new ObservableCollection<DeviceManagementIntent>(rows);
+                _endpointSecurityLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} endpoint security intent(s) from cache";
+            }))
+            {
+                _ = LoadEndpointSecurityIntentsAsync();
+            }
+        }
+
+        if (value?.Name == "Administrative Templates" && !_administrativeTemplatesLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<GroupPolicyConfiguration>(CacheKeyAdministrativeTemplates, rows =>
+            {
+                AdministrativeTemplates = new ObservableCollection<GroupPolicyConfiguration>(rows);
+                _administrativeTemplatesLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} administrative template(s) from cache";
+            }))
+            {
+                _ = LoadAdministrativeTemplatesAsync();
+            }
+        }
+
+        if (value?.Name == "Enrollment Configurations" && !_enrollmentConfigurationsLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<DeviceEnrollmentConfiguration>(CacheKeyEnrollmentConfigurations, rows =>
+            {
+                EnrollmentConfigurations = new ObservableCollection<DeviceEnrollmentConfiguration>(rows);
+                _enrollmentConfigurationsLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} enrollment configuration(s) from cache";
+            }))
+            {
+                _ = LoadEnrollmentConfigurationsAsync();
+            }
+        }
     }
 
     // --- Refresh single item from Graph ---
@@ -1013,6 +1167,51 @@ public partial class MainWindowViewModel : ViewModelBase
                     DebugLog.Log("Graph", $"Refreshed settings catalog policy: {updated.Name}");
                 }
             }
+            else if (IsEndpointSecurityCategory && SelectedEndpointSecurityIntent?.Id != null && _endpointSecurityService != null)
+            {
+                StatusText = $"Refreshing {SelectedEndpointSecurityIntent.DisplayName}...";
+                var updated = await _endpointSecurityService.GetEndpointSecurityIntentAsync(SelectedEndpointSecurityIntent.Id, cancellationToken);
+                if (updated != null)
+                {
+                    var idx = EndpointSecurityIntents.IndexOf(SelectedEndpointSecurityIntent);
+                    if (idx >= 0)
+                    {
+                        EndpointSecurityIntents[idx] = updated;
+                        SelectedEndpointSecurityIntent = updated;
+                    }
+                    DebugLog.Log("Graph", $"Refreshed endpoint security intent: {updated.DisplayName}");
+                }
+            }
+            else if (IsAdministrativeTemplatesCategory && SelectedAdministrativeTemplate?.Id != null && _administrativeTemplateService != null)
+            {
+                StatusText = $"Refreshing {SelectedAdministrativeTemplate.DisplayName}...";
+                var updated = await _administrativeTemplateService.GetAdministrativeTemplateAsync(SelectedAdministrativeTemplate.Id, cancellationToken);
+                if (updated != null)
+                {
+                    var idx = AdministrativeTemplates.IndexOf(SelectedAdministrativeTemplate);
+                    if (idx >= 0)
+                    {
+                        AdministrativeTemplates[idx] = updated;
+                        SelectedAdministrativeTemplate = updated;
+                    }
+                    DebugLog.Log("Graph", $"Refreshed administrative template: {updated.DisplayName}");
+                }
+            }
+            else if (IsEnrollmentConfigurationsCategory && SelectedEnrollmentConfiguration?.Id != null && _enrollmentConfigurationService != null)
+            {
+                StatusText = $"Refreshing {SelectedEnrollmentConfiguration.DisplayName}...";
+                var updated = await _enrollmentConfigurationService.GetEnrollmentConfigurationAsync(SelectedEnrollmentConfiguration.Id, cancellationToken);
+                if (updated != null)
+                {
+                    var idx = EnrollmentConfigurations.IndexOf(SelectedEnrollmentConfiguration);
+                    if (idx >= 0)
+                    {
+                        EnrollmentConfigurations[idx] = updated;
+                        SelectedEnrollmentConfiguration = updated;
+                    }
+                    DebugLog.Log("Graph", $"Refreshed enrollment configuration: {updated.DisplayName}");
+                }
+            }
             else if (IsConditionalAccessCategory && SelectedConditionalAccessPolicy?.Id != null && _conditionalAccessPolicyService != null)
             {
                 StatusText = $"Refreshing {SelectedConditionalAccessPolicy.DisplayName}...";
@@ -1080,6 +1279,9 @@ public partial class MainWindowViewModel : ViewModelBase
         (IsCompliancePolicyCategory && SelectedCompliancePolicy != null) ||
         (IsApplicationCategory && SelectedApplication != null) ||
         (IsSettingsCatalogCategory && SelectedSettingsCatalogPolicy != null) ||
+        (IsEndpointSecurityCategory && SelectedEndpointSecurityIntent != null) ||
+        (IsAdministrativeTemplatesCategory && SelectedAdministrativeTemplate != null) ||
+        (IsEnrollmentConfigurationsCategory && SelectedEnrollmentConfiguration != null) ||
         (IsConditionalAccessCategory && SelectedConditionalAccessPolicy != null) ||
         (IsAssignmentFiltersCategory && SelectedAssignmentFilter != null) ||
         (IsPolicySetsCategory && SelectedPolicySet != null);
@@ -1128,6 +1330,30 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         SelectedItemAssignments.Clear();
         SelectedItemTypeName = "Conditional Access";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedEndpointSecurityIntentChanged(DeviceManagementIntent? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Endpoint Security";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedAdministrativeTemplateChanged(GroupPolicyConfiguration? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Administrative Template";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedEnrollmentConfigurationChanged(DeviceEnrollmentConfiguration? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = FriendlyODataType(value?.OdataType);
         SelectedItemPlatform = "";
         OnPropertyChanged(nameof(CanRefreshSelectedItem));
     }
@@ -2073,6 +2299,111 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    // --- Endpoint Security view ---
+
+    private async Task LoadEndpointSecurityIntentsAsync()
+    {
+        if (_endpointSecurityService == null) return;
+
+        IsBusy = true;
+        StatusText = "Loading endpoint security intents...";
+
+        try
+        {
+            var intents = await _endpointSecurityService.ListEndpointSecurityIntentsAsync();
+            EndpointSecurityIntents = new ObservableCollection<DeviceManagementIntent>(intents);
+            _endpointSecurityLoaded = true;
+            ApplyFilter();
+
+            if (ActiveProfile?.TenantId != null)
+            {
+                _cacheService.Set(ActiveProfile.TenantId, CacheKeyEndpointSecurity, intents);
+                DebugLog.Log("Cache", $"Saved {intents.Count} endpoint security intent(s) to cache");
+            }
+
+            StatusText = $"Loaded {intents.Count} endpoint security intent(s)";
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to load endpoint security intents: {FormatGraphError(ex)}");
+            StatusText = "Error loading endpoint security intents";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    // --- Administrative Templates view ---
+
+    private async Task LoadAdministrativeTemplatesAsync()
+    {
+        if (_administrativeTemplateService == null) return;
+
+        IsBusy = true;
+        StatusText = "Loading administrative templates...";
+
+        try
+        {
+            var templates = await _administrativeTemplateService.ListAdministrativeTemplatesAsync();
+            AdministrativeTemplates = new ObservableCollection<GroupPolicyConfiguration>(templates);
+            _administrativeTemplatesLoaded = true;
+            ApplyFilter();
+
+            if (ActiveProfile?.TenantId != null)
+            {
+                _cacheService.Set(ActiveProfile.TenantId, CacheKeyAdministrativeTemplates, templates);
+                DebugLog.Log("Cache", $"Saved {templates.Count} administrative template(s) to cache");
+            }
+
+            StatusText = $"Loaded {templates.Count} administrative template(s)";
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to load administrative templates: {FormatGraphError(ex)}");
+            StatusText = "Error loading administrative templates";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    // --- Enrollment Configurations view ---
+
+    private async Task LoadEnrollmentConfigurationsAsync()
+    {
+        if (_enrollmentConfigurationService == null) return;
+
+        IsBusy = true;
+        StatusText = "Loading enrollment configurations...";
+
+        try
+        {
+            var configurations = await _enrollmentConfigurationService.ListEnrollmentConfigurationsAsync();
+            EnrollmentConfigurations = new ObservableCollection<DeviceEnrollmentConfiguration>(configurations);
+            _enrollmentConfigurationsLoaded = true;
+            ApplyFilter();
+
+            if (ActiveProfile?.TenantId != null)
+            {
+                _cacheService.Set(ActiveProfile.TenantId, CacheKeyEnrollmentConfigurations, configurations);
+                DebugLog.Log("Cache", $"Saved {configurations.Count} enrollment configuration(s) to cache");
+            }
+
+            StatusText = $"Loaded {configurations.Count} enrollment configuration(s)";
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to load enrollment configurations: {FormatGraphError(ex)}");
+            StatusText = "Error loading enrollment configurations";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     private static GroupRow BuildGroupRow(Microsoft.Graph.Beta.Models.Group group, GroupMemberCounts counts)
     {
         return new GroupRow
@@ -2124,7 +2455,15 @@ public partial class MainWindowViewModel : ViewModelBase
             _conditionalAccessPolicyService = new ConditionalAccessPolicyService(_graphClient);
             _assignmentFilterService = new AssignmentFilterService(_graphClient);
             _policySetService = new PolicySetService(_graphClient);
-            _importService = new ImportService(_configProfileService, _compliancePolicyService);
+            _endpointSecurityService = new EndpointSecurityService(_graphClient);
+            _administrativeTemplateService = new AdministrativeTemplateService(_graphClient);
+            _enrollmentConfigurationService = new EnrollmentConfigurationService(_graphClient);
+            _importService = new ImportService(
+                _configProfileService,
+                _compliancePolicyService,
+                _endpointSecurityService,
+                _administrativeTemplateService,
+                _enrollmentConfigurationService);
 
             RefreshSwitcherProfiles();
             SelectedSwitchProfile = profile;
@@ -2241,6 +2580,9 @@ public partial class MainWindowViewModel : ViewModelBase
         var loadConditionalAccess = IsConditionalAccessCategory;
         var loadAssignmentFilters = IsAssignmentFiltersCategory;
         var loadPolicySets = IsPolicySetsCategory;
+        var loadEndpointSecurity = IsEndpointSecurityCategory;
+        var loadAdministrativeTemplates = IsAdministrativeTemplatesCategory;
+        var loadEnrollmentConfigurations = IsEnrollmentConfigurationsCategory;
 
         try
         {
@@ -2335,6 +2677,75 @@ public partial class MainWindowViewModel : ViewModelBase
                 DebugLog.Log("Graph", "Skipping conditional access refresh (lazy-load when tab selected)");
             }
 
+            if (_endpointSecurityService != null && loadEndpointSecurity)
+            {
+                try
+                {
+                    StatusText = "Loading endpoint security intents...";
+                    var intents = await _endpointSecurityService.ListEndpointSecurityIntentsAsync(cancellationToken);
+                    EndpointSecurityIntents = new ObservableCollection<DeviceManagementIntent>(intents);
+                    _endpointSecurityLoaded = true;
+                    DebugLog.Log("Graph", $"Loaded {intents.Count} endpoint security intent(s)");
+                }
+                catch (Exception ex)
+                {
+                    _endpointSecurityLoaded = false;
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load endpoint security intents: {detail}", ex);
+                    errors.Add($"Endpoint Security: {detail}");
+                }
+            }
+            else if (_endpointSecurityService != null)
+            {
+                DebugLog.Log("Graph", "Skipping endpoint security refresh (lazy-load when tab selected)");
+            }
+
+            if (_administrativeTemplateService != null && loadAdministrativeTemplates)
+            {
+                try
+                {
+                    StatusText = "Loading administrative templates...";
+                    var templates = await _administrativeTemplateService.ListAdministrativeTemplatesAsync(cancellationToken);
+                    AdministrativeTemplates = new ObservableCollection<GroupPolicyConfiguration>(templates);
+                    _administrativeTemplatesLoaded = true;
+                    DebugLog.Log("Graph", $"Loaded {templates.Count} administrative template(s)");
+                }
+                catch (Exception ex)
+                {
+                    _administrativeTemplatesLoaded = false;
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load administrative templates: {detail}", ex);
+                    errors.Add($"Administrative Templates: {detail}");
+                }
+            }
+            else if (_administrativeTemplateService != null)
+            {
+                DebugLog.Log("Graph", "Skipping administrative templates refresh (lazy-load when tab selected)");
+            }
+
+            if (_enrollmentConfigurationService != null && loadEnrollmentConfigurations)
+            {
+                try
+                {
+                    StatusText = "Loading enrollment configurations...";
+                    var configurations = await _enrollmentConfigurationService.ListEnrollmentConfigurationsAsync(cancellationToken);
+                    EnrollmentConfigurations = new ObservableCollection<DeviceEnrollmentConfiguration>(configurations);
+                    _enrollmentConfigurationsLoaded = true;
+                    DebugLog.Log("Graph", $"Loaded {configurations.Count} enrollment configuration(s)");
+                }
+                catch (Exception ex)
+                {
+                    _enrollmentConfigurationsLoaded = false;
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load enrollment configurations: {detail}", ex);
+                    errors.Add($"Enrollment Configurations: {detail}");
+                }
+            }
+            else if (_enrollmentConfigurationService != null)
+            {
+                DebugLog.Log("Graph", "Skipping enrollment configurations refresh (lazy-load when tab selected)");
+            }
+
             if (_assignmentFilterService != null && loadAssignmentFilters)
             {
                 try
@@ -2381,8 +2792,8 @@ public partial class MainWindowViewModel : ViewModelBase
                 DebugLog.Log("Graph", "Skipping policy sets refresh (lazy-load when tab selected)");
             }
 
-            var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count + ConditionalAccessPolicies.Count + AssignmentFilters.Count + PolicySets.Count;
-            StatusText = $"Loaded {totalItems} item(s) ({DeviceConfigurations.Count} configs, {CompliancePolicies.Count} compliance, {Applications.Count} apps, {SettingsCatalogPolicies.Count} settings catalog, {ConditionalAccessPolicies.Count} conditional access, {AssignmentFilters.Count} filters, {PolicySets.Count} policy sets)";
+            var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count + EndpointSecurityIntents.Count + AdministrativeTemplates.Count + EnrollmentConfigurations.Count + ConditionalAccessPolicies.Count + AssignmentFilters.Count + PolicySets.Count;
+            StatusText = $"Loaded {totalItems} item(s) ({DeviceConfigurations.Count} configs, {CompliancePolicies.Count} compliance, {Applications.Count} apps, {SettingsCatalogPolicies.Count} settings catalog, {EndpointSecurityIntents.Count} endpoint security, {AdministrativeTemplates.Count} admin templates, {EnrollmentConfigurations.Count} enrollment configs, {ConditionalAccessPolicies.Count} conditional access, {AssignmentFilters.Count} filters, {PolicySets.Count} policy sets)";
 
             if (errors.Count > 0)
                 SetError($"Some data failed to load — {string.Join("; ", errors)}");
@@ -2456,6 +2867,30 @@ public partial class MainWindowViewModel : ViewModelBase
                     : [];
                 await _exportService.ExportApplicationAsync(
                     SelectedApplication, assignments, outputPath, migrationTable, cancellationToken);
+            }
+            else if (IsEndpointSecurityCategory && SelectedEndpointSecurityIntent != null)
+            {
+                StatusText = $"Exporting {SelectedEndpointSecurityIntent.DisplayName}...";
+                var assignments = _endpointSecurityService != null && SelectedEndpointSecurityIntent.Id != null
+                    ? await _endpointSecurityService.GetAssignmentsAsync(SelectedEndpointSecurityIntent.Id, cancellationToken)
+                    : [];
+                await _exportService.ExportEndpointSecurityIntentAsync(
+                    SelectedEndpointSecurityIntent, assignments, outputPath, migrationTable, cancellationToken);
+            }
+            else if (IsAdministrativeTemplatesCategory && SelectedAdministrativeTemplate != null)
+            {
+                StatusText = $"Exporting {SelectedAdministrativeTemplate.DisplayName}...";
+                var assignments = _administrativeTemplateService != null && SelectedAdministrativeTemplate.Id != null
+                    ? await _administrativeTemplateService.GetAssignmentsAsync(SelectedAdministrativeTemplate.Id, cancellationToken)
+                    : [];
+                await _exportService.ExportAdministrativeTemplateAsync(
+                    SelectedAdministrativeTemplate, assignments, outputPath, migrationTable, cancellationToken);
+            }
+            else if (IsEnrollmentConfigurationsCategory && SelectedEnrollmentConfiguration != null)
+            {
+                StatusText = $"Exporting {SelectedEnrollmentConfiguration.DisplayName}...";
+                await _exportService.ExportEnrollmentConfigurationAsync(
+                    SelectedEnrollmentConfiguration, outputPath, migrationTable, cancellationToken);
             }
             else
             {
@@ -2531,6 +2966,45 @@ public partial class MainWindowViewModel : ViewModelBase
                 }
             }
 
+            // Export endpoint security intents with assignments
+            if (EndpointSecurityIntents.Any() && _endpointSecurityService != null)
+            {
+                StatusText = "Exporting endpoint security intents...";
+                foreach (var intent in EndpointSecurityIntents)
+                {
+                    var assignments = intent.Id != null
+                        ? await _endpointSecurityService.GetAssignmentsAsync(intent.Id, cancellationToken)
+                        : [];
+                    await _exportService.ExportEndpointSecurityIntentAsync(intent, assignments, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
+            // Export administrative templates with assignments
+            if (AdministrativeTemplates.Any() && _administrativeTemplateService != null)
+            {
+                StatusText = "Exporting administrative templates...";
+                foreach (var template in AdministrativeTemplates)
+                {
+                    var assignments = template.Id != null
+                        ? await _administrativeTemplateService.GetAssignmentsAsync(template.Id, cancellationToken)
+                        : [];
+                    await _exportService.ExportAdministrativeTemplateAsync(template, assignments, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
+            // Export enrollment configurations
+            if (EnrollmentConfigurations.Any())
+            {
+                StatusText = "Exporting enrollment configurations...";
+                foreach (var configuration in EnrollmentConfigurations)
+                {
+                    await _exportService.ExportEnrollmentConfigurationAsync(configuration, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
             await _exportService.SaveMigrationTableAsync(migrationTable, outputPath, cancellationToken);
             StatusText = $"Exported {count} item(s) to {outputPath}";
         }
@@ -2575,6 +3049,33 @@ public partial class MainWindowViewModel : ViewModelBase
             foreach (var export in policies)
             {
                 await _importService.ImportCompliancePolicyAsync(export, migrationTable, cancellationToken);
+                imported++;
+                StatusText = $"Imported {imported} item(s)...";
+            }
+
+            // Import endpoint security intents
+            var endpointIntents = await _importService.ReadEndpointSecurityIntentsFromFolderAsync(folderPath, cancellationToken);
+            foreach (var export in endpointIntents)
+            {
+                await _importService.ImportEndpointSecurityIntentAsync(export, migrationTable, cancellationToken);
+                imported++;
+                StatusText = $"Imported {imported} item(s)...";
+            }
+
+            // Import administrative templates
+            var templates = await _importService.ReadAdministrativeTemplatesFromFolderAsync(folderPath, cancellationToken);
+            foreach (var export in templates)
+            {
+                await _importService.ImportAdministrativeTemplateAsync(export, migrationTable, cancellationToken);
+                imported++;
+                StatusText = $"Imported {imported} item(s)...";
+            }
+
+            // Import enrollment configurations
+            var enrollmentConfigs = await _importService.ReadEnrollmentConfigurationsFromFolderAsync(folderPath, cancellationToken);
+            foreach (var config in enrollmentConfigs)
+            {
+                await _importService.ImportEnrollmentConfigurationAsync(config, migrationTable, cancellationToken);
                 imported++;
                 StatusText = $"Imported {imported} item(s)...";
             }
@@ -2647,6 +3148,36 @@ public partial class MainWindowViewModel : ViewModelBase
                 UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeySettingsCatalog);
             }
 
+            var endpointSecurityIntents = _cacheService.Get<DeviceManagementIntent>(tenantId, CacheKeyEndpointSecurity);
+            if (endpointSecurityIntents != null)
+            {
+                EndpointSecurityIntents = new ObservableCollection<DeviceManagementIntent>(endpointSecurityIntents);
+                _endpointSecurityLoaded = true;
+                DebugLog.Log("Cache", $"Loaded {endpointSecurityIntents.Count} endpoint security intent(s) from cache");
+                typesLoaded++;
+                UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyEndpointSecurity);
+            }
+
+            var administrativeTemplates = _cacheService.Get<GroupPolicyConfiguration>(tenantId, CacheKeyAdministrativeTemplates);
+            if (administrativeTemplates != null)
+            {
+                AdministrativeTemplates = new ObservableCollection<GroupPolicyConfiguration>(administrativeTemplates);
+                _administrativeTemplatesLoaded = true;
+                DebugLog.Log("Cache", $"Loaded {administrativeTemplates.Count} administrative template(s) from cache");
+                typesLoaded++;
+                UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyAdministrativeTemplates);
+            }
+
+            var enrollmentConfigurations = _cacheService.Get<DeviceEnrollmentConfiguration>(tenantId, CacheKeyEnrollmentConfigurations);
+            if (enrollmentConfigurations != null)
+            {
+                EnrollmentConfigurations = new ObservableCollection<DeviceEnrollmentConfiguration>(enrollmentConfigurations);
+                _enrollmentConfigurationsLoaded = true;
+                DebugLog.Log("Cache", $"Loaded {enrollmentConfigurations.Count} enrollment configuration(s) from cache");
+                typesLoaded++;
+                UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyEnrollmentConfigurations);
+            }
+
             var conditionalAccessPolicies = _cacheService.Get<ConditionalAccessPolicy>(tenantId, CacheKeyConditionalAccess);
             if (conditionalAccessPolicies != null)
             {
@@ -2679,7 +3210,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
             if (typesLoaded > 0)
             {
-                var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count + ConditionalAccessPolicies.Count + AssignmentFilters.Count + PolicySets.Count;
+                var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count + EndpointSecurityIntents.Count + AdministrativeTemplates.Count + EnrollmentConfigurations.Count + ConditionalAccessPolicies.Count + AssignmentFilters.Count + PolicySets.Count;
                 var ageText = FormatCacheAge(oldestCacheTime);
                 CacheStatusText = oldestCacheTime.HasValue
                     ? $"Cache: {oldestCacheTime.Value.ToLocalTime():MMM dd, h:mm tt}"
@@ -2790,6 +3321,15 @@ public partial class MainWindowViewModel : ViewModelBase
             if (SettingsCatalogPolicies.Count > 0)
                 _cacheService.Set(tenantId, CacheKeySettingsCatalog, SettingsCatalogPolicies.ToList());
 
+            if (EndpointSecurityIntents.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyEndpointSecurity, EndpointSecurityIntents.ToList());
+
+            if (AdministrativeTemplates.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyAdministrativeTemplates, AdministrativeTemplates.ToList());
+
+            if (EnrollmentConfigurations.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyEnrollmentConfigurations, EnrollmentConfigurations.ToList());
+
             if (ConditionalAccessPolicies.Count > 0)
                 _cacheService.Set(tenantId, CacheKeyConditionalAccess, ConditionalAccessPolicies.ToList());
 
@@ -2835,10 +3375,19 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedAppAssignmentRow = null;
         _appAssignmentsLoaded = false;
         _conditionalAccessLoaded = false;
+        _endpointSecurityLoaded = false;
+        _administrativeTemplatesLoaded = false;
+        _enrollmentConfigurationsLoaded = false;
         _assignmentFiltersLoaded = false;
         _policySetsLoaded = false;
         SettingsCatalogPolicies.Clear();
         SelectedSettingsCatalogPolicy = null;
+        EndpointSecurityIntents.Clear();
+        SelectedEndpointSecurityIntent = null;
+        AdministrativeTemplates.Clear();
+        SelectedAdministrativeTemplate = null;
+        EnrollmentConfigurations.Clear();
+        SelectedEnrollmentConfiguration = null;
         ConditionalAccessPolicies.Clear();
         SelectedConditionalAccessPolicy = null;
         AssignmentFilters.Clear();
@@ -2862,6 +3411,9 @@ public partial class MainWindowViewModel : ViewModelBase
         _conditionalAccessPolicyService = null;
         _assignmentFilterService = null;
         _policySetService = null;
+        _endpointSecurityService = null;
+        _administrativeTemplateService = null;
+        _enrollmentConfigurationService = null;
         _importService = null;
         _groupNameCache.Clear();
         CacheStatusText = "";
