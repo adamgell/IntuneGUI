@@ -22,23 +22,23 @@ Wave 4 focuses on implementing services for device enrollment automation and man
 - Assignments: `/deviceManagement/windowsAutopilotDeploymentProfiles/{id}/assignments`
 
 **Methods to Implement:**
-- [ ] `ListWindowsAutopilotDeploymentProfilesAsync(CancellationToken cancellationToken = default)`
+- [ ] `ListAutopilotProfilesAsync(CancellationToken cancellationToken = default)`
   - Returns `List<WindowsAutopilotDeploymentProfile>`
   - Use manual `@odata.nextLink` pagination with `$top=999`
-- [ ] `GetWindowsAutopilotDeploymentProfileAsync(string id, CancellationToken cancellationToken = default)`
+- [ ] `GetAutopilotProfileAsync(string id, CancellationToken cancellationToken = default)`
   - Returns `WindowsAutopilotDeploymentProfile`
   - Throw if null response
-- [ ] `CreateWindowsAutopilotDeploymentProfileAsync(WindowsAutopilotDeploymentProfile profile, CancellationToken cancellationToken = default)`
+- [ ] `CreateAutopilotProfileAsync(WindowsAutopilotDeploymentProfile profile, CancellationToken cancellationToken = default)`
   - Returns created `WindowsAutopilotDeploymentProfile`
   - Throw if null response
-- [ ] `UpdateWindowsAutopilotDeploymentProfileAsync(WindowsAutopilotDeploymentProfile profile, CancellationToken cancellationToken = default)`
+- [ ] `UpdateAutopilotProfileAsync(WindowsAutopilotDeploymentProfile profile, CancellationToken cancellationToken = default)`
   - Returns updated `WindowsAutopilotDeploymentProfile`
   - Throw if null response
-- [ ] `DeleteWindowsAutopilotDeploymentProfileAsync(string id, CancellationToken cancellationToken = default)`
+- [ ] `DeleteAutopilotProfileAsync(string id, CancellationToken cancellationToken = default)`
   - Returns `Task`
 - [ ] `GetAssignmentsAsync(string profileId, CancellationToken cancellationToken = default)`
   - Returns `List<WindowsAutopilotDeploymentProfileAssignment>`
-  - Use manual pagination
+  - Return `response?.Value ?? []` (no manual pagination; consistent with existing services)
 - [ ] `AssignProfileAsync(string profileId, List<WindowsAutopilotDeploymentProfileAssignment> assignments, CancellationToken cancellationToken = default)`
   - Returns `Task`
 
@@ -67,7 +67,7 @@ Wave 4 focuses on implementing services for device enrollment automation and man
   - Returns `Task`
 - [ ] `GetAssignmentsAsync(string scriptId, CancellationToken cancellationToken = default)`
   - Returns `List<DeviceHealthScriptAssignment>`
-  - Use manual pagination
+  - Return `response?.Value ?? []` (no manual pagination; consistent with existing services)
 - [ ] `AssignScriptAsync(string scriptId, List<DeviceHealthScriptAssignment> assignments, CancellationToken cancellationToken = default)`
   - Returns `Task`
 
@@ -80,23 +80,23 @@ Wave 4 focuses on implementing services for device enrollment automation and man
 - Assignments: `/deviceManagement/deviceCustomAttributeShellScripts/{id}/assignments`
 
 **Methods to Implement:**
-- [ ] `ListDeviceCustomAttributeShellScriptsAsync(CancellationToken cancellationToken = default)`
+- [ ] `ListMacCustomAttributesAsync(CancellationToken cancellationToken = default)`
   - Returns `List<DeviceCustomAttributeShellScript>`
   - Use manual `@odata.nextLink` pagination with `$top=999`
-- [ ] `GetDeviceCustomAttributeShellScriptAsync(string id, CancellationToken cancellationToken = default)`
+- [ ] `GetMacCustomAttributeAsync(string id, CancellationToken cancellationToken = default)`
   - Returns `DeviceCustomAttributeShellScript`
   - Throw if null response
-- [ ] `CreateDeviceCustomAttributeShellScriptAsync(DeviceCustomAttributeShellScript script, CancellationToken cancellationToken = default)`
+- [ ] `CreateMacCustomAttributeAsync(DeviceCustomAttributeShellScript script, CancellationToken cancellationToken = default)`
   - Returns created `DeviceCustomAttributeShellScript`
   - Throw if null response
-- [ ] `UpdateDeviceCustomAttributeShellScriptAsync(DeviceCustomAttributeShellScript script, CancellationToken cancellationToken = default)`
+- [ ] `UpdateMacCustomAttributeAsync(DeviceCustomAttributeShellScript script, CancellationToken cancellationToken = default)`
   - Returns updated `DeviceCustomAttributeShellScript`
   - Throw if null response
-- [ ] `DeleteDeviceCustomAttributeShellScriptAsync(string id, CancellationToken cancellationToken = default)`
+- [ ] `DeleteMacCustomAttributeAsync(string id, CancellationToken cancellationToken = default)`
   - Returns `Task`
 - [ ] `GetAssignmentsAsync(string scriptId, CancellationToken cancellationToken = default)`
   - Returns `List<DeviceCustomAttributeShellScriptAssignment>`
-  - Use manual pagination
+  - Return `response?.Value ?? []` (no manual pagination; consistent with existing services)
 - [ ] `AssignScriptAsync(string scriptId, List<DeviceCustomAttributeShellScriptAssignment> assignments, CancellationToken cancellationToken = default)`
   - Returns `Task`
 
@@ -109,23 +109,23 @@ Wave 4 focuses on implementing services for device enrollment automation and man
 - Assignments: `/deviceManagement/windowsFeatureUpdateProfiles/{id}/assignments`
 
 **Methods to Implement:**
-- [ ] `ListWindowsFeatureUpdateProfilesAsync(CancellationToken cancellationToken = default)`
+- [ ] `ListFeatureUpdateProfilesAsync(CancellationToken cancellationToken = default)`
   - Returns `List<WindowsFeatureUpdateProfile>`
   - Use manual `@odata.nextLink` pagination with `$top=999`
-- [ ] `GetWindowsFeatureUpdateProfileAsync(string id, CancellationToken cancellationToken = default)`
+- [ ] `GetFeatureUpdateProfileAsync(string id, CancellationToken cancellationToken = default)`
   - Returns `WindowsFeatureUpdateProfile`
   - Throw if null response
-- [ ] `CreateWindowsFeatureUpdateProfileAsync(WindowsFeatureUpdateProfile profile, CancellationToken cancellationToken = default)`
+- [ ] `CreateFeatureUpdateProfileAsync(WindowsFeatureUpdateProfile profile, CancellationToken cancellationToken = default)`
   - Returns created `WindowsFeatureUpdateProfile`
   - Throw if null response
-- [ ] `UpdateWindowsFeatureUpdateProfileAsync(WindowsFeatureUpdateProfile profile, CancellationToken cancellationToken = default)`
+- [ ] `UpdateFeatureUpdateProfileAsync(WindowsFeatureUpdateProfile profile, CancellationToken cancellationToken = default)`
   - Returns updated `WindowsFeatureUpdateProfile`
   - Throw if null response
-- [ ] `DeleteWindowsFeatureUpdateProfileAsync(string id, CancellationToken cancellationToken = default)`
+- [ ] `DeleteFeatureUpdateProfileAsync(string id, CancellationToken cancellationToken = default)`
   - Returns `Task`
 - [ ] `GetAssignmentsAsync(string profileId, CancellationToken cancellationToken = default)`
   - Returns `List<WindowsFeatureUpdateProfileAssignment>`
-  - Use manual pagination
+  - Return `response?.Value ?? []` (no manual pagination; consistent with existing services)
 - [ ] `AssignProfileAsync(string profileId, List<WindowsFeatureUpdateProfileAssignment> assignments, CancellationToken cancellationToken = default)`
   - Returns `Task`
 

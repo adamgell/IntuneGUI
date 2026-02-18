@@ -37,8 +37,8 @@ Wave 2 focuses on implementing services for application protection policies and 
   - Returns `Task`
 - [ ] `GetAssignmentsAsync(string policyId, CancellationToken cancellationToken = default)`
   - Returns assignments if supported by API
-  - Use manual pagination
-- [ ] `AssignPolicyAsync(string policyId, assignments, CancellationToken cancellationToken = default)`
+  - Return `response?.Value ?? []` (no manual pagination; consistent with existing services)
+- [ ] `AssignPolicyAsync(string policyId, List<ManagedAppPolicyAssignment> assignments, CancellationToken cancellationToken = default)`
   - If supported by API
 
 ### 2. Managed App Configuration Service
@@ -80,7 +80,7 @@ Wave 2 focuses on implementing services for application protection policies and 
   - Returns `Task`
 - [ ] `GetAssignmentsAsync(string configId, CancellationToken cancellationToken = default)`
   - Returns assignments if supported
-  - Use manual pagination
+  - Return `response?.Value ?? []` (no manual pagination; consistent with existing services)
 
 ### 3. Terms and Conditions Service
 
@@ -106,7 +106,7 @@ Wave 2 focuses on implementing services for application protection policies and 
   - Returns `Task`
 - [ ] `GetAssignmentsAsync(string termsId, CancellationToken cancellationToken = default)`
   - Returns assignments if supported
-  - Use manual pagination
+  - Return `response?.Value ?? []` (no manual pagination; consistent with existing services)
 
 ## Scaffolding Steps
 

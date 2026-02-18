@@ -38,7 +38,7 @@ Wave 1 focuses on implementing three core service types that are critical for In
   - Returns `Task`
 - [ ] `GetAssignmentsAsync(string intentId, CancellationToken cancellationToken = default)`
   - Returns `List<DeviceManagementIntentAssignment>`
-  - Use manual pagination
+  - Return `response?.Value ?? []` (no manual pagination; consistent with existing services)
 - [ ] `AssignIntentAsync(string intentId, List<DeviceManagementIntentAssignment> assignments, CancellationToken cancellationToken = default)`
   - Returns `Task`
   - Use assign action endpoint
@@ -69,7 +69,7 @@ Wave 1 focuses on implementing three core service types that are critical for In
   - Returns `Task`
 - [ ] `GetAssignmentsAsync(string configId, CancellationToken cancellationToken = default)`
   - Returns `List<GroupPolicyConfigurationAssignment>`
-  - Use manual pagination
+  - Return `response?.Value ?? []` (no manual pagination; consistent with existing services)
 - [ ] `AssignAdministrativeTemplateAsync(string configId, List<GroupPolicyConfigurationAssignment> assignments, CancellationToken cancellationToken = default)`
   - Returns `Task`
   - Use assign action endpoint

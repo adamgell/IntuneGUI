@@ -37,7 +37,7 @@ Wave 3 focuses on implementing tenant-level administrative services:
   - Returns `Task`
 - [ ] `GetAssignmentsAsync(string scopeTagId, CancellationToken cancellationToken = default)`
   - Returns assignments/members if supported by API
-  - Use manual pagination
+  - Return `response?.Value ?? []` (no manual pagination; consistent with existing services)
 
 ### 2. Role Definition Service
 
@@ -63,7 +63,7 @@ Wave 3 focuses on implementing tenant-level administrative services:
   - Returns `Task`
 - [ ] `GetRoleAssignmentsAsync(string roleDefinitionId, CancellationToken cancellationToken = default)`
   - Returns `List<RoleAssignment>` if supported
-  - Use manual pagination
+  - Return `response?.Value ?? []` (no manual pagination; consistent with existing services)
 
 ### 3. Intune Branding Service
 
@@ -89,7 +89,7 @@ Wave 3 focuses on implementing tenant-level administrative services:
   - Returns `Task`
 - [ ] `GetAssignmentsAsync(string profileId, CancellationToken cancellationToken = default)`
   - Returns assignments if supported
-  - Use manual pagination
+  - Return `response?.Value ?? []` (no manual pagination; consistent with existing services)
 
 ### 4. Azure Branding Service
 

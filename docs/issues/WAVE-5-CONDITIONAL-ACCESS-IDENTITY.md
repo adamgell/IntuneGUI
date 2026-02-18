@@ -42,7 +42,7 @@ Wave 5 focuses on implementing services for Conditional Access-adjacent identity
 **Interface:** `IAuthenticationStrengthService`  
 **Class:** `AuthenticationStrengthService`  
 **Graph Endpoints:**
-- Base collection: `/identity/conditionalAccess/authenticationStrengths/policies`
+- Base collection: `/identity/conditionalAccess/authenticationStrength/policies`
 
 **Methods to Implement:**
 - [ ] `ListAuthenticationStrengthPoliciesAsync(CancellationToken cancellationToken = default)`
@@ -91,19 +91,19 @@ Wave 5 focuses on implementing services for Conditional Access-adjacent identity
 - Base collection: `/identityGovernance/termsOfUse/agreements`
 
 **Methods to Implement:**
-- [ ] `ListAgreementsAsync(CancellationToken cancellationToken = default)`
+- [ ] `ListTermsOfUseAgreementsAsync(CancellationToken cancellationToken = default)`
   - Returns `List<Agreement>`
   - Use manual `@odata.nextLink` pagination with `$top=999`
-- [ ] `GetAgreementAsync(string id, CancellationToken cancellationToken = default)`
+- [ ] `GetTermsOfUseAgreementAsync(string id, CancellationToken cancellationToken = default)`
   - Returns `Agreement`
   - Throw if null response
-- [ ] `CreateAgreementAsync(Agreement agreement, CancellationToken cancellationToken = default)`
+- [ ] `CreateTermsOfUseAgreementAsync(Agreement agreement, CancellationToken cancellationToken = default)`
   - Returns created `Agreement`
   - Throw if null response
-- [ ] `UpdateAgreementAsync(Agreement agreement, CancellationToken cancellationToken = default)`
+- [ ] `UpdateTermsOfUseAgreementAsync(Agreement agreement, CancellationToken cancellationToken = default)`
   - Returns updated `Agreement`
   - Throw if null response
-- [ ] `DeleteAgreementAsync(string id, CancellationToken cancellationToken = default)`
+- [ ] `DeleteTermsOfUseAgreementAsync(string id, CancellationToken cancellationToken = default)`
   - Returns `Task`
 - [ ] `GetAgreementFileAsync(string agreementId, string fileId, CancellationToken cancellationToken = default)`
   - Returns agreement file content if supported
