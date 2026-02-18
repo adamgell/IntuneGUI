@@ -24,6 +24,13 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly ProfileService _profileService;
     private readonly IntuneGraphClientFactory _graphClientFactory;
     private readonly IExportService _exportService;
+    private readonly ICacheService _cacheService;
+
+    // Cache data-type keys
+    private const string CacheKeyDeviceConfigs = "DeviceConfigurations";
+    private const string CacheKeyCompliancePolicies = "CompliancePolicies";
+    private const string CacheKeyApplications = "Applications";
+    private const string CacheKeySettingsCatalog = "SettingsCatalog";
 
     private GraphServiceClient? _graphClient;
     private IConfigurationProfileService? _configProfileService;
@@ -580,11 +587,13 @@ public partial class MainWindowViewModel : ViewModelBase
     public MainWindowViewModel(
         ProfileService profileService,
         IntuneGraphClientFactory graphClientFactory,
-        IExportService exportService)
+        IExportService exportService,
+        ICacheService cacheService)
     {
         _profileService = profileService;
         _graphClientFactory = graphClientFactory;
         _exportService = exportService;
+        _cacheService = cacheService;
 
         LoginViewModel = new LoginViewModel(profileService, graphClientFactory);
         LoginViewModel.LoginSucceeded += OnLoginSucceeded;
@@ -617,6 +626,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _profileService = null!;
         _graphClientFactory = null!;
         _exportService = null!;
+        _cacheService = null!;
         LoginViewModel = null!;
     }
 
@@ -1504,6 +1514,11 @@ public partial class MainWindowViewModel : ViewModelBase
 
             StatusText = $"Connected to {profile.Name}";
             DebugLog.Log("Auth", $"Connected to {profile.Name}");
+
+            // Try loading cached data first for instant UI
+            var cacheLoaded = TryLoadFromCache(profile.TenantId ?? "");
+
+            // Always refresh from Graph (will update cache on success)
             await RefreshAsync(CancellationToken.None);
         }
         catch (Exception ex)
@@ -1670,6 +1685,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
             if (errors.Count > 0)
                 SetError($"Some data failed to load — {string.Join("; ", errors)}");
+
+            // Save successful loads to cache
+            if (ActiveProfile?.TenantId != null)
+                SaveToCache(ActiveProfile.TenantId);
 
             ApplyFilter();
 
@@ -1868,6 +1887,98 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    // --- Cache helpers ---
+
+    /// <summary>
+    /// Attempts to populate all collections from cached data. Returns true if any data was loaded.
+    /// </summary>
+    private bool TryLoadFromCache(string tenantId)
+    {
+        if (string.IsNullOrEmpty(tenantId)) return false;
+
+        var anyLoaded = false;
+        try
+        {
+            var configs = _cacheService.Get<DeviceConfiguration>(tenantId, CacheKeyDeviceConfigs);
+            if (configs != null)
+            {
+                DeviceConfigurations = new ObservableCollection<DeviceConfiguration>(configs);
+                DebugLog.Log("Cache", $"Loaded {configs.Count} device configuration(s) from cache");
+                anyLoaded = true;
+            }
+
+            var policies = _cacheService.Get<DeviceCompliancePolicy>(tenantId, CacheKeyCompliancePolicies);
+            if (policies != null)
+            {
+                CompliancePolicies = new ObservableCollection<DeviceCompliancePolicy>(policies);
+                DebugLog.Log("Cache", $"Loaded {policies.Count} compliance policy(ies) from cache");
+                anyLoaded = true;
+            }
+
+            var apps = _cacheService.Get<MobileApp>(tenantId, CacheKeyApplications);
+            if (apps != null)
+            {
+                Applications = new ObservableCollection<MobileApp>(apps);
+                DebugLog.Log("Cache", $"Loaded {apps.Count} application(s) from cache");
+                anyLoaded = true;
+            }
+
+            var settingsPolicies = _cacheService.Get<DeviceManagementConfigurationPolicy>(tenantId, CacheKeySettingsCatalog);
+            if (settingsPolicies != null)
+            {
+                SettingsCatalogPolicies = new ObservableCollection<DeviceManagementConfigurationPolicy>(settingsPolicies);
+                DebugLog.Log("Cache", $"Loaded {settingsPolicies.Count} settings catalog policy(ies) from cache");
+                anyLoaded = true;
+            }
+
+            if (anyLoaded)
+            {
+                var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count;
+                StatusText = $"Loaded {totalItems} cached item(s) — refreshing from Graph...";
+                ApplyFilter();
+            }
+            else
+            {
+                DebugLog.Log("Cache", "No cached data found");
+            }
+        }
+        catch (Exception ex)
+        {
+            DebugLog.LogError($"Failed to load from cache: {ex.Message}", ex);
+        }
+
+        return anyLoaded;
+    }
+
+    /// <summary>
+    /// Saves all current collections to the cache.
+    /// </summary>
+    private void SaveToCache(string tenantId)
+    {
+        if (string.IsNullOrEmpty(tenantId)) return;
+
+        try
+        {
+            if (DeviceConfigurations.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyDeviceConfigs, DeviceConfigurations.ToList());
+
+            if (CompliancePolicies.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyCompliancePolicies, CompliancePolicies.ToList());
+
+            if (Applications.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyApplications, Applications.ToList());
+
+            if (SettingsCatalogPolicies.Count > 0)
+                _cacheService.Set(tenantId, CacheKeySettingsCatalog, SettingsCatalogPolicies.ToList());
+
+            DebugLog.Log("Cache", "Saved data to disk cache");
+        }
+        catch (Exception ex)
+        {
+            DebugLog.LogError($"Failed to save to cache: {ex.Message}", ex);
+        }
+    }
+
     // --- Disconnect ---
 
     [RelayCommand]
@@ -1912,5 +2023,6 @@ public partial class MainWindowViewModel : ViewModelBase
         _groupService = null;
         _settingsCatalogService = null;
         _importService = null;
+        _groupNameCache.Clear();
     }
 }
