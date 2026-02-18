@@ -47,6 +47,11 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string _statusText = "Not connected";
 
+    partial void OnStatusTextChanged(string value)
+    {
+        DebugLog.Log("Status", value);
+    }
+
     // --- Navigation ---
     [ObservableProperty]
     private NavCategory? _selectedCategory;
@@ -583,6 +588,8 @@ public partial class MainWindowViewModel : ViewModelBase
         LoginViewModel.LoginSucceeded += OnLoginSucceeded;
 
         CurrentView = LoginViewModel;
+
+        DebugLog.Log("App", "IntuneManager started");
 
         // Load profiles asynchronously — never block the UI thread
         _ = LoadProfilesAsync();
@@ -1469,6 +1476,7 @@ public partial class MainWindowViewModel : ViewModelBase
         ClearError();
         IsBusy = true;
         StatusText = $"Connecting to {profile.Name}...";
+        DebugLog.Log("Auth", $"Authenticating to tenant {profile.TenantId} ({profile.Cloud}) as {profile.ClientId}");
 
         try
         {
@@ -1478,6 +1486,7 @@ public partial class MainWindowViewModel : ViewModelBase
             CurrentView = null;
 
             _graphClient = await _graphClientFactory.CreateClientAsync(profile);
+            DebugLog.Log("Auth", "Graph client created successfully");
             _configProfileService = new ConfigurationProfileService(_graphClient);
             _compliancePolicyService = new CompliancePolicyService(_graphClient);
             _applicationService = new ApplicationService(_graphClient);
@@ -1492,10 +1501,12 @@ public partial class MainWindowViewModel : ViewModelBase
             SelectedCategory = NavCategories.FirstOrDefault();
 
             StatusText = $"Connected to {profile.Name}";
+            DebugLog.Log("Auth", $"Connected to {profile.Name}");
             await RefreshAsync(CancellationToken.None);
         }
         catch (Exception ex)
         {
+            DebugLog.LogError($"Connection to {profile.Name} failed", ex);
             SetError($"Connection failed: {ex.Message}");
             StatusText = "Connection failed";
             DisconnectInternal();
@@ -1556,6 +1567,7 @@ public partial class MainWindowViewModel : ViewModelBase
                 StatusText = "Loading device configurations...";
                 var configs = await _configProfileService.ListDeviceConfigurationsAsync(cancellationToken);
                 DeviceConfigurations = new ObservableCollection<DeviceConfiguration>(configs);
+                DebugLog.Log("Graph", $"Loaded {configs.Count} device configuration(s)");
             }
 
             if (_compliancePolicyService != null)
@@ -1563,6 +1575,7 @@ public partial class MainWindowViewModel : ViewModelBase
                 StatusText = "Loading compliance policies...";
                 var policies = await _compliancePolicyService.ListCompliancePoliciesAsync(cancellationToken);
                 CompliancePolicies = new ObservableCollection<DeviceCompliancePolicy>(policies);
+                DebugLog.Log("Graph", $"Loaded {policies.Count} compliance policy(ies)");
             }
 
             if (_applicationService != null)
@@ -1570,6 +1583,7 @@ public partial class MainWindowViewModel : ViewModelBase
                 StatusText = "Loading applications...";
                 var apps = await _applicationService.ListApplicationsAsync(cancellationToken);
                 Applications = new ObservableCollection<MobileApp>(apps);
+                DebugLog.Log("Graph", $"Loaded {apps.Count} application(s)");
             }
 
             if (_settingsCatalogService != null)
@@ -1577,6 +1591,7 @@ public partial class MainWindowViewModel : ViewModelBase
                 StatusText = "Loading settings catalog policies...";
                 var settingsPolicies = await _settingsCatalogService.ListSettingsCatalogPoliciesAsync(cancellationToken);
                 SettingsCatalogPolicies = new ObservableCollection<DeviceManagementConfigurationPolicy>(settingsPolicies);
+                DebugLog.Log("Graph", $"Loaded {settingsPolicies.Count} settings catalog policy(ies)");
             }
 
             var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count;

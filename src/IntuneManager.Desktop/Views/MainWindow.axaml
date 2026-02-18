@@ -19,30 +19,47 @@
     <DockPanel>
         <!-- Status Bar -->
         <Border DockPanel.Dock="Bottom" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
-                Padding="8,6">
+                Padding="8,6" MinHeight="36">
             <DockPanel>
-                <TextBlock Text="{Binding StatusText}" FontSize="12" VerticalAlignment="Center" />
-                <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsBusy}"
-                             Width="200" Height="12"
-                             Foreground="#00CC55" Background="#224400"
-                             HorizontalAlignment="Right" VerticalAlignment="Center"
-                             Margin="12,0,0,0"
-                             CornerRadius="6">
-                    <ProgressBar.Styles>
-                        <Style Selector="ProgressBar:indeterminate">
-                            <Style.Animations>
-                                <Animation Duration="0:0:0.8" IterationCount="INFINITE" PlaybackDirection="Alternate">
-                                    <KeyFrame Cue="0%">
-                                        <Setter Property="Opacity" Value="0.5" />
-                                    </KeyFrame>
-                                    <KeyFrame Cue="100%">
-                                        <Setter Property="Opacity" Value="1.0" />
-                                    </KeyFrame>
-                                </Animation>
-                            </Style.Animations>
-                        </Style>
-                    </ProgressBar.Styles>
-                </ProgressBar>
+                <!-- Right side: Debug Log link + progress bar -->
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="12"
+                            VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsBusy}"
+                                 Width="200" Height="12"
+                                 Foreground="#00CC55" Background="#224400"
+                                 VerticalAlignment="Center"
+                                 CornerRadius="6">
+                        <ProgressBar.Styles>
+                            <Style Selector="ProgressBar:indeterminate">
+                                <Style.Animations>
+                                    <Animation Duration="0:0:0.8" IterationCount="INFINITE" PlaybackDirection="Alternate">
+                                        <KeyFrame Cue="0%">
+                                            <Setter Property="Opacity" Value="0.5" />
+                                        </KeyFrame>
+                                        <KeyFrame Cue="100%">
+                                            <Setter Property="Opacity" Value="1.0" />
+                                        </KeyFrame>
+                                    </Animation>
+                                </Style.Animations>
+                            </Style>
+                        </ProgressBar.Styles>
+                    </ProgressBar>
+                    <Border Background="Transparent" Cursor="Hand" Padding="4,2"
+                            PointerPressed="OnDebugLogLinkPressed">
+                        <TextBlock Text="Debug Log" FontSize="12"
+                                   Foreground="{DynamicResource SystemAccentColor}"
+                                   TextDecorations="Underline"
+                                   VerticalAlignment="Center" />
+                    </Border>
+                </StackPanel>
+
+                <!-- Left side: Status text + error text -->
+                <StackPanel Orientation="Vertical" Spacing="2" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding StatusText}" FontSize="12" />
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#FF4444" FontSize="11"
+                               TextWrapping="Wrap"
+                               IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                </StackPanel>
             </DockPanel>
         </Border>
 
@@ -959,11 +976,6 @@
                 </Grid>
             </DockPanel>
 
-            <!-- Error Banner -->
-            <Border Background="#33FF0000" Padding="8" VerticalAlignment="Top"
-                    IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" />
-            </Border>
         </Panel>
     </DockPanel>
 </Window>

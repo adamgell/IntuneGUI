@@ -2,9 +2,11 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
+using System.Collections.Specialized;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Platform.Storage;
@@ -22,6 +24,7 @@ public partial class MainWindow : Window
     private DataGrid? _mainDataGrid;
     private MainWindowViewModel? _vm;
     private bool _pendingGridRebuild;
+    private DebugLogWindow? _debugLogWindow;
 
     public MainWindow()
     {
@@ -332,5 +335,19 @@ public partial class MainWindow : Window
                 await clipboard.SetTextAsync(text);
         }
         catch { /* clipboard not available */ }
+    }
+
+    private void OnDebugLogLinkPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (_debugLogWindow == null || !_debugLogWindow.IsVisible)
+        {
+            _debugLogWindow = new DebugLogWindow();
+            _debugLogWindow.Closed += (_, _) => _debugLogWindow = null;
+            _debugLogWindow.Show();
+        }
+        else
+        {
+            _debugLogWindow.Activate();
+        }
     }
 }
