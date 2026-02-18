@@ -25,9 +25,6 @@ public class TenantProfile
     [JsonPropertyName("clientSecret")]
     public string? ClientSecret { get; set; }
 
-    [JsonPropertyName("certificateThumbprint")]
-    public string? CertificateThumbprint { get; set; }
-
     [JsonPropertyName("lastUsed")]
     public DateTime? LastUsed { get; set; }
 }

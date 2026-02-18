@@ -19,7 +19,7 @@ public class InteractiveBrowserAuthProvider : IAuthenticationProvider
                     profile.ClientSecret,
                     new ClientSecretCredentialOptions { AuthorityHost = authorityHost }),
 
-            _ => new InteractiveBrowserCredential(new InteractiveBrowserCredentialOptions
+            AuthMethod.Interactive => new InteractiveBrowserCredential(new InteractiveBrowserCredentialOptions
             {
                 TenantId = profile.TenantId,
                 ClientId = profile.ClientId,
@@ -28,7 +28,13 @@ public class InteractiveBrowserAuthProvider : IAuthenticationProvider
                 {
                     Name = $"IntuneManager-{profile.Id}"
                 }
-            })
+            }),
+
+            AuthMethod.ClientSecret => throw new InvalidOperationException(
+                "ClientSecret auth method requires a non-empty ClientSecret value."),
+
+            _ => throw new NotSupportedException(
+                $"AuthMethod '{profile.AuthMethod}' is not supported. Only Interactive and ClientSecret are implemented.")
         };
 
         return Task.FromResult(credential);
