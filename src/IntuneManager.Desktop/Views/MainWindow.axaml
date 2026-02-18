@@ -32,6 +32,14 @@
             </MenuItem>
         </Menu>
 
+        <!-- Cache date indicator (right-aligned over menu bar) -->
+        <Panel DockPanel.Dock="Top" Height="0" Margin="0,-26,12,0" ClipToBounds="False">
+            <TextBlock Text="{Binding CacheStatusText}"
+                       FontSize="11" Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                       HorizontalAlignment="Right" VerticalAlignment="Center"
+                       IsVisible="{Binding CacheStatusText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        </Panel>
+
         <!-- Status Bar -->
         <Border DockPanel.Dock="Bottom" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
                 Padding="8,6" MinHeight="36">

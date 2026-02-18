@@ -59,6 +59,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string _statusText = "Not connected";
 
+    [ObservableProperty]
+    private string _cacheStatusText = "";
+
     partial void OnStatusTextChanged(string value)
     {
         DebugLog.Log("Status", value);
@@ -1053,14 +1056,25 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             if (_graphClient != null)
             {
-                var group = await _graphClient.Groups[groupId].GetAsync(cfg =>
-                    cfg.QueryParameters.Select = ["displayName"]);
+                var group = await _graphClient.Groups[groupId]
+                    .GetAsync(req =>
+                    {
+                        req.QueryParameters.Select = new[] { "displayName" };
+                    });
                 var name = group?.DisplayName ?? groupId;
                 _groupNameCache[groupId] = name;
                 return name;
             }
         }
-        catch { /* fall back to GUID */ }
+        catch (ODataError ex)
+        {
+            // Group may be deleted or inaccessible — cache the ID to avoid repeated failures
+            DebugLog.Log("Graph", $"Could not resolve group {groupId}: {ex.Error?.Message ?? ex.Message}");
+        }
+        catch
+        {
+            // Other failures — fall back to GUID
+        }
 
         _groupNameCache[groupId] = groupId;
         return groupId;
@@ -2205,6 +2219,9 @@ public partial class MainWindowViewModel : ViewModelBase
             {
                 var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count;
                 var ageText = FormatCacheAge(oldestCacheTime);
+                CacheStatusText = oldestCacheTime.HasValue
+                    ? $"Cache: {oldestCacheTime.Value.ToLocalTime():MMM dd, h:mm tt}"
+                    : "";
                 StatusText = $"Loaded {totalItems} item(s) from cache ({ageText})";
                 ApplyFilter();
             }
@@ -2310,6 +2327,7 @@ public partial class MainWindowViewModel : ViewModelBase
                 _cacheService.Set(tenantId, CacheKeySettingsCatalog, SettingsCatalogPolicies.ToList());
 
             DebugLog.Log("Cache", "Saved data to disk cache");
+            CacheStatusText = $"Cache: {DateTime.Now:MMM dd, h:mm tt}";
         }
         catch (Exception ex)
         {
@@ -2362,5 +2380,6 @@ public partial class MainWindowViewModel : ViewModelBase
         _settingsCatalogService = null;
         _importService = null;
         _groupNameCache.Clear();
+        CacheStatusText = "";
     }
 }
