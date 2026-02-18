@@ -18,6 +18,14 @@ public class ImportService : IImportService
     private readonly IRoleDefinitionService? _roleDefinitionService;
     private readonly IIntuneBrandingService? _intuneBrandingService;
     private readonly IAzureBrandingService? _azureBrandingService;
+    private readonly IAutopilotService? _autopilotService;
+    private readonly IDeviceHealthScriptService? _deviceHealthScriptService;
+    private readonly IMacCustomAttributeService? _macCustomAttributeService;
+    private readonly IFeatureUpdateProfileService? _featureUpdateProfileService;
+    private readonly INamedLocationService? _namedLocationService;
+    private readonly IAuthenticationStrengthService? _authenticationStrengthService;
+    private readonly IAuthenticationContextService? _authenticationContextService;
+    private readonly ITermsOfUseService? _termsOfUseService;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -36,7 +44,15 @@ public class ImportService : IImportService
         IScopeTagService? scopeTagService = null,
         IRoleDefinitionService? roleDefinitionService = null,
         IIntuneBrandingService? intuneBrandingService = null,
-        IAzureBrandingService? azureBrandingService = null)
+        IAzureBrandingService? azureBrandingService = null,
+        IAutopilotService? autopilotService = null,
+        IDeviceHealthScriptService? deviceHealthScriptService = null,
+        IMacCustomAttributeService? macCustomAttributeService = null,
+        IFeatureUpdateProfileService? featureUpdateProfileService = null,
+        INamedLocationService? namedLocationService = null,
+        IAuthenticationStrengthService? authenticationStrengthService = null,
+        IAuthenticationContextService? authenticationContextService = null,
+        ITermsOfUseService? termsOfUseService = null)
     {
         _configProfileService = configProfileService;
         _compliancePolicyService = compliancePolicyService;
@@ -50,6 +66,74 @@ public class ImportService : IImportService
         _roleDefinitionService = roleDefinitionService;
         _intuneBrandingService = intuneBrandingService;
         _azureBrandingService = azureBrandingService;
+        _autopilotService = autopilotService;
+        _deviceHealthScriptService = deviceHealthScriptService;
+        _macCustomAttributeService = macCustomAttributeService;
+        _featureUpdateProfileService = featureUpdateProfileService;
+        _namedLocationService = namedLocationService;
+        _authenticationStrengthService = authenticationStrengthService;
+        _authenticationContextService = authenticationContextService;
+        _termsOfUseService = termsOfUseService;
+    }
+
+    public ImportService(
+        IConfigurationProfileService configProfileService,
+        ICompliancePolicyService? compliancePolicyService,
+        IEndpointSecurityService? endpointSecurityService,
+        IAdministrativeTemplateService? administrativeTemplateService,
+        IEnrollmentConfigurationService? enrollmentConfigurationService,
+        IAppProtectionPolicyService? appProtectionPolicyService,
+        IManagedAppConfigurationService? managedAppConfigurationService,
+        ITermsAndConditionsService? termsAndConditionsService,
+        IScopeTagService? scopeTagService,
+        IRoleDefinitionService? roleDefinitionService,
+        IIntuneBrandingService? intuneBrandingService,
+        IAzureBrandingService? azureBrandingService)
+        : this(
+            configProfileService,
+            compliancePolicyService,
+            endpointSecurityService,
+            administrativeTemplateService,
+            enrollmentConfigurationService,
+            appProtectionPolicyService,
+            managedAppConfigurationService,
+            termsAndConditionsService,
+            scopeTagService,
+            roleDefinitionService,
+            intuneBrandingService,
+            azureBrandingService,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null)
+    {
+    }
+
+    private static void ClearMetadataForCreate<T>(T item)
+    {
+        if (item == null)
+            return;
+
+        var type = item.GetType();
+        var idProperty = type.GetProperty("Id");
+        if (idProperty?.CanWrite == true)
+            idProperty.SetValue(item, null);
+
+        var createdDateTimeProperty = type.GetProperty("CreatedDateTime");
+        if (createdDateTimeProperty?.CanWrite == true)
+            createdDateTimeProperty.SetValue(item, null);
+
+        var lastModifiedDateTimeProperty = type.GetProperty("LastModifiedDateTime");
+        if (lastModifiedDateTimeProperty?.CanWrite == true)
+            lastModifiedDateTimeProperty.SetValue(item, null);
+
+        var versionProperty = type.GetProperty("Version");
+        if (versionProperty?.CanWrite == true)
+            versionProperty.SetValue(item, null);
     }
 
     public async Task<DeviceConfiguration?> ReadDeviceConfigurationAsync(string filePath, CancellationToken cancellationToken = default)
@@ -789,6 +873,418 @@ public class ImportService : IImportService
                 OriginalId = originalId,
                 NewId = created.Id,
                 Name = created.Id ?? "Unknown"
+            });
+        }
+
+        return created;
+    }
+
+    public async Task<WindowsAutopilotDeploymentProfile?> ReadAutopilotProfileAsync(string filePath, CancellationToken cancellationToken = default)
+    {
+        var json = await File.ReadAllTextAsync(filePath, cancellationToken);
+        return JsonSerializer.Deserialize<WindowsAutopilotDeploymentProfile>(json, JsonOptions);
+    }
+
+    public async Task<List<WindowsAutopilotDeploymentProfile>> ReadAutopilotProfilesFromFolderAsync(string folderPath, CancellationToken cancellationToken = default)
+    {
+        var results = new List<WindowsAutopilotDeploymentProfile>();
+        var folder = Path.Combine(folderPath, "AutopilotProfiles");
+
+        if (!Directory.Exists(folder))
+            return results;
+
+        foreach (var file in Directory.GetFiles(folder, "*.json"))
+        {
+            var profile = await ReadAutopilotProfileAsync(file, cancellationToken);
+            if (profile != null)
+                results.Add(profile);
+        }
+
+        return results;
+    }
+
+    public async Task<WindowsAutopilotDeploymentProfile> ImportAutopilotProfileAsync(
+        WindowsAutopilotDeploymentProfile profile,
+        MigrationTable migrationTable,
+        CancellationToken cancellationToken = default)
+    {
+        if (_autopilotService == null)
+            throw new InvalidOperationException("Autopilot service is not available");
+
+        var originalId = profile.Id;
+        ClearMetadataForCreate(profile);
+
+        var created = await _autopilotService.CreateAutopilotProfileAsync(profile, cancellationToken);
+
+        if (originalId != null && created.Id != null)
+        {
+            migrationTable.AddOrUpdate(new MigrationEntry
+            {
+                ObjectType = "AutopilotProfile",
+                OriginalId = originalId,
+                NewId = created.Id,
+                Name = created.DisplayName ?? "Unknown"
+            });
+        }
+
+        return created;
+    }
+
+    public async Task<DeviceHealthScript?> ReadDeviceHealthScriptAsync(string filePath, CancellationToken cancellationToken = default)
+    {
+        var json = await File.ReadAllTextAsync(filePath, cancellationToken);
+        return JsonSerializer.Deserialize<DeviceHealthScript>(json, JsonOptions);
+    }
+
+    public async Task<List<DeviceHealthScript>> ReadDeviceHealthScriptsFromFolderAsync(string folderPath, CancellationToken cancellationToken = default)
+    {
+        var results = new List<DeviceHealthScript>();
+        var folder = Path.Combine(folderPath, "DeviceHealthScripts");
+
+        if (!Directory.Exists(folder))
+            return results;
+
+        foreach (var file in Directory.GetFiles(folder, "*.json"))
+        {
+            var script = await ReadDeviceHealthScriptAsync(file, cancellationToken);
+            if (script != null)
+                results.Add(script);
+        }
+
+        return results;
+    }
+
+    public async Task<DeviceHealthScript> ImportDeviceHealthScriptAsync(
+        DeviceHealthScript script,
+        MigrationTable migrationTable,
+        CancellationToken cancellationToken = default)
+    {
+        if (_deviceHealthScriptService == null)
+            throw new InvalidOperationException("Device health script service is not available");
+
+        var originalId = script.Id;
+        ClearMetadataForCreate(script);
+
+        var created = await _deviceHealthScriptService.CreateDeviceHealthScriptAsync(script, cancellationToken);
+
+        if (originalId != null && created.Id != null)
+        {
+            migrationTable.AddOrUpdate(new MigrationEntry
+            {
+                ObjectType = "DeviceHealthScript",
+                OriginalId = originalId,
+                NewId = created.Id,
+                Name = created.DisplayName ?? "Unknown"
+            });
+        }
+
+        return created;
+    }
+
+    public async Task<DeviceCustomAttributeShellScript?> ReadMacCustomAttributeAsync(string filePath, CancellationToken cancellationToken = default)
+    {
+        var json = await File.ReadAllTextAsync(filePath, cancellationToken);
+        return JsonSerializer.Deserialize<DeviceCustomAttributeShellScript>(json, JsonOptions);
+    }
+
+    public async Task<List<DeviceCustomAttributeShellScript>> ReadMacCustomAttributesFromFolderAsync(string folderPath, CancellationToken cancellationToken = default)
+    {
+        var results = new List<DeviceCustomAttributeShellScript>();
+        var folder = Path.Combine(folderPath, "MacCustomAttributes");
+
+        if (!Directory.Exists(folder))
+            return results;
+
+        foreach (var file in Directory.GetFiles(folder, "*.json"))
+        {
+            var script = await ReadMacCustomAttributeAsync(file, cancellationToken);
+            if (script != null)
+                results.Add(script);
+        }
+
+        return results;
+    }
+
+    public async Task<DeviceCustomAttributeShellScript> ImportMacCustomAttributeAsync(
+        DeviceCustomAttributeShellScript script,
+        MigrationTable migrationTable,
+        CancellationToken cancellationToken = default)
+    {
+        if (_macCustomAttributeService == null)
+            throw new InvalidOperationException("Mac custom attribute service is not available");
+
+        var originalId = script.Id;
+        ClearMetadataForCreate(script);
+
+        var created = await _macCustomAttributeService.CreateMacCustomAttributeAsync(script, cancellationToken);
+
+        if (originalId != null && created.Id != null)
+        {
+            migrationTable.AddOrUpdate(new MigrationEntry
+            {
+                ObjectType = "MacCustomAttribute",
+                OriginalId = originalId,
+                NewId = created.Id,
+                Name = created.DisplayName ?? "Unknown"
+            });
+        }
+
+        return created;
+    }
+
+    public async Task<WindowsFeatureUpdateProfile?> ReadFeatureUpdateProfileAsync(string filePath, CancellationToken cancellationToken = default)
+    {
+        var json = await File.ReadAllTextAsync(filePath, cancellationToken);
+        return JsonSerializer.Deserialize<WindowsFeatureUpdateProfile>(json, JsonOptions);
+    }
+
+    public async Task<List<WindowsFeatureUpdateProfile>> ReadFeatureUpdateProfilesFromFolderAsync(string folderPath, CancellationToken cancellationToken = default)
+    {
+        var results = new List<WindowsFeatureUpdateProfile>();
+        var folder = Path.Combine(folderPath, "FeatureUpdates");
+
+        if (!Directory.Exists(folder))
+            return results;
+
+        foreach (var file in Directory.GetFiles(folder, "*.json"))
+        {
+            var profile = await ReadFeatureUpdateProfileAsync(file, cancellationToken);
+            if (profile != null)
+                results.Add(profile);
+        }
+
+        return results;
+    }
+
+    public async Task<WindowsFeatureUpdateProfile> ImportFeatureUpdateProfileAsync(
+        WindowsFeatureUpdateProfile profile,
+        MigrationTable migrationTable,
+        CancellationToken cancellationToken = default)
+    {
+        if (_featureUpdateProfileService == null)
+            throw new InvalidOperationException("Feature update profile service is not available");
+
+        var originalId = profile.Id;
+        ClearMetadataForCreate(profile);
+
+        var created = await _featureUpdateProfileService.CreateFeatureUpdateProfileAsync(profile, cancellationToken);
+
+        if (originalId != null && created.Id != null)
+        {
+            migrationTable.AddOrUpdate(new MigrationEntry
+            {
+                ObjectType = "FeatureUpdateProfile",
+                OriginalId = originalId,
+                NewId = created.Id,
+                Name = created.DisplayName ?? "Unknown"
+            });
+        }
+
+        return created;
+    }
+
+    public async Task<NamedLocation?> ReadNamedLocationAsync(string filePath, CancellationToken cancellationToken = default)
+    {
+        var json = await File.ReadAllTextAsync(filePath, cancellationToken);
+        return JsonSerializer.Deserialize<NamedLocation>(json, JsonOptions);
+    }
+
+    public async Task<List<NamedLocation>> ReadNamedLocationsFromFolderAsync(string folderPath, CancellationToken cancellationToken = default)
+    {
+        var results = new List<NamedLocation>();
+        var folder = Path.Combine(folderPath, "NamedLocations");
+
+        if (!Directory.Exists(folder))
+            return results;
+
+        foreach (var file in Directory.GetFiles(folder, "*.json"))
+        {
+            var namedLocation = await ReadNamedLocationAsync(file, cancellationToken);
+            if (namedLocation != null)
+                results.Add(namedLocation);
+        }
+
+        return results;
+    }
+
+    public async Task<NamedLocation> ImportNamedLocationAsync(
+        NamedLocation namedLocation,
+        MigrationTable migrationTable,
+        CancellationToken cancellationToken = default)
+    {
+        if (_namedLocationService == null)
+            throw new InvalidOperationException("Named location service is not available");
+
+        var originalId = namedLocation.Id;
+        ClearMetadataForCreate(namedLocation);
+
+        var created = await _namedLocationService.CreateNamedLocationAsync(namedLocation, cancellationToken);
+
+        if (originalId != null && created.Id != null)
+        {
+            var createdName = created.AdditionalData?.TryGetValue("displayName", out var value) == true
+                ? value?.ToString() ?? "Unknown"
+                : "Unknown";
+
+            migrationTable.AddOrUpdate(new MigrationEntry
+            {
+                ObjectType = "NamedLocation",
+                OriginalId = originalId,
+                NewId = created.Id,
+                Name = createdName
+            });
+        }
+
+        return created;
+    }
+
+    public async Task<AuthenticationStrengthPolicy?> ReadAuthenticationStrengthPolicyAsync(string filePath, CancellationToken cancellationToken = default)
+    {
+        var json = await File.ReadAllTextAsync(filePath, cancellationToken);
+        return JsonSerializer.Deserialize<AuthenticationStrengthPolicy>(json, JsonOptions);
+    }
+
+    public async Task<List<AuthenticationStrengthPolicy>> ReadAuthenticationStrengthPoliciesFromFolderAsync(string folderPath, CancellationToken cancellationToken = default)
+    {
+        var results = new List<AuthenticationStrengthPolicy>();
+        var folder = Path.Combine(folderPath, "AuthenticationStrengths");
+
+        if (!Directory.Exists(folder))
+            return results;
+
+        foreach (var file in Directory.GetFiles(folder, "*.json"))
+        {
+            var policy = await ReadAuthenticationStrengthPolicyAsync(file, cancellationToken);
+            if (policy != null)
+                results.Add(policy);
+        }
+
+        return results;
+    }
+
+    public async Task<AuthenticationStrengthPolicy> ImportAuthenticationStrengthPolicyAsync(
+        AuthenticationStrengthPolicy policy,
+        MigrationTable migrationTable,
+        CancellationToken cancellationToken = default)
+    {
+        if (_authenticationStrengthService == null)
+            throw new InvalidOperationException("Authentication strength service is not available");
+
+        var originalId = policy.Id;
+        ClearMetadataForCreate(policy);
+
+        var created = await _authenticationStrengthService.CreateAuthenticationStrengthPolicyAsync(policy, cancellationToken);
+
+        if (originalId != null && created.Id != null)
+        {
+            migrationTable.AddOrUpdate(new MigrationEntry
+            {
+                ObjectType = "AuthenticationStrengthPolicy",
+                OriginalId = originalId,
+                NewId = created.Id,
+                Name = created.DisplayName ?? "Unknown"
+            });
+        }
+
+        return created;
+    }
+
+    public async Task<AuthenticationContextClassReference?> ReadAuthenticationContextAsync(string filePath, CancellationToken cancellationToken = default)
+    {
+        var json = await File.ReadAllTextAsync(filePath, cancellationToken);
+        return JsonSerializer.Deserialize<AuthenticationContextClassReference>(json, JsonOptions);
+    }
+
+    public async Task<List<AuthenticationContextClassReference>> ReadAuthenticationContextsFromFolderAsync(string folderPath, CancellationToken cancellationToken = default)
+    {
+        var results = new List<AuthenticationContextClassReference>();
+        var folder = Path.Combine(folderPath, "AuthenticationContexts");
+
+        if (!Directory.Exists(folder))
+            return results;
+
+        foreach (var file in Directory.GetFiles(folder, "*.json"))
+        {
+            var contextClassReference = await ReadAuthenticationContextAsync(file, cancellationToken);
+            if (contextClassReference != null)
+                results.Add(contextClassReference);
+        }
+
+        return results;
+    }
+
+    public async Task<AuthenticationContextClassReference> ImportAuthenticationContextAsync(
+        AuthenticationContextClassReference contextClassReference,
+        MigrationTable migrationTable,
+        CancellationToken cancellationToken = default)
+    {
+        if (_authenticationContextService == null)
+            throw new InvalidOperationException("Authentication context service is not available");
+
+        var originalId = contextClassReference.Id;
+        ClearMetadataForCreate(contextClassReference);
+
+        var created = await _authenticationContextService.CreateAuthenticationContextAsync(contextClassReference, cancellationToken);
+
+        if (originalId != null && created.Id != null)
+        {
+            migrationTable.AddOrUpdate(new MigrationEntry
+            {
+                ObjectType = "AuthenticationContext",
+                OriginalId = originalId,
+                NewId = created.Id,
+                Name = created.DisplayName ?? "Unknown"
+            });
+        }
+
+        return created;
+    }
+
+    public async Task<Agreement?> ReadTermsOfUseAgreementAsync(string filePath, CancellationToken cancellationToken = default)
+    {
+        var json = await File.ReadAllTextAsync(filePath, cancellationToken);
+        return JsonSerializer.Deserialize<Agreement>(json, JsonOptions);
+    }
+
+    public async Task<List<Agreement>> ReadTermsOfUseAgreementsFromFolderAsync(string folderPath, CancellationToken cancellationToken = default)
+    {
+        var results = new List<Agreement>();
+        var folder = Path.Combine(folderPath, "TermsOfUse");
+
+        if (!Directory.Exists(folder))
+            return results;
+
+        foreach (var file in Directory.GetFiles(folder, "*.json"))
+        {
+            var agreement = await ReadTermsOfUseAgreementAsync(file, cancellationToken);
+            if (agreement != null)
+                results.Add(agreement);
+        }
+
+        return results;
+    }
+
+    public async Task<Agreement> ImportTermsOfUseAgreementAsync(
+        Agreement agreement,
+        MigrationTable migrationTable,
+        CancellationToken cancellationToken = default)
+    {
+        if (_termsOfUseService == null)
+            throw new InvalidOperationException("Terms of use service is not available");
+
+        var originalId = agreement.Id;
+        ClearMetadataForCreate(agreement);
+
+        var created = await _termsOfUseService.CreateTermsOfUseAgreementAsync(agreement, cancellationToken);
+
+        if (originalId != null && created.Id != null)
+        {
+            migrationTable.AddOrUpdate(new MigrationEntry
+            {
+                ObjectType = "TermsOfUseAgreement",
+                OriginalId = originalId,
+                NewId = created.Id,
+                Name = created.DisplayName ?? "Unknown"
             });
         }
 

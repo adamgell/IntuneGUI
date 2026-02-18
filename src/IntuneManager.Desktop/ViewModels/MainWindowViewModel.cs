@@ -46,6 +46,14 @@ public partial class MainWindowViewModel : ViewModelBase
     private const string CacheKeyRoleDefinitions = "RoleDefinitions";
     private const string CacheKeyIntuneBrandingProfiles = "IntuneBrandingProfiles";
     private const string CacheKeyAzureBrandingLocalizations = "AzureBrandingLocalizations";
+    private const string CacheKeyAutopilotProfiles = "AutopilotProfiles";
+    private const string CacheKeyDeviceHealthScripts = "DeviceHealthScripts";
+    private const string CacheKeyMacCustomAttributes = "MacCustomAttributes";
+    private const string CacheKeyFeatureUpdateProfiles = "FeatureUpdateProfiles";
+    private const string CacheKeyNamedLocations = "NamedLocations";
+    private const string CacheKeyAuthenticationStrengths = "AuthenticationStrengths";
+    private const string CacheKeyAuthenticationContexts = "AuthenticationContexts";
+    private const string CacheKeyTermsOfUseAgreements = "TermsOfUseAgreements";
     private const string CacheKeyAppAssignments = "AppAssignments";
     private const string CacheKeyDynamicGroups = "DynamicGroups";
     private const string CacheKeyAssignedGroups = "AssignedGroups";
@@ -70,6 +78,14 @@ public partial class MainWindowViewModel : ViewModelBase
     private IRoleDefinitionService? _roleDefinitionService;
     private IIntuneBrandingService? _intuneBrandingService;
     private IAzureBrandingService? _azureBrandingService;
+    private IAutopilotService? _autopilotService;
+    private IDeviceHealthScriptService? _deviceHealthScriptService;
+    private IMacCustomAttributeService? _macCustomAttributeService;
+    private IFeatureUpdateProfileService? _featureUpdateProfileService;
+    private INamedLocationService? _namedLocationService;
+    private IAuthenticationStrengthService? _authenticationStrengthService;
+    private IAuthenticationContextService? _authenticationContextService;
+    private ITermsOfUseService? _termsOfUseService;
 
     [ObservableProperty]
     private ViewModelBase? _currentView;
@@ -116,9 +132,17 @@ public partial class MainWindowViewModel : ViewModelBase
         new NavCategory { Name = "Targeted Managed App Configurations", Icon = "🎯" },
         new NavCategory { Name = "Terms and Conditions", Icon = "📜" },
         new NavCategory { Name = "Scope Tags", Icon = "🏷" },
-        new NavCategory { Name = "Role Definitions", Icon = "🧑‍💼" },
+        new NavCategory { Name = "Role Definitions", Icon = "💼" },
         new NavCategory { Name = "Intune Branding", Icon = "🎨" },
         new NavCategory { Name = "Azure Branding", Icon = "🟦" },
+        new NavCategory { Name = "Autopilot Profiles", Icon = "🚀" },
+        new NavCategory { Name = "Device Health Scripts", Icon = "🩺" },
+        new NavCategory { Name = "Mac Custom Attributes", Icon = "🍎" },
+        new NavCategory { Name = "Feature Updates", Icon = "🪟" },
+        new NavCategory { Name = "Named Locations", Icon = "📍" },
+        new NavCategory { Name = "Authentication Strengths", Icon = "🔐" },
+        new NavCategory { Name = "Authentication Contexts", Icon = "🏷" },
+        new NavCategory { Name = "Terms of Use", Icon = "📄" },
         new NavCategory { Name = "Conditional Access", Icon = "🔐" },
         new NavCategory { Name = "Assignment Filters", Icon = "🧩" },
         new NavCategory { Name = "Policy Sets", Icon = "🗂" },
@@ -276,6 +300,78 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private bool _azureBrandingLocalizationsLoaded;
 
+    // --- Autopilot Profiles ---
+    [ObservableProperty]
+    private ObservableCollection<WindowsAutopilotDeploymentProfile> _autopilotProfiles = [];
+
+    [ObservableProperty]
+    private WindowsAutopilotDeploymentProfile? _selectedAutopilotProfile;
+
+    private bool _autopilotProfilesLoaded;
+
+    // --- Device Health Scripts ---
+    [ObservableProperty]
+    private ObservableCollection<DeviceHealthScript> _deviceHealthScripts = [];
+
+    [ObservableProperty]
+    private DeviceHealthScript? _selectedDeviceHealthScript;
+
+    private bool _deviceHealthScriptsLoaded;
+
+    // --- Mac Custom Attributes ---
+    [ObservableProperty]
+    private ObservableCollection<DeviceCustomAttributeShellScript> _macCustomAttributes = [];
+
+    [ObservableProperty]
+    private DeviceCustomAttributeShellScript? _selectedMacCustomAttribute;
+
+    private bool _macCustomAttributesLoaded;
+
+    // --- Feature Update Profiles ---
+    [ObservableProperty]
+    private ObservableCollection<WindowsFeatureUpdateProfile> _featureUpdateProfiles = [];
+
+    [ObservableProperty]
+    private WindowsFeatureUpdateProfile? _selectedFeatureUpdateProfile;
+
+    private bool _featureUpdateProfilesLoaded;
+
+    // --- Named Locations ---
+    [ObservableProperty]
+    private ObservableCollection<NamedLocation> _namedLocations = [];
+
+    [ObservableProperty]
+    private NamedLocation? _selectedNamedLocation;
+
+    private bool _namedLocationsLoaded;
+
+    // --- Authentication Strengths ---
+    [ObservableProperty]
+    private ObservableCollection<AuthenticationStrengthPolicy> _authenticationStrengthPolicies = [];
+
+    [ObservableProperty]
+    private AuthenticationStrengthPolicy? _selectedAuthenticationStrengthPolicy;
+
+    private bool _authenticationStrengthPoliciesLoaded;
+
+    // --- Authentication Contexts ---
+    [ObservableProperty]
+    private ObservableCollection<AuthenticationContextClassReference> _authenticationContextClassReferences = [];
+
+    [ObservableProperty]
+    private AuthenticationContextClassReference? _selectedAuthenticationContextClassReference;
+
+    private bool _authenticationContextClassReferencesLoaded;
+
+    // --- Terms of Use ---
+    [ObservableProperty]
+    private ObservableCollection<Agreement> _termsOfUseAgreements = [];
+
+    [ObservableProperty]
+    private Agreement? _selectedTermsOfUseAgreement;
+
+    private bool _termsOfUseAgreementsLoaded;
+
     // --- Conditional Access ---
     [ObservableProperty]
     private ObservableCollection<ConditionalAccessPolicy> _conditionalAccessPolicies = [];
@@ -396,6 +492,14 @@ public partial class MainWindowViewModel : ViewModelBase
             ?? SelectedRoleDefinition as object
             ?? SelectedIntuneBrandingProfile as object
             ?? SelectedAzureBrandingLocalization as object
+            ?? SelectedAutopilotProfile as object
+            ?? SelectedDeviceHealthScript as object
+            ?? SelectedMacCustomAttribute as object
+            ?? SelectedFeatureUpdateProfile as object
+            ?? SelectedNamedLocation as object
+            ?? SelectedAuthenticationStrengthPolicy as object
+            ?? SelectedAuthenticationContextClassReference as object
+            ?? SelectedTermsOfUseAgreement as object
             ?? SelectedConditionalAccessPolicy as object
             ?? SelectedAssignmentFilter as object
             ?? SelectedPolicySet as object;
@@ -419,6 +523,14 @@ public partial class MainWindowViewModel : ViewModelBase
             RoleDefinition roleDefinition => roleDefinition.DisplayName ?? "Role Definition",
             IntuneBrandingProfile brandingProfile => brandingProfile.ProfileName ?? "Intune Branding",
             OrganizationalBrandingLocalization azureBranding => azureBranding.Id ?? "Azure Branding",
+            WindowsAutopilotDeploymentProfile autopilot => TryReadStringProperty(autopilot, "DisplayName") ?? "Autopilot Profile",
+            DeviceHealthScript deviceHealthScript => TryReadStringProperty(deviceHealthScript, "DisplayName") ?? "Device Health Script",
+            DeviceCustomAttributeShellScript macCustomAttribute => TryReadStringProperty(macCustomAttribute, "DisplayName") ?? "Mac Custom Attribute",
+            WindowsFeatureUpdateProfile featureUpdateProfile => TryReadStringProperty(featureUpdateProfile, "DisplayName") ?? "Feature Update Profile",
+            NamedLocation namedLocation => TryReadStringProperty(namedLocation, "DisplayName") ?? "Named Location",
+            AuthenticationStrengthPolicy authStrength => TryReadStringProperty(authStrength, "DisplayName") ?? "Authentication Strength",
+            AuthenticationContextClassReference authContext => TryReadStringProperty(authContext, "DisplayName") ?? "Authentication Context",
+            Agreement termsOfUse => TryReadStringProperty(termsOfUse, "DisplayName") ?? "Terms of Use",
             ConditionalAccessPolicy cap => cap.DisplayName ?? "Conditional Access Policy",
             DeviceAndAppManagementAssignmentFilter af => af.DisplayName ?? "Assignment Filter",
             PolicySet ps => ps.DisplayName ?? "Policy Set",
@@ -506,6 +618,37 @@ public partial class MainWindowViewModel : ViewModelBase
             Append(sb, "Publishing State", app.PublishingState?.ToString());
             AppendAssignments(sb);
         }
+        else if (SelectedEndpointSecurityIntent is { } endpointSecurity)
+        {
+            sb.AppendLine("=== Endpoint Security ===");
+            Append(sb, "Name", endpointSecurity.DisplayName);
+            Append(sb, "Description", endpointSecurity.Description);
+            Append(sb, "Type", SelectedItemTypeName);
+            Append(sb, "ID", endpointSecurity.Id);
+            Append(sb, "Is Assigned", endpointSecurity.IsAssigned?.ToString());
+            Append(sb, "Last Modified", endpointSecurity.LastModifiedDateTime?.ToString("g"));
+            AppendAssignments(sb);
+        }
+        else if (SelectedAdministrativeTemplate is { } adminTemplate)
+        {
+            sb.AppendLine("=== Administrative Template ===");
+            Append(sb, "Name", adminTemplate.DisplayName);
+            Append(sb, "Description", adminTemplate.Description);
+            Append(sb, "Type", SelectedItemTypeName);
+            Append(sb, "ID", adminTemplate.Id);
+            Append(sb, "Ingestion Type", adminTemplate.PolicyConfigurationIngestionType?.ToString());
+            Append(sb, "Last Modified", adminTemplate.LastModifiedDateTime?.ToString("g"));
+            AppendAssignments(sb);
+        }
+        else if (SelectedEnrollmentConfiguration is { } enrollment)
+        {
+            sb.AppendLine("=== Enrollment Configuration ===");
+            Append(sb, "Name", enrollment.DisplayName);
+            Append(sb, "Description", enrollment.Description);
+            Append(sb, "Type", FriendlyODataType(enrollment.OdataType));
+            Append(sb, "ID", enrollment.Id);
+            Append(sb, "Priority", enrollment.Priority?.ToString());
+        }
         else if (SelectedAppProtectionPolicy is { } appProtection)
         {
             sb.AppendLine("=== App Protection Policy ===");
@@ -577,6 +720,62 @@ public partial class MainWindowViewModel : ViewModelBase
             Append(sb, "Sign-in Page Text", azureBranding.SignInPageText);
             Append(sb, "Username Hint Text", azureBranding.UsernameHintText);
             Append(sb, "Tenant Banner Logo Relative URL", azureBranding.BannerLogoRelativeUrl);
+        }
+        else if (SelectedAutopilotProfile is { } autopilot)
+        {
+            sb.AppendLine("=== Autopilot Profile ===");
+            Append(sb, "Name", TryReadStringProperty(autopilot, "DisplayName"));
+            Append(sb, "Description", TryReadStringProperty(autopilot, "Description"));
+            Append(sb, "ID", autopilot.Id);
+        }
+        else if (SelectedDeviceHealthScript is { } healthScript)
+        {
+            sb.AppendLine("=== Device Health Script ===");
+            Append(sb, "Name", TryReadStringProperty(healthScript, "DisplayName"));
+            Append(sb, "Description", TryReadStringProperty(healthScript, "Description"));
+            Append(sb, "ID", healthScript.Id);
+        }
+        else if (SelectedMacCustomAttribute is { } macCustomAttribute)
+        {
+            sb.AppendLine("=== Mac Custom Attribute ===");
+            Append(sb, "Name", TryReadStringProperty(macCustomAttribute, "DisplayName"));
+            Append(sb, "Description", TryReadStringProperty(macCustomAttribute, "Description"));
+            Append(sb, "ID", macCustomAttribute.Id);
+        }
+        else if (SelectedFeatureUpdateProfile is { } featureUpdate)
+        {
+            sb.AppendLine("=== Feature Update Profile ===");
+            Append(sb, "Name", TryReadStringProperty(featureUpdate, "DisplayName"));
+            Append(sb, "Description", TryReadStringProperty(featureUpdate, "Description"));
+            Append(sb, "ID", featureUpdate.Id);
+        }
+        else if (SelectedNamedLocation is { } namedLocation)
+        {
+            sb.AppendLine("=== Named Location ===");
+            Append(sb, "Name", TryReadStringProperty(namedLocation, "DisplayName"));
+            Append(sb, "Description", TryReadStringProperty(namedLocation, "Description"));
+            Append(sb, "ID", namedLocation.Id);
+        }
+        else if (SelectedAuthenticationStrengthPolicy is { } authStrength)
+        {
+            sb.AppendLine("=== Authentication Strength ===");
+            Append(sb, "Name", TryReadStringProperty(authStrength, "DisplayName"));
+            Append(sb, "Description", TryReadStringProperty(authStrength, "Description"));
+            Append(sb, "ID", authStrength.Id);
+        }
+        else if (SelectedAuthenticationContextClassReference is { } authContext)
+        {
+            sb.AppendLine("=== Authentication Context ===");
+            Append(sb, "Name", TryReadStringProperty(authContext, "DisplayName"));
+            Append(sb, "Description", TryReadStringProperty(authContext, "Description"));
+            Append(sb, "ID", authContext.Id);
+        }
+        else if (SelectedTermsOfUseAgreement is { } termsOfUse)
+        {
+            sb.AppendLine("=== Terms of Use ===");
+            Append(sb, "Name", TryReadStringProperty(termsOfUse, "DisplayName"));
+            Append(sb, "Description", TryReadStringProperty(termsOfUse, "Description"));
+            Append(sb, "ID", termsOfUse.Id);
         }
         else if (SelectedConditionalAccessPolicy is { } cap)
         {
@@ -765,6 +964,30 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private ObservableCollection<PolicySet> _filteredPolicySets = [];
 
+    [ObservableProperty]
+    private ObservableCollection<WindowsAutopilotDeploymentProfile> _filteredAutopilotProfiles = [];
+
+    [ObservableProperty]
+    private ObservableCollection<DeviceHealthScript> _filteredDeviceHealthScripts = [];
+
+    [ObservableProperty]
+    private ObservableCollection<DeviceCustomAttributeShellScript> _filteredMacCustomAttributes = [];
+
+    [ObservableProperty]
+    private ObservableCollection<WindowsFeatureUpdateProfile> _filteredFeatureUpdateProfiles = [];
+
+    [ObservableProperty]
+    private ObservableCollection<NamedLocation> _filteredNamedLocations = [];
+
+    [ObservableProperty]
+    private ObservableCollection<AuthenticationStrengthPolicy> _filteredAuthenticationStrengthPolicies = [];
+
+    [ObservableProperty]
+    private ObservableCollection<AuthenticationContextClassReference> _filteredAuthenticationContextClassReferences = [];
+
+    [ObservableProperty]
+    private ObservableCollection<Agreement> _filteredTermsOfUseAgreements = [];
+
     private void ApplyFilter()
     {
         var q = SearchText.Trim();
@@ -792,6 +1015,14 @@ public partial class MainWindowViewModel : ViewModelBase
             FilteredConditionalAccessPolicies = new ObservableCollection<ConditionalAccessPolicy>(ConditionalAccessPolicies);
             FilteredAssignmentFilters = new ObservableCollection<DeviceAndAppManagementAssignmentFilter>(AssignmentFilters);
             FilteredPolicySets = new ObservableCollection<PolicySet>(PolicySets);
+            FilteredAutopilotProfiles = new ObservableCollection<WindowsAutopilotDeploymentProfile>(AutopilotProfiles);
+            FilteredDeviceHealthScripts = new ObservableCollection<DeviceHealthScript>(DeviceHealthScripts);
+            FilteredMacCustomAttributes = new ObservableCollection<DeviceCustomAttributeShellScript>(MacCustomAttributes);
+            FilteredFeatureUpdateProfiles = new ObservableCollection<WindowsFeatureUpdateProfile>(FeatureUpdateProfiles);
+            FilteredNamedLocations = new ObservableCollection<NamedLocation>(NamedLocations);
+            FilteredAuthenticationStrengthPolicies = new ObservableCollection<AuthenticationStrengthPolicy>(AuthenticationStrengthPolicies);
+            FilteredAuthenticationContextClassReferences = new ObservableCollection<AuthenticationContextClassReference>(AuthenticationContextClassReferences);
+            FilteredTermsOfUseAgreements = new ObservableCollection<Agreement>(TermsOfUseAgreements);
             return;
         }
 
@@ -931,10 +1162,65 @@ public partial class MainWindowViewModel : ViewModelBase
                 Contains(p.DisplayName, q) ||
                 Contains(p.Description, q) ||
                 Contains(p.Id, q)));
+
+        FilteredAutopilotProfiles = new ObservableCollection<WindowsAutopilotDeploymentProfile>(
+            AutopilotProfiles.Where(p =>
+                Contains(TryReadStringProperty(p, "DisplayName"), q) ||
+                Contains(TryReadStringProperty(p, "Description"), q) ||
+                Contains(p.Id, q)));
+
+        FilteredDeviceHealthScripts = new ObservableCollection<DeviceHealthScript>(
+            DeviceHealthScripts.Where(s =>
+                Contains(TryReadStringProperty(s, "DisplayName"), q) ||
+                Contains(TryReadStringProperty(s, "Description"), q) ||
+                Contains(s.Id, q)));
+
+        FilteredMacCustomAttributes = new ObservableCollection<DeviceCustomAttributeShellScript>(
+            MacCustomAttributes.Where(a =>
+                Contains(TryReadStringProperty(a, "DisplayName"), q) ||
+                Contains(TryReadStringProperty(a, "Description"), q) ||
+                Contains(a.Id, q)));
+
+        FilteredFeatureUpdateProfiles = new ObservableCollection<WindowsFeatureUpdateProfile>(
+            FeatureUpdateProfiles.Where(p =>
+                Contains(TryReadStringProperty(p, "DisplayName"), q) ||
+                Contains(TryReadStringProperty(p, "Description"), q) ||
+                Contains(p.Id, q)));
+
+        FilteredNamedLocations = new ObservableCollection<NamedLocation>(
+            NamedLocations.Where(n =>
+                Contains(TryReadStringProperty(n, "DisplayName"), q) ||
+                Contains(TryReadStringProperty(n, "Description"), q) ||
+                Contains(n.Id, q)));
+
+        FilteredAuthenticationStrengthPolicies = new ObservableCollection<AuthenticationStrengthPolicy>(
+            AuthenticationStrengthPolicies.Where(p =>
+                Contains(TryReadStringProperty(p, "DisplayName"), q) ||
+                Contains(TryReadStringProperty(p, "Description"), q) ||
+                Contains(p.Id, q)));
+
+        FilteredAuthenticationContextClassReferences = new ObservableCollection<AuthenticationContextClassReference>(
+            AuthenticationContextClassReferences.Where(c =>
+                Contains(TryReadStringProperty(c, "DisplayName"), q) ||
+                Contains(TryReadStringProperty(c, "Description"), q) ||
+                Contains(c.Id, q)));
+
+        FilteredTermsOfUseAgreements = new ObservableCollection<Agreement>(
+            TermsOfUseAgreements.Where(a =>
+                Contains(TryReadStringProperty(a, "DisplayName"), q) ||
+                Contains(TryReadStringProperty(a, "Description"), q) ||
+                Contains(a.Id, q)));
     }
 
     private static bool Contains(string? source, string search)
         => source?.Contains(search, StringComparison.OrdinalIgnoreCase) == true;
+
+    private static string? TryReadStringProperty(object? instance, string propertyName)
+    {
+        if (instance == null) return null;
+        var propertyInfo = instance.GetType().GetProperty(propertyName);
+        return propertyInfo?.GetValue(instance) as string;
+    }
 
     // --- Configurable columns per category ---
     public ObservableCollection<DataGridColumnConfig> DeviceConfigColumns { get; } =
@@ -1108,6 +1394,72 @@ public partial class MainWindowViewModel : ViewModelBase
         new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
     ];
 
+    public ObservableCollection<DataGridColumnConfig> AutopilotProfileColumns { get; } =
+    [
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+        new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
+        new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = true },
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+    ];
+
+    public ObservableCollection<DataGridColumnConfig> DeviceHealthScriptColumns { get; } =
+    [
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+        new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
+        new() { Header = "Created", BindingPath = "CreatedDateTime", Width = 150, IsVisible = true },
+        new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = true },
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+    ];
+
+    public ObservableCollection<DataGridColumnConfig> MacCustomAttributeColumns { get; } =
+    [
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+        new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
+        new() { Header = "Created", BindingPath = "CreatedDateTime", Width = 150, IsVisible = true },
+        new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = true },
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+    ];
+
+    public ObservableCollection<DataGridColumnConfig> FeatureUpdateProfileColumns { get; } =
+    [
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+        new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
+        new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = true },
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+    ];
+
+    public ObservableCollection<DataGridColumnConfig> NamedLocationColumns { get; } =
+    [
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+        new() { Header = "Type", BindingPath = "Computed:ODataType", Width = 200, IsVisible = true },
+        new() { Header = "Modified", BindingPath = "ModifiedDateTime", Width = 150, IsVisible = true },
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+    ];
+
+    public ObservableCollection<DataGridColumnConfig> AuthenticationStrengthColumns { get; } =
+    [
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+        new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
+        new() { Header = "Policy Type", BindingPath = "PolicyType", Width = 120, IsVisible = true },
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+    ];
+
+    public ObservableCollection<DataGridColumnConfig> AuthenticationContextColumns { get; } =
+    [
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+        new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
+        new() { Header = "Is Available", BindingPath = "IsAvailable", Width = 100, IsVisible = true },
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+    ];
+
+    public ObservableCollection<DataGridColumnConfig> TermsOfUseColumns { get; } =
+    [
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+        new() { Header = "File Name", BindingPath = "FileName", Width = 220, IsVisible = true },
+        new() { Header = "Created", BindingPath = "CreatedDateTime", Width = 150, IsVisible = true },
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+    ];
+
     public ObservableCollection<DataGridColumnConfig> DynamicGroupColumns { get; } =
     [
         new() { Header = "Group Name", BindingPath = "GroupName", IsStar = true, IsVisible = true },
@@ -1194,6 +1546,14 @@ public partial class MainWindowViewModel : ViewModelBase
         "Conditional Access" => ConditionalAccessColumns,
         "Assignment Filters" => AssignmentFilterColumns,
         "Policy Sets" => PolicySetColumns,
+        "Autopilot Profiles" => AutopilotProfileColumns,
+        "Device Health Scripts" => DeviceHealthScriptColumns,
+        "Mac Custom Attributes" => MacCustomAttributeColumns,
+        "Feature Updates" => FeatureUpdateProfileColumns,
+        "Named Locations" => NamedLocationColumns,
+        "Authentication Strengths" => AuthenticationStrengthColumns,
+        "Authentication Contexts" => AuthenticationContextColumns,
+        "Terms of Use" => TermsOfUseColumns,
         "Dynamic Groups" => DynamicGroupColumns,
         "Assigned Groups" => AssignedGroupColumns,
         _ => null
@@ -1295,6 +1655,14 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool IsConditionalAccessCategory => SelectedCategory?.Name == "Conditional Access";
     public bool IsAssignmentFiltersCategory => SelectedCategory?.Name == "Assignment Filters";
     public bool IsPolicySetsCategory => SelectedCategory?.Name == "Policy Sets";
+    public bool IsAutopilotProfilesCategory => SelectedCategory?.Name == "Autopilot Profiles";
+    public bool IsDeviceHealthScriptsCategory => SelectedCategory?.Name == "Device Health Scripts";
+    public bool IsMacCustomAttributesCategory => SelectedCategory?.Name == "Mac Custom Attributes";
+    public bool IsFeatureUpdatesCategory => SelectedCategory?.Name == "Feature Updates";
+    public bool IsNamedLocationsCategory => SelectedCategory?.Name == "Named Locations";
+    public bool IsAuthenticationStrengthsCategory => SelectedCategory?.Name == "Authentication Strengths";
+    public bool IsAuthenticationContextsCategory => SelectedCategory?.Name == "Authentication Contexts";
+    public bool IsTermsOfUseCategory => SelectedCategory?.Name == "Terms of Use";
     public bool IsDynamicGroupsCategory => SelectedCategory?.Name == "Dynamic Groups";
     public bool IsAssignedGroupsCategory => SelectedCategory?.Name == "Assigned Groups";
 
@@ -1320,6 +1688,14 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedConditionalAccessPolicy = null;
         SelectedAssignmentFilter = null;
         SelectedPolicySet = null;
+        SelectedAutopilotProfile = null;
+        SelectedDeviceHealthScript = null;
+        SelectedMacCustomAttribute = null;
+        SelectedFeatureUpdateProfile = null;
+        SelectedNamedLocation = null;
+        SelectedAuthenticationStrengthPolicy = null;
+        SelectedAuthenticationContextClassReference = null;
+        SelectedTermsOfUseAgreement = null;
         SelectedDynamicGroupRow = null;
         SelectedAssignedGroupRow = null;
         SelectedItemAssignments.Clear();
@@ -1351,6 +1727,14 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsConditionalAccessCategory));
         OnPropertyChanged(nameof(IsAssignmentFiltersCategory));
         OnPropertyChanged(nameof(IsPolicySetsCategory));
+        OnPropertyChanged(nameof(IsAutopilotProfilesCategory));
+        OnPropertyChanged(nameof(IsDeviceHealthScriptsCategory));
+        OnPropertyChanged(nameof(IsMacCustomAttributesCategory));
+        OnPropertyChanged(nameof(IsFeatureUpdatesCategory));
+        OnPropertyChanged(nameof(IsNamedLocationsCategory));
+        OnPropertyChanged(nameof(IsAuthenticationStrengthsCategory));
+        OnPropertyChanged(nameof(IsAuthenticationContextsCategory));
+        OnPropertyChanged(nameof(IsTermsOfUseCategory));
         OnPropertyChanged(nameof(IsDynamicGroupsCategory));
         OnPropertyChanged(nameof(IsAssignedGroupsCategory));
         OnPropertyChanged(nameof(ActiveColumns));
@@ -1602,6 +1986,118 @@ public partial class MainWindowViewModel : ViewModelBase
             }))
             {
                 _ = LoadAzureBrandingLocalizationsAsync();
+            }
+        }
+
+        if (value?.Name == "Autopilot Profiles" && !_autopilotProfilesLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<WindowsAutopilotDeploymentProfile>(CacheKeyAutopilotProfiles, rows =>
+            {
+                AutopilotProfiles = new ObservableCollection<WindowsAutopilotDeploymentProfile>(rows);
+                _autopilotProfilesLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} autopilot profile(s) from cache";
+            }))
+            {
+                _ = LoadAutopilotProfilesAsync();
+            }
+        }
+
+        if (value?.Name == "Device Health Scripts" && !_deviceHealthScriptsLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<DeviceHealthScript>(CacheKeyDeviceHealthScripts, rows =>
+            {
+                DeviceHealthScripts = new ObservableCollection<DeviceHealthScript>(rows);
+                _deviceHealthScriptsLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} device health script(s) from cache";
+            }))
+            {
+                _ = LoadDeviceHealthScriptsAsync();
+            }
+        }
+
+        if (value?.Name == "Mac Custom Attributes" && !_macCustomAttributesLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<DeviceCustomAttributeShellScript>(CacheKeyMacCustomAttributes, rows =>
+            {
+                MacCustomAttributes = new ObservableCollection<DeviceCustomAttributeShellScript>(rows);
+                _macCustomAttributesLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} mac custom attribute(s) from cache";
+            }))
+            {
+                _ = LoadMacCustomAttributesAsync();
+            }
+        }
+
+        if (value?.Name == "Feature Updates" && !_featureUpdateProfilesLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<WindowsFeatureUpdateProfile>(CacheKeyFeatureUpdateProfiles, rows =>
+            {
+                FeatureUpdateProfiles = new ObservableCollection<WindowsFeatureUpdateProfile>(rows);
+                _featureUpdateProfilesLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} feature update profile(s) from cache";
+            }))
+            {
+                _ = LoadFeatureUpdateProfilesAsync();
+            }
+        }
+
+        if (value?.Name == "Named Locations" && !_namedLocationsLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<NamedLocation>(CacheKeyNamedLocations, rows =>
+            {
+                NamedLocations = new ObservableCollection<NamedLocation>(rows);
+                _namedLocationsLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} named location(s) from cache";
+            }))
+            {
+                _ = LoadNamedLocationsAsync();
+            }
+        }
+
+        if (value?.Name == "Authentication Strengths" && !_authenticationStrengthPoliciesLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<AuthenticationStrengthPolicy>(CacheKeyAuthenticationStrengths, rows =>
+            {
+                AuthenticationStrengthPolicies = new ObservableCollection<AuthenticationStrengthPolicy>(rows);
+                _authenticationStrengthPoliciesLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} authentication strength policy(ies) from cache";
+            }))
+            {
+                _ = LoadAuthenticationStrengthPoliciesAsync();
+            }
+        }
+
+        if (value?.Name == "Authentication Contexts" && !_authenticationContextClassReferencesLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<AuthenticationContextClassReference>(CacheKeyAuthenticationContexts, rows =>
+            {
+                AuthenticationContextClassReferences = new ObservableCollection<AuthenticationContextClassReference>(rows);
+                _authenticationContextClassReferencesLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} authentication context(s) from cache";
+            }))
+            {
+                _ = LoadAuthenticationContextsAsync();
+            }
+        }
+
+        if (value?.Name == "Terms of Use" && !_termsOfUseAgreementsLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<Agreement>(CacheKeyTermsOfUseAgreements, rows =>
+            {
+                TermsOfUseAgreements = new ObservableCollection<Agreement>(rows);
+                _termsOfUseAgreementsLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} terms of use agreement(s) from cache";
+            }))
+            {
+                _ = LoadTermsOfUseAgreementsAsync();
             }
         }
     }
@@ -1883,6 +2379,126 @@ public partial class MainWindowViewModel : ViewModelBase
                     DebugLog.Log("Graph", $"Refreshed policy set: {updated.DisplayName}");
                 }
             }
+            else if (IsAutopilotProfilesCategory && SelectedAutopilotProfile?.Id != null && _autopilotService != null)
+            {
+                StatusText = "Refreshing autopilot profile...";
+                var updated = await _autopilotService.GetAutopilotProfileAsync(SelectedAutopilotProfile.Id, cancellationToken);
+                if (updated != null)
+                {
+                    var idx = AutopilotProfiles.IndexOf(SelectedAutopilotProfile);
+                    if (idx >= 0)
+                    {
+                        AutopilotProfiles[idx] = updated;
+                        SelectedAutopilotProfile = updated;
+                    }
+                    DebugLog.Log("Graph", $"Refreshed autopilot profile: {TryReadStringProperty(updated, "DisplayName")}");
+                }
+            }
+            else if (IsDeviceHealthScriptsCategory && SelectedDeviceHealthScript?.Id != null && _deviceHealthScriptService != null)
+            {
+                StatusText = "Refreshing device health script...";
+                var updated = await _deviceHealthScriptService.GetDeviceHealthScriptAsync(SelectedDeviceHealthScript.Id, cancellationToken);
+                if (updated != null)
+                {
+                    var idx = DeviceHealthScripts.IndexOf(SelectedDeviceHealthScript);
+                    if (idx >= 0)
+                    {
+                        DeviceHealthScripts[idx] = updated;
+                        SelectedDeviceHealthScript = updated;
+                    }
+                    DebugLog.Log("Graph", $"Refreshed device health script: {TryReadStringProperty(updated, "DisplayName")}");
+                }
+            }
+            else if (IsMacCustomAttributesCategory && SelectedMacCustomAttribute?.Id != null && _macCustomAttributeService != null)
+            {
+                StatusText = "Refreshing mac custom attribute...";
+                var updated = await _macCustomAttributeService.GetMacCustomAttributeAsync(SelectedMacCustomAttribute.Id, cancellationToken);
+                if (updated != null)
+                {
+                    var idx = MacCustomAttributes.IndexOf(SelectedMacCustomAttribute);
+                    if (idx >= 0)
+                    {
+                        MacCustomAttributes[idx] = updated;
+                        SelectedMacCustomAttribute = updated;
+                    }
+                    DebugLog.Log("Graph", $"Refreshed mac custom attribute: {TryReadStringProperty(updated, "DisplayName")}");
+                }
+            }
+            else if (IsFeatureUpdatesCategory && SelectedFeatureUpdateProfile?.Id != null && _featureUpdateProfileService != null)
+            {
+                StatusText = "Refreshing feature update profile...";
+                var updated = await _featureUpdateProfileService.GetFeatureUpdateProfileAsync(SelectedFeatureUpdateProfile.Id, cancellationToken);
+                if (updated != null)
+                {
+                    var idx = FeatureUpdateProfiles.IndexOf(SelectedFeatureUpdateProfile);
+                    if (idx >= 0)
+                    {
+                        FeatureUpdateProfiles[idx] = updated;
+                        SelectedFeatureUpdateProfile = updated;
+                    }
+                    DebugLog.Log("Graph", $"Refreshed feature update profile: {TryReadStringProperty(updated, "DisplayName")}");
+                }
+            }
+            else if (IsNamedLocationsCategory && SelectedNamedLocation?.Id != null && _namedLocationService != null)
+            {
+                StatusText = "Refreshing named location...";
+                var updated = await _namedLocationService.GetNamedLocationAsync(SelectedNamedLocation.Id, cancellationToken);
+                if (updated != null)
+                {
+                    var idx = NamedLocations.IndexOf(SelectedNamedLocation);
+                    if (idx >= 0)
+                    {
+                        NamedLocations[idx] = updated;
+                        SelectedNamedLocation = updated;
+                    }
+                    DebugLog.Log("Graph", $"Refreshed named location: {TryReadStringProperty(updated, "DisplayName")}");
+                }
+            }
+            else if (IsAuthenticationStrengthsCategory && SelectedAuthenticationStrengthPolicy?.Id != null && _authenticationStrengthService != null)
+            {
+                StatusText = "Refreshing authentication strength...";
+                var updated = await _authenticationStrengthService.GetAuthenticationStrengthPolicyAsync(SelectedAuthenticationStrengthPolicy.Id, cancellationToken);
+                if (updated != null)
+                {
+                    var idx = AuthenticationStrengthPolicies.IndexOf(SelectedAuthenticationStrengthPolicy);
+                    if (idx >= 0)
+                    {
+                        AuthenticationStrengthPolicies[idx] = updated;
+                        SelectedAuthenticationStrengthPolicy = updated;
+                    }
+                    DebugLog.Log("Graph", $"Refreshed authentication strength: {TryReadStringProperty(updated, "DisplayName")}");
+                }
+            }
+            else if (IsAuthenticationContextsCategory && SelectedAuthenticationContextClassReference?.Id != null && _authenticationContextService != null)
+            {
+                StatusText = "Refreshing authentication context...";
+                var updated = await _authenticationContextService.GetAuthenticationContextAsync(SelectedAuthenticationContextClassReference.Id, cancellationToken);
+                if (updated != null)
+                {
+                    var idx = AuthenticationContextClassReferences.IndexOf(SelectedAuthenticationContextClassReference);
+                    if (idx >= 0)
+                    {
+                        AuthenticationContextClassReferences[idx] = updated;
+                        SelectedAuthenticationContextClassReference = updated;
+                    }
+                    DebugLog.Log("Graph", $"Refreshed authentication context: {TryReadStringProperty(updated, "DisplayName")}");
+                }
+            }
+            else if (IsTermsOfUseCategory && SelectedTermsOfUseAgreement?.Id != null && _termsOfUseService != null)
+            {
+                StatusText = "Refreshing terms of use...";
+                var updated = await _termsOfUseService.GetTermsOfUseAgreementAsync(SelectedTermsOfUseAgreement.Id, cancellationToken);
+                if (updated != null)
+                {
+                    var idx = TermsOfUseAgreements.IndexOf(SelectedTermsOfUseAgreement);
+                    if (idx >= 0)
+                    {
+                        TermsOfUseAgreements[idx] = updated;
+                        SelectedTermsOfUseAgreement = updated;
+                    }
+                    DebugLog.Log("Graph", $"Refreshed terms of use agreement: {TryReadStringProperty(updated, "DisplayName")}");
+                }
+            }
             else
             {
                 return;
@@ -1918,7 +2534,15 @@ public partial class MainWindowViewModel : ViewModelBase
         (IsAzureBrandingCategory && SelectedAzureBrandingLocalization != null) ||
         (IsConditionalAccessCategory && SelectedConditionalAccessPolicy != null) ||
         (IsAssignmentFiltersCategory && SelectedAssignmentFilter != null) ||
-        (IsPolicySetsCategory && SelectedPolicySet != null);
+        (IsPolicySetsCategory && SelectedPolicySet != null) ||
+        (IsAutopilotProfilesCategory && SelectedAutopilotProfile != null) ||
+        (IsDeviceHealthScriptsCategory && SelectedDeviceHealthScript != null) ||
+        (IsMacCustomAttributesCategory && SelectedMacCustomAttribute != null) ||
+        (IsFeatureUpdatesCategory && SelectedFeatureUpdateProfile != null) ||
+        (IsNamedLocationsCategory && SelectedNamedLocation != null) ||
+        (IsAuthenticationStrengthsCategory && SelectedAuthenticationStrengthPolicy != null) ||
+        (IsAuthenticationContextsCategory && SelectedAuthenticationContextClassReference != null) ||
+        (IsTermsOfUseCategory && SelectedTermsOfUseAgreement != null);
 
     // --- Selection-changed handlers (load detail + assignments) ---
 
@@ -1974,6 +2598,8 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedItemTypeName = "Endpoint Security";
         SelectedItemPlatform = "";
         OnPropertyChanged(nameof(CanRefreshSelectedItem));
+        if (value?.Id != null)
+            _ = LoadEndpointSecurityAssignmentsAsync(value.Id);
     }
 
     partial void OnSelectedAdministrativeTemplateChanged(GroupPolicyConfiguration? value)
@@ -1982,6 +2608,8 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedItemTypeName = "Administrative Template";
         SelectedItemPlatform = "";
         OnPropertyChanged(nameof(CanRefreshSelectedItem));
+        if (value?.Id != null)
+            _ = LoadAdministrativeTemplateAssignmentsAsync(value.Id);
     }
 
     partial void OnSelectedEnrollmentConfigurationChanged(DeviceEnrollmentConfiguration? value)
@@ -2068,6 +2696,70 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         SelectedItemAssignments.Clear();
         SelectedItemTypeName = "Policy Set";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedAutopilotProfileChanged(WindowsAutopilotDeploymentProfile? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Autopilot Profile";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedDeviceHealthScriptChanged(DeviceHealthScript? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Device Health Script";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedMacCustomAttributeChanged(DeviceCustomAttributeShellScript? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Mac Custom Attribute";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedFeatureUpdateProfileChanged(WindowsFeatureUpdateProfile? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Feature Update Profile";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedNamedLocationChanged(NamedLocation? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Named Location";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedAuthenticationStrengthPolicyChanged(AuthenticationStrengthPolicy? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Authentication Strength";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedAuthenticationContextClassReferenceChanged(AuthenticationContextClassReference? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Authentication Context";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedTermsOfUseAgreementChanged(Agreement? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Terms of Use";
         SelectedItemPlatform = "";
         OnPropertyChanged(nameof(CanRefreshSelectedItem));
     }
@@ -2193,6 +2885,44 @@ public partial class MainWindowViewModel : ViewModelBase
         catch (Exception ex)
         {
             DebugLog.LogError($"Failed to load application assignments: {FormatGraphError(ex)}", ex);
+        }
+        finally { IsLoadingDetails = false; }
+    }
+
+    private async Task LoadEndpointSecurityAssignmentsAsync(string intentId)
+    {
+        if (_endpointSecurityService == null) return;
+        IsLoadingDetails = true;
+        try
+        {
+            var assignments = await _endpointSecurityService.GetAssignmentsAsync(intentId);
+            var items = new List<AssignmentDisplayItem>();
+            foreach (var a in assignments)
+                items.Add(await MapAssignmentAsync(a.Target));
+            SelectedItemAssignments = new ObservableCollection<AssignmentDisplayItem>(items);
+        }
+        catch (Exception ex)
+        {
+            DebugLog.LogError($"Failed to load endpoint security assignments: {FormatGraphError(ex)}", ex);
+        }
+        finally { IsLoadingDetails = false; }
+    }
+
+    private async Task LoadAdministrativeTemplateAssignmentsAsync(string templateId)
+    {
+        if (_administrativeTemplateService == null) return;
+        IsLoadingDetails = true;
+        try
+        {
+            var assignments = await _administrativeTemplateService.GetAssignmentsAsync(templateId);
+            var items = new List<AssignmentDisplayItem>();
+            foreach (var a in assignments)
+                items.Add(await MapAssignmentAsync(a.Target));
+            SelectedItemAssignments = new ObservableCollection<AssignmentDisplayItem>(items);
+        }
+        catch (Exception ex)
+        {
+            DebugLog.LogError($"Failed to load administrative template assignments: {FormatGraphError(ex)}", ex);
         }
         finally { IsLoadingDetails = false; }
     }
@@ -3382,6 +4112,248 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    // --- Wave 4/5 views ---
+
+    private async Task LoadAutopilotProfilesAsync()
+    {
+        if (_autopilotService == null) return;
+
+        IsBusy = true;
+        StatusText = "Loading autopilot profiles...";
+
+        try
+        {
+            var profiles = await _autopilotService.ListAutopilotProfilesAsync();
+            AutopilotProfiles = new ObservableCollection<WindowsAutopilotDeploymentProfile>(profiles);
+            _autopilotProfilesLoaded = true;
+            ApplyFilter();
+
+            if (ActiveProfile?.TenantId != null)
+                _cacheService.Set(ActiveProfile.TenantId, CacheKeyAutopilotProfiles, profiles);
+
+            StatusText = $"Loaded {profiles.Count} autopilot profile(s)";
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to load autopilot profiles: {FormatGraphError(ex)}");
+            StatusText = "Error loading autopilot profiles";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task LoadDeviceHealthScriptsAsync()
+    {
+        if (_deviceHealthScriptService == null) return;
+
+        IsBusy = true;
+        StatusText = "Loading device health scripts...";
+
+        try
+        {
+            var scripts = await _deviceHealthScriptService.ListDeviceHealthScriptsAsync();
+            DeviceHealthScripts = new ObservableCollection<DeviceHealthScript>(scripts);
+            _deviceHealthScriptsLoaded = true;
+            ApplyFilter();
+
+            if (ActiveProfile?.TenantId != null)
+                _cacheService.Set(ActiveProfile.TenantId, CacheKeyDeviceHealthScripts, scripts);
+
+            StatusText = $"Loaded {scripts.Count} device health script(s)";
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to load device health scripts: {FormatGraphError(ex)}");
+            StatusText = "Error loading device health scripts";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task LoadMacCustomAttributesAsync()
+    {
+        if (_macCustomAttributeService == null) return;
+
+        IsBusy = true;
+        StatusText = "Loading mac custom attributes...";
+
+        try
+        {
+            var attributes = await _macCustomAttributeService.ListMacCustomAttributesAsync();
+            MacCustomAttributes = new ObservableCollection<DeviceCustomAttributeShellScript>(attributes);
+            _macCustomAttributesLoaded = true;
+            ApplyFilter();
+
+            if (ActiveProfile?.TenantId != null)
+                _cacheService.Set(ActiveProfile.TenantId, CacheKeyMacCustomAttributes, attributes);
+
+            StatusText = $"Loaded {attributes.Count} mac custom attribute(s)";
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to load mac custom attributes: {FormatGraphError(ex)}");
+            StatusText = "Error loading mac custom attributes";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task LoadFeatureUpdateProfilesAsync()
+    {
+        if (_featureUpdateProfileService == null) return;
+
+        IsBusy = true;
+        StatusText = "Loading feature update profiles...";
+
+        try
+        {
+            var profiles = await _featureUpdateProfileService.ListFeatureUpdateProfilesAsync();
+            FeatureUpdateProfiles = new ObservableCollection<WindowsFeatureUpdateProfile>(profiles);
+            _featureUpdateProfilesLoaded = true;
+            ApplyFilter();
+
+            if (ActiveProfile?.TenantId != null)
+                _cacheService.Set(ActiveProfile.TenantId, CacheKeyFeatureUpdateProfiles, profiles);
+
+            StatusText = $"Loaded {profiles.Count} feature update profile(s)";
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to load feature update profiles: {FormatGraphError(ex)}");
+            StatusText = "Error loading feature update profiles";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task LoadNamedLocationsAsync()
+    {
+        if (_namedLocationService == null) return;
+
+        IsBusy = true;
+        StatusText = "Loading named locations...";
+
+        try
+        {
+            var locations = await _namedLocationService.ListNamedLocationsAsync();
+            NamedLocations = new ObservableCollection<NamedLocation>(locations);
+            _namedLocationsLoaded = true;
+            ApplyFilter();
+
+            if (ActiveProfile?.TenantId != null)
+                _cacheService.Set(ActiveProfile.TenantId, CacheKeyNamedLocations, locations);
+
+            StatusText = $"Loaded {locations.Count} named location(s)";
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to load named locations: {FormatGraphError(ex)}");
+            StatusText = "Error loading named locations";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task LoadAuthenticationStrengthPoliciesAsync()
+    {
+        if (_authenticationStrengthService == null) return;
+
+        IsBusy = true;
+        StatusText = "Loading authentication strengths...";
+
+        try
+        {
+            var strengths = await _authenticationStrengthService.ListAuthenticationStrengthPoliciesAsync();
+            AuthenticationStrengthPolicies = new ObservableCollection<AuthenticationStrengthPolicy>(strengths);
+            _authenticationStrengthPoliciesLoaded = true;
+            ApplyFilter();
+
+            if (ActiveProfile?.TenantId != null)
+                _cacheService.Set(ActiveProfile.TenantId, CacheKeyAuthenticationStrengths, strengths);
+
+            StatusText = $"Loaded {strengths.Count} authentication strength policy(ies)";
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to load authentication strengths: {FormatGraphError(ex)}");
+            StatusText = "Error loading authentication strengths";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task LoadAuthenticationContextsAsync()
+    {
+        if (_authenticationContextService == null) return;
+
+        IsBusy = true;
+        StatusText = "Loading authentication contexts...";
+
+        try
+        {
+            var contexts = await _authenticationContextService.ListAuthenticationContextsAsync();
+            AuthenticationContextClassReferences = new ObservableCollection<AuthenticationContextClassReference>(contexts);
+            _authenticationContextClassReferencesLoaded = true;
+            ApplyFilter();
+
+            if (ActiveProfile?.TenantId != null)
+                _cacheService.Set(ActiveProfile.TenantId, CacheKeyAuthenticationContexts, contexts);
+
+            StatusText = $"Loaded {contexts.Count} authentication context(s)";
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to load authentication contexts: {FormatGraphError(ex)}");
+            StatusText = "Error loading authentication contexts";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task LoadTermsOfUseAgreementsAsync()
+    {
+        if (_termsOfUseService == null) return;
+
+        IsBusy = true;
+        StatusText = "Loading terms of use agreements...";
+
+        try
+        {
+            var agreements = await _termsOfUseService.ListTermsOfUseAgreementsAsync();
+            TermsOfUseAgreements = new ObservableCollection<Agreement>(agreements);
+            _termsOfUseAgreementsLoaded = true;
+            ApplyFilter();
+
+            if (ActiveProfile?.TenantId != null)
+                _cacheService.Set(ActiveProfile.TenantId, CacheKeyTermsOfUseAgreements, agreements);
+
+            StatusText = $"Loaded {agreements.Count} terms of use agreement(s)";
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to load terms of use agreements: {FormatGraphError(ex)}");
+            StatusText = "Error loading terms of use agreements";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     private static GroupRow BuildGroupRow(Microsoft.Graph.Beta.Models.Group group, GroupMemberCounts counts)
     {
         return new GroupRow
@@ -3443,6 +4415,14 @@ public partial class MainWindowViewModel : ViewModelBase
             _roleDefinitionService = new RoleDefinitionService(_graphClient);
             _intuneBrandingService = new IntuneBrandingService(_graphClient);
             _azureBrandingService = new AzureBrandingService(_graphClient);
+            _autopilotService = new AutopilotService(_graphClient);
+            _deviceHealthScriptService = new DeviceHealthScriptService(_graphClient);
+            _macCustomAttributeService = new MacCustomAttributeService(_graphClient);
+            _featureUpdateProfileService = new FeatureUpdateProfileService(_graphClient);
+            _namedLocationService = new NamedLocationService(_graphClient);
+            _authenticationStrengthService = new AuthenticationStrengthService(_graphClient);
+            _authenticationContextService = new AuthenticationContextService(_graphClient);
+            _termsOfUseService = new TermsOfUseService(_graphClient);
             _importService = new ImportService(
                 _configProfileService,
                 _compliancePolicyService,
@@ -3455,7 +4435,15 @@ public partial class MainWindowViewModel : ViewModelBase
                 _scopeTagService,
                 _roleDefinitionService,
                 _intuneBrandingService,
-                _azureBrandingService);
+                _azureBrandingService,
+                _autopilotService,
+                _deviceHealthScriptService,
+                _macCustomAttributeService,
+                _featureUpdateProfileService,
+                _namedLocationService,
+                _authenticationStrengthService,
+                _authenticationContextService,
+                _termsOfUseService);
 
             RefreshSwitcherProfiles();
             SelectedSwitchProfile = profile;
@@ -3470,7 +4458,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
             // Try loading cached data — if all primary types are cached, skip Graph refresh
             var cachedCount = TryLoadFromCache(profile.TenantId ?? "");
-            if (cachedCount >= 18)
+            if (cachedCount >= 26)
             {
                 DebugLog.Log("Cache", "All data loaded from cache — skipping Graph refresh");
                 IsBusy = false;
@@ -3478,7 +4466,7 @@ public partial class MainWindowViewModel : ViewModelBase
             else
             {
                 if (cachedCount > 0)
-                    DebugLog.Log("Cache", $"Partial cache hit ({cachedCount}/18) — refreshing from Graph");
+                    DebugLog.Log("Cache", $"Partial cache hit ({cachedCount}/26) — refreshing from Graph");
                 await RefreshAsync(CancellationToken.None);
             }
         }
@@ -3585,6 +4573,14 @@ public partial class MainWindowViewModel : ViewModelBase
         var loadRoleDefinitions = IsRoleDefinitionsCategory;
         var loadIntuneBranding = IsIntuneBrandingCategory;
         var loadAzureBranding = IsAzureBrandingCategory;
+        var loadAutopilotProfiles = IsAutopilotProfilesCategory;
+        var loadDeviceHealthScripts = IsDeviceHealthScriptsCategory;
+        var loadMacCustomAttributes = IsMacCustomAttributesCategory;
+        var loadFeatureUpdates = IsFeatureUpdatesCategory;
+        var loadNamedLocations = IsNamedLocationsCategory;
+        var loadAuthenticationStrengths = IsAuthenticationStrengthsCategory;
+        var loadAuthenticationContexts = IsAuthenticationContextsCategory;
+        var loadTermsOfUse = IsTermsOfUseCategory;
 
         try
         {
@@ -3978,8 +4974,160 @@ public partial class MainWindowViewModel : ViewModelBase
                 DebugLog.Log("Graph", "Skipping policy sets refresh (lazy-load when tab selected)");
             }
 
-            var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count + EndpointSecurityIntents.Count + AdministrativeTemplates.Count + EnrollmentConfigurations.Count + AppProtectionPolicies.Count + ManagedDeviceAppConfigurations.Count + TargetedManagedAppConfigurations.Count + TermsAndConditionsCollection.Count + ScopeTags.Count + RoleDefinitions.Count + IntuneBrandingProfiles.Count + AzureBrandingLocalizations.Count + ConditionalAccessPolicies.Count + AssignmentFilters.Count + PolicySets.Count;
-            StatusText = $"Loaded {totalItems} item(s) ({DeviceConfigurations.Count} configs, {CompliancePolicies.Count} compliance, {Applications.Count} apps, {SettingsCatalogPolicies.Count} settings catalog, {EndpointSecurityIntents.Count} endpoint security, {AdministrativeTemplates.Count} admin templates, {EnrollmentConfigurations.Count} enrollment configs, {AppProtectionPolicies.Count} app protection, {ManagedDeviceAppConfigurations.Count} managed device app configs, {TargetedManagedAppConfigurations.Count} targeted app configs, {TermsAndConditionsCollection.Count} terms, {ScopeTags.Count} scope tags, {RoleDefinitions.Count} role definitions, {IntuneBrandingProfiles.Count} intune branding, {AzureBrandingLocalizations.Count} azure branding, {ConditionalAccessPolicies.Count} conditional access, {AssignmentFilters.Count} filters, {PolicySets.Count} policy sets)";
+            if (_autopilotService != null && loadAutopilotProfiles)
+            {
+                try
+                {
+                    StatusText = "Loading autopilot profiles...";
+                    var profiles = await _autopilotService.ListAutopilotProfilesAsync(cancellationToken);
+                    AutopilotProfiles = new ObservableCollection<WindowsAutopilotDeploymentProfile>(profiles);
+                    _autopilotProfilesLoaded = true;
+                    DebugLog.Log("Graph", $"Loaded {profiles.Count} autopilot profile(s)");
+                }
+                catch (Exception ex)
+                {
+                    _autopilotProfilesLoaded = false;
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load autopilot profiles: {detail}", ex);
+                    errors.Add($"Autopilot Profiles: {detail}");
+                }
+            }
+
+            if (_deviceHealthScriptService != null && loadDeviceHealthScripts)
+            {
+                try
+                {
+                    StatusText = "Loading device health scripts...";
+                    var scripts = await _deviceHealthScriptService.ListDeviceHealthScriptsAsync(cancellationToken);
+                    DeviceHealthScripts = new ObservableCollection<DeviceHealthScript>(scripts);
+                    _deviceHealthScriptsLoaded = true;
+                    DebugLog.Log("Graph", $"Loaded {scripts.Count} device health script(s)");
+                }
+                catch (Exception ex)
+                {
+                    _deviceHealthScriptsLoaded = false;
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load device health scripts: {detail}", ex);
+                    errors.Add($"Device Health Scripts: {detail}");
+                }
+            }
+
+            if (_macCustomAttributeService != null && loadMacCustomAttributes)
+            {
+                try
+                {
+                    StatusText = "Loading mac custom attributes...";
+                    var attributes = await _macCustomAttributeService.ListMacCustomAttributesAsync(cancellationToken);
+                    MacCustomAttributes = new ObservableCollection<DeviceCustomAttributeShellScript>(attributes);
+                    _macCustomAttributesLoaded = true;
+                    DebugLog.Log("Graph", $"Loaded {attributes.Count} mac custom attribute(s)");
+                }
+                catch (Exception ex)
+                {
+                    _macCustomAttributesLoaded = false;
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load mac custom attributes: {detail}", ex);
+                    errors.Add($"Mac Custom Attributes: {detail}");
+                }
+            }
+
+            if (_featureUpdateProfileService != null && loadFeatureUpdates)
+            {
+                try
+                {
+                    StatusText = "Loading feature update profiles...";
+                    var profiles = await _featureUpdateProfileService.ListFeatureUpdateProfilesAsync(cancellationToken);
+                    FeatureUpdateProfiles = new ObservableCollection<WindowsFeatureUpdateProfile>(profiles);
+                    _featureUpdateProfilesLoaded = true;
+                    DebugLog.Log("Graph", $"Loaded {profiles.Count} feature update profile(s)");
+                }
+                catch (Exception ex)
+                {
+                    _featureUpdateProfilesLoaded = false;
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load feature update profiles: {detail}", ex);
+                    errors.Add($"Feature Updates: {detail}");
+                }
+            }
+
+            if (_namedLocationService != null && loadNamedLocations)
+            {
+                try
+                {
+                    StatusText = "Loading named locations...";
+                    var locations = await _namedLocationService.ListNamedLocationsAsync(cancellationToken);
+                    NamedLocations = new ObservableCollection<NamedLocation>(locations);
+                    _namedLocationsLoaded = true;
+                    DebugLog.Log("Graph", $"Loaded {locations.Count} named location(s)");
+                }
+                catch (Exception ex)
+                {
+                    _namedLocationsLoaded = false;
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load named locations: {detail}", ex);
+                    errors.Add($"Named Locations: {detail}");
+                }
+            }
+
+            if (_authenticationStrengthService != null && loadAuthenticationStrengths)
+            {
+                try
+                {
+                    StatusText = "Loading authentication strengths...";
+                    var strengths = await _authenticationStrengthService.ListAuthenticationStrengthPoliciesAsync(cancellationToken);
+                    AuthenticationStrengthPolicies = new ObservableCollection<AuthenticationStrengthPolicy>(strengths);
+                    _authenticationStrengthPoliciesLoaded = true;
+                    DebugLog.Log("Graph", $"Loaded {strengths.Count} authentication strength policy(ies)");
+                }
+                catch (Exception ex)
+                {
+                    _authenticationStrengthPoliciesLoaded = false;
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load authentication strengths: {detail}", ex);
+                    errors.Add($"Authentication Strengths: {detail}");
+                }
+            }
+
+            if (_authenticationContextService != null && loadAuthenticationContexts)
+            {
+                try
+                {
+                    StatusText = "Loading authentication contexts...";
+                    var contexts = await _authenticationContextService.ListAuthenticationContextsAsync(cancellationToken);
+                    AuthenticationContextClassReferences = new ObservableCollection<AuthenticationContextClassReference>(contexts);
+                    _authenticationContextClassReferencesLoaded = true;
+                    DebugLog.Log("Graph", $"Loaded {contexts.Count} authentication context(s)");
+                }
+                catch (Exception ex)
+                {
+                    _authenticationContextClassReferencesLoaded = false;
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load authentication contexts: {detail}", ex);
+                    errors.Add($"Authentication Contexts: {detail}");
+                }
+            }
+
+            if (_termsOfUseService != null && loadTermsOfUse)
+            {
+                try
+                {
+                    StatusText = "Loading terms of use agreements...";
+                    var agreements = await _termsOfUseService.ListTermsOfUseAgreementsAsync(cancellationToken);
+                    TermsOfUseAgreements = new ObservableCollection<Agreement>(agreements);
+                    _termsOfUseAgreementsLoaded = true;
+                    DebugLog.Log("Graph", $"Loaded {agreements.Count} terms of use agreement(s)");
+                }
+                catch (Exception ex)
+                {
+                    _termsOfUseAgreementsLoaded = false;
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load terms of use agreements: {detail}", ex);
+                    errors.Add($"Terms Of Use: {detail}");
+                }
+            }
+
+            var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count + EndpointSecurityIntents.Count + AdministrativeTemplates.Count + EnrollmentConfigurations.Count + AppProtectionPolicies.Count + ManagedDeviceAppConfigurations.Count + TargetedManagedAppConfigurations.Count + TermsAndConditionsCollection.Count + ScopeTags.Count + RoleDefinitions.Count + IntuneBrandingProfiles.Count + AzureBrandingLocalizations.Count + ConditionalAccessPolicies.Count + AssignmentFilters.Count + PolicySets.Count + AutopilotProfiles.Count + DeviceHealthScripts.Count + MacCustomAttributes.Count + FeatureUpdateProfiles.Count + NamedLocations.Count + AuthenticationStrengthPolicies.Count + AuthenticationContextClassReferences.Count + TermsOfUseAgreements.Count;
+            StatusText = $"Loaded {totalItems} item(s) ({DeviceConfigurations.Count} configs, {CompliancePolicies.Count} compliance, {Applications.Count} apps, {SettingsCatalogPolicies.Count} settings catalog, {EndpointSecurityIntents.Count} endpoint security, {AdministrativeTemplates.Count} admin templates, {EnrollmentConfigurations.Count} enrollment configs, {AppProtectionPolicies.Count} app protection, {ManagedDeviceAppConfigurations.Count} managed device app configs, {TargetedManagedAppConfigurations.Count} targeted app configs, {TermsAndConditionsCollection.Count} terms, {ScopeTags.Count} scope tags, {RoleDefinitions.Count} role definitions, {IntuneBrandingProfiles.Count} intune branding, {AzureBrandingLocalizations.Count} azure branding, {ConditionalAccessPolicies.Count} conditional access, {AssignmentFilters.Count} filters, {PolicySets.Count} policy sets, {AutopilotProfiles.Count} autopilot, {DeviceHealthScripts.Count} device health scripts, {MacCustomAttributes.Count} mac custom attributes, {FeatureUpdateProfiles.Count} feature updates, {NamedLocations.Count} named locations, {AuthenticationStrengthPolicies.Count} auth strengths, {AuthenticationContextClassReferences.Count} auth contexts, {TermsOfUseAgreements.Count} terms of use)";
 
             if (errors.Count > 0)
                 SetError($"Some data failed to load — {string.Join("; ", errors)}");
@@ -4125,6 +5273,54 @@ public partial class MainWindowViewModel : ViewModelBase
                 StatusText = $"Exporting {SelectedAzureBrandingLocalization.Id ?? "branding localization"}...";
                 await _exportService.ExportAzureBrandingLocalizationAsync(
                     SelectedAzureBrandingLocalization, outputPath, migrationTable, cancellationToken);
+            }
+            else if (IsAutopilotProfilesCategory && SelectedAutopilotProfile != null)
+            {
+                StatusText = $"Exporting {SelectedAutopilotProfile.DisplayName}...";
+                await _exportService.ExportAutopilotProfileAsync(
+                    SelectedAutopilotProfile, outputPath, migrationTable, cancellationToken);
+            }
+            else if (IsDeviceHealthScriptsCategory && SelectedDeviceHealthScript != null)
+            {
+                StatusText = $"Exporting {SelectedDeviceHealthScript.DisplayName}...";
+                await _exportService.ExportDeviceHealthScriptAsync(
+                    SelectedDeviceHealthScript, outputPath, migrationTable, cancellationToken);
+            }
+            else if (IsMacCustomAttributesCategory && SelectedMacCustomAttribute != null)
+            {
+                StatusText = $"Exporting {SelectedMacCustomAttribute.DisplayName}...";
+                await _exportService.ExportMacCustomAttributeAsync(
+                    SelectedMacCustomAttribute, outputPath, migrationTable, cancellationToken);
+            }
+            else if (IsFeatureUpdatesCategory && SelectedFeatureUpdateProfile != null)
+            {
+                StatusText = $"Exporting {SelectedFeatureUpdateProfile.DisplayName}...";
+                await _exportService.ExportFeatureUpdateProfileAsync(
+                    SelectedFeatureUpdateProfile, outputPath, migrationTable, cancellationToken);
+            }
+            else if (IsNamedLocationsCategory && SelectedNamedLocation != null)
+            {
+                StatusText = $"Exporting {TryReadStringProperty(SelectedNamedLocation, "DisplayName") ?? "named location"}...";
+                await _exportService.ExportNamedLocationAsync(
+                    SelectedNamedLocation, outputPath, migrationTable, cancellationToken);
+            }
+            else if (IsAuthenticationStrengthsCategory && SelectedAuthenticationStrengthPolicy != null)
+            {
+                StatusText = $"Exporting {SelectedAuthenticationStrengthPolicy.DisplayName}...";
+                await _exportService.ExportAuthenticationStrengthPolicyAsync(
+                    SelectedAuthenticationStrengthPolicy, outputPath, migrationTable, cancellationToken);
+            }
+            else if (IsAuthenticationContextsCategory && SelectedAuthenticationContextClassReference != null)
+            {
+                StatusText = $"Exporting {SelectedAuthenticationContextClassReference.DisplayName}...";
+                await _exportService.ExportAuthenticationContextAsync(
+                    SelectedAuthenticationContextClassReference, outputPath, migrationTable, cancellationToken);
+            }
+            else if (IsTermsOfUseCategory && SelectedTermsOfUseAgreement != null)
+            {
+                StatusText = $"Exporting {SelectedTermsOfUseAgreement.DisplayName ?? "terms of use"}...";
+                await _exportService.ExportTermsOfUseAgreementAsync(
+                    SelectedTermsOfUseAgreement, outputPath, migrationTable, cancellationToken);
             }
             else
             {
@@ -4327,6 +5523,94 @@ public partial class MainWindowViewModel : ViewModelBase
                 }
             }
 
+            // Export autopilot profiles
+            if (AutopilotProfiles.Any())
+            {
+                StatusText = "Exporting autopilot profiles...";
+                foreach (var profile in AutopilotProfiles)
+                {
+                    await _exportService.ExportAutopilotProfileAsync(profile, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
+            // Export device health scripts
+            if (DeviceHealthScripts.Any())
+            {
+                StatusText = "Exporting device health scripts...";
+                foreach (var script in DeviceHealthScripts)
+                {
+                    await _exportService.ExportDeviceHealthScriptAsync(script, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
+            // Export mac custom attributes
+            if (MacCustomAttributes.Any())
+            {
+                StatusText = "Exporting mac custom attributes...";
+                foreach (var script in MacCustomAttributes)
+                {
+                    await _exportService.ExportMacCustomAttributeAsync(script, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
+            // Export feature update profiles
+            if (FeatureUpdateProfiles.Any())
+            {
+                StatusText = "Exporting feature update profiles...";
+                foreach (var profile in FeatureUpdateProfiles)
+                {
+                    await _exportService.ExportFeatureUpdateProfileAsync(profile, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
+            // Export named locations
+            if (NamedLocations.Any())
+            {
+                StatusText = "Exporting named locations...";
+                foreach (var namedLocation in NamedLocations)
+                {
+                    await _exportService.ExportNamedLocationAsync(namedLocation, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
+            // Export authentication strength policies
+            if (AuthenticationStrengthPolicies.Any())
+            {
+                StatusText = "Exporting authentication strengths...";
+                foreach (var policy in AuthenticationStrengthPolicies)
+                {
+                    await _exportService.ExportAuthenticationStrengthPolicyAsync(policy, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
+            // Export authentication contexts
+            if (AuthenticationContextClassReferences.Any())
+            {
+                StatusText = "Exporting authentication contexts...";
+                foreach (var contextClassReference in AuthenticationContextClassReferences)
+                {
+                    await _exportService.ExportAuthenticationContextAsync(contextClassReference, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
+            // Export terms of use agreements
+            if (TermsOfUseAgreements.Any())
+            {
+                StatusText = "Exporting terms of use agreements...";
+                foreach (var agreement in TermsOfUseAgreements)
+                {
+                    await _exportService.ExportTermsOfUseAgreementAsync(agreement, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
             await _exportService.SaveMigrationTableAsync(migrationTable, outputPath, cancellationToken);
             StatusText = $"Exported {count} item(s) to {outputPath}";
         }
@@ -4470,6 +5754,78 @@ public partial class MainWindowViewModel : ViewModelBase
             foreach (var localization in azureBrandingLocalizations)
             {
                 await _importService.ImportAzureBrandingLocalizationAsync(localization, migrationTable, cancellationToken);
+                imported++;
+                StatusText = $"Imported {imported} item(s)...";
+            }
+
+            // Import autopilot profiles
+            var autopilotProfiles = await _importService.ReadAutopilotProfilesFromFolderAsync(folderPath, cancellationToken);
+            foreach (var profile in autopilotProfiles)
+            {
+                await _importService.ImportAutopilotProfileAsync(profile, migrationTable, cancellationToken);
+                imported++;
+                StatusText = $"Imported {imported} item(s)...";
+            }
+
+            // Import device health scripts
+            var deviceHealthScripts = await _importService.ReadDeviceHealthScriptsFromFolderAsync(folderPath, cancellationToken);
+            foreach (var script in deviceHealthScripts)
+            {
+                await _importService.ImportDeviceHealthScriptAsync(script, migrationTable, cancellationToken);
+                imported++;
+                StatusText = $"Imported {imported} item(s)...";
+            }
+
+            // Import mac custom attributes
+            var macCustomAttributes = await _importService.ReadMacCustomAttributesFromFolderAsync(folderPath, cancellationToken);
+            foreach (var script in macCustomAttributes)
+            {
+                await _importService.ImportMacCustomAttributeAsync(script, migrationTable, cancellationToken);
+                imported++;
+                StatusText = $"Imported {imported} item(s)...";
+            }
+
+            // Import feature update profiles
+            var featureUpdateProfiles = await _importService.ReadFeatureUpdateProfilesFromFolderAsync(folderPath, cancellationToken);
+            foreach (var profile in featureUpdateProfiles)
+            {
+                await _importService.ImportFeatureUpdateProfileAsync(profile, migrationTable, cancellationToken);
+                imported++;
+                StatusText = $"Imported {imported} item(s)...";
+            }
+
+            // Import named locations
+            var namedLocations = await _importService.ReadNamedLocationsFromFolderAsync(folderPath, cancellationToken);
+            foreach (var namedLocation in namedLocations)
+            {
+                await _importService.ImportNamedLocationAsync(namedLocation, migrationTable, cancellationToken);
+                imported++;
+                StatusText = $"Imported {imported} item(s)...";
+            }
+
+            // Import authentication strength policies
+            var authenticationStrengthPolicies = await _importService.ReadAuthenticationStrengthPoliciesFromFolderAsync(folderPath, cancellationToken);
+            foreach (var policy in authenticationStrengthPolicies)
+            {
+                await _importService.ImportAuthenticationStrengthPolicyAsync(policy, migrationTable, cancellationToken);
+                imported++;
+                StatusText = $"Imported {imported} item(s)...";
+            }
+
+            // Import authentication contexts
+            var authenticationContexts = await _importService.ReadAuthenticationContextsFromFolderAsync(folderPath, cancellationToken);
+            foreach (var contextClassReference in authenticationContexts)
+            {
+                await _importService.ImportAuthenticationContextAsync(contextClassReference, migrationTable, cancellationToken);
+                imported++;
+                StatusText = $"Imported {imported} item(s)...";
+            }
+
+            // Import terms of use agreements
+            var termsOfUseAgreements = await _importService.ReadTermsOfUseAgreementsFromFolderAsync(folderPath, cancellationToken);
+            foreach (var agreement in termsOfUseAgreements)
+            {
+                await _importService.ImportTermsOfUseAgreementAsync(agreement, migrationTable, cancellationToken);
                 imported++;
                 StatusText = $"Imported {imported} item(s)...";
             }
@@ -4682,9 +6038,89 @@ public partial class MainWindowViewModel : ViewModelBase
                 UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyPolicySets);
             }
 
+            var autopilotProfiles = _cacheService.Get<WindowsAutopilotDeploymentProfile>(tenantId, CacheKeyAutopilotProfiles);
+            if (autopilotProfiles != null)
+            {
+                AutopilotProfiles = new ObservableCollection<WindowsAutopilotDeploymentProfile>(autopilotProfiles);
+                _autopilotProfilesLoaded = true;
+                DebugLog.Log("Cache", $"Loaded {autopilotProfiles.Count} autopilot profile(s) from cache");
+                typesLoaded++;
+                UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyAutopilotProfiles);
+            }
+
+            var deviceHealthScripts = _cacheService.Get<DeviceHealthScript>(tenantId, CacheKeyDeviceHealthScripts);
+            if (deviceHealthScripts != null)
+            {
+                DeviceHealthScripts = new ObservableCollection<DeviceHealthScript>(deviceHealthScripts);
+                _deviceHealthScriptsLoaded = true;
+                DebugLog.Log("Cache", $"Loaded {deviceHealthScripts.Count} device health script(s) from cache");
+                typesLoaded++;
+                UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyDeviceHealthScripts);
+            }
+
+            var macCustomAttributes = _cacheService.Get<DeviceCustomAttributeShellScript>(tenantId, CacheKeyMacCustomAttributes);
+            if (macCustomAttributes != null)
+            {
+                MacCustomAttributes = new ObservableCollection<DeviceCustomAttributeShellScript>(macCustomAttributes);
+                _macCustomAttributesLoaded = true;
+                DebugLog.Log("Cache", $"Loaded {macCustomAttributes.Count} mac custom attribute(s) from cache");
+                typesLoaded++;
+                UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyMacCustomAttributes);
+            }
+
+            var featureUpdates = _cacheService.Get<WindowsFeatureUpdateProfile>(tenantId, CacheKeyFeatureUpdateProfiles);
+            if (featureUpdates != null)
+            {
+                FeatureUpdateProfiles = new ObservableCollection<WindowsFeatureUpdateProfile>(featureUpdates);
+                _featureUpdateProfilesLoaded = true;
+                DebugLog.Log("Cache", $"Loaded {featureUpdates.Count} feature update profile(s) from cache");
+                typesLoaded++;
+                UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyFeatureUpdateProfiles);
+            }
+
+            var namedLocations = _cacheService.Get<NamedLocation>(tenantId, CacheKeyNamedLocations);
+            if (namedLocations != null)
+            {
+                NamedLocations = new ObservableCollection<NamedLocation>(namedLocations);
+                _namedLocationsLoaded = true;
+                DebugLog.Log("Cache", $"Loaded {namedLocations.Count} named location(s) from cache");
+                typesLoaded++;
+                UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyNamedLocations);
+            }
+
+            var authenticationStrengths = _cacheService.Get<AuthenticationStrengthPolicy>(tenantId, CacheKeyAuthenticationStrengths);
+            if (authenticationStrengths != null)
+            {
+                AuthenticationStrengthPolicies = new ObservableCollection<AuthenticationStrengthPolicy>(authenticationStrengths);
+                _authenticationStrengthPoliciesLoaded = true;
+                DebugLog.Log("Cache", $"Loaded {authenticationStrengths.Count} authentication strength policy(ies) from cache");
+                typesLoaded++;
+                UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyAuthenticationStrengths);
+            }
+
+            var authenticationContexts = _cacheService.Get<AuthenticationContextClassReference>(tenantId, CacheKeyAuthenticationContexts);
+            if (authenticationContexts != null)
+            {
+                AuthenticationContextClassReferences = new ObservableCollection<AuthenticationContextClassReference>(authenticationContexts);
+                _authenticationContextClassReferencesLoaded = true;
+                DebugLog.Log("Cache", $"Loaded {authenticationContexts.Count} authentication context(s) from cache");
+                typesLoaded++;
+                UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyAuthenticationContexts);
+            }
+
+            var termsOfUse = _cacheService.Get<Agreement>(tenantId, CacheKeyTermsOfUseAgreements);
+            if (termsOfUse != null)
+            {
+                TermsOfUseAgreements = new ObservableCollection<Agreement>(termsOfUse);
+                _termsOfUseAgreementsLoaded = true;
+                DebugLog.Log("Cache", $"Loaded {termsOfUse.Count} terms of use agreement(s) from cache");
+                typesLoaded++;
+                UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyTermsOfUseAgreements);
+            }
+
             if (typesLoaded > 0)
             {
-                var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count + EndpointSecurityIntents.Count + AdministrativeTemplates.Count + EnrollmentConfigurations.Count + AppProtectionPolicies.Count + ManagedDeviceAppConfigurations.Count + TargetedManagedAppConfigurations.Count + TermsAndConditionsCollection.Count + ScopeTags.Count + RoleDefinitions.Count + IntuneBrandingProfiles.Count + AzureBrandingLocalizations.Count + ConditionalAccessPolicies.Count + AssignmentFilters.Count + PolicySets.Count;
+                var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count + EndpointSecurityIntents.Count + AdministrativeTemplates.Count + EnrollmentConfigurations.Count + AppProtectionPolicies.Count + ManagedDeviceAppConfigurations.Count + TargetedManagedAppConfigurations.Count + TermsAndConditionsCollection.Count + ScopeTags.Count + RoleDefinitions.Count + IntuneBrandingProfiles.Count + AzureBrandingLocalizations.Count + ConditionalAccessPolicies.Count + AssignmentFilters.Count + PolicySets.Count + AutopilotProfiles.Count + DeviceHealthScripts.Count + MacCustomAttributes.Count + FeatureUpdateProfiles.Count + NamedLocations.Count + AuthenticationStrengthPolicies.Count + AuthenticationContextClassReferences.Count + TermsOfUseAgreements.Count;
                 var ageText = FormatCacheAge(oldestCacheTime);
                 CacheStatusText = oldestCacheTime.HasValue
                     ? $"Cache: {oldestCacheTime.Value.ToLocalTime():MMM dd, h:mm tt}"
@@ -4837,6 +6273,30 @@ public partial class MainWindowViewModel : ViewModelBase
             if (PolicySets.Count > 0)
                 _cacheService.Set(tenantId, CacheKeyPolicySets, PolicySets.ToList());
 
+            if (AutopilotProfiles.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyAutopilotProfiles, AutopilotProfiles.ToList());
+
+            if (DeviceHealthScripts.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyDeviceHealthScripts, DeviceHealthScripts.ToList());
+
+            if (MacCustomAttributes.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyMacCustomAttributes, MacCustomAttributes.ToList());
+
+            if (FeatureUpdateProfiles.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyFeatureUpdateProfiles, FeatureUpdateProfiles.ToList());
+
+            if (NamedLocations.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyNamedLocations, NamedLocations.ToList());
+
+            if (AuthenticationStrengthPolicies.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyAuthenticationStrengths, AuthenticationStrengthPolicies.ToList());
+
+            if (AuthenticationContextClassReferences.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyAuthenticationContexts, AuthenticationContextClassReferences.ToList());
+
+            if (TermsOfUseAgreements.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyTermsOfUseAgreements, TermsOfUseAgreements.ToList());
+
             DebugLog.Log("Cache", "Saved data to disk cache");
         }
         catch (Exception ex)
@@ -4886,6 +6346,14 @@ public partial class MainWindowViewModel : ViewModelBase
         _azureBrandingLocalizationsLoaded = false;
         _assignmentFiltersLoaded = false;
         _policySetsLoaded = false;
+        _autopilotProfilesLoaded = false;
+        _deviceHealthScriptsLoaded = false;
+        _macCustomAttributesLoaded = false;
+        _featureUpdateProfilesLoaded = false;
+        _namedLocationsLoaded = false;
+        _authenticationStrengthPoliciesLoaded = false;
+        _authenticationContextClassReferencesLoaded = false;
+        _termsOfUseAgreementsLoaded = false;
         SettingsCatalogPolicies.Clear();
         SelectedSettingsCatalogPolicy = null;
         EndpointSecurityIntents.Clear();
@@ -4916,6 +6384,22 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedAssignmentFilter = null;
         PolicySets.Clear();
         SelectedPolicySet = null;
+        AutopilotProfiles.Clear();
+        SelectedAutopilotProfile = null;
+        DeviceHealthScripts.Clear();
+        SelectedDeviceHealthScript = null;
+        MacCustomAttributes.Clear();
+        SelectedMacCustomAttribute = null;
+        FeatureUpdateProfiles.Clear();
+        SelectedFeatureUpdateProfile = null;
+        NamedLocations.Clear();
+        SelectedNamedLocation = null;
+        AuthenticationStrengthPolicies.Clear();
+        SelectedAuthenticationStrengthPolicy = null;
+        AuthenticationContextClassReferences.Clear();
+        SelectedAuthenticationContextClassReference = null;
+        TermsOfUseAgreements.Clear();
+        SelectedTermsOfUseAgreement = null;
         DynamicGroupRows.Clear();
         SelectedDynamicGroupRow = null;
         _dynamicGroupsLoaded = false;
@@ -4943,6 +6427,14 @@ public partial class MainWindowViewModel : ViewModelBase
         _roleDefinitionService = null;
         _intuneBrandingService = null;
         _azureBrandingService = null;
+        _autopilotService = null;
+        _deviceHealthScriptService = null;
+        _macCustomAttributeService = null;
+        _featureUpdateProfileService = null;
+        _namedLocationService = null;
+        _authenticationStrengthService = null;
+        _authenticationContextService = null;
+        _termsOfUseService = null;
         _importService = null;
         _groupNameCache.Clear();
         CacheStatusText = "";

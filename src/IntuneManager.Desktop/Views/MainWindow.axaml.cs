@@ -103,6 +103,14 @@ public partial class MainWindow : Window
             or nameof(MainWindowViewModel.IsConditionalAccessCategory)
             or nameof(MainWindowViewModel.IsAssignmentFiltersCategory)
             or nameof(MainWindowViewModel.IsPolicySetsCategory)
+            or nameof(MainWindowViewModel.IsAutopilotProfilesCategory)
+            or nameof(MainWindowViewModel.IsDeviceHealthScriptsCategory)
+            or nameof(MainWindowViewModel.IsMacCustomAttributesCategory)
+            or nameof(MainWindowViewModel.IsFeatureUpdatesCategory)
+            or nameof(MainWindowViewModel.IsNamedLocationsCategory)
+            or nameof(MainWindowViewModel.IsAuthenticationStrengthsCategory)
+            or nameof(MainWindowViewModel.IsAuthenticationContextsCategory)
+            or nameof(MainWindowViewModel.IsTermsOfUseCategory)
             or nameof(MainWindowViewModel.IsDynamicGroupsCategory)
             or nameof(MainWindowViewModel.IsAssignedGroupsCategory)
             or nameof(MainWindowViewModel.IsOverviewCategory))
@@ -141,6 +149,14 @@ public partial class MainWindow : Window
             or nameof(MainWindowViewModel.FilteredConditionalAccessPolicies)
             or nameof(MainWindowViewModel.FilteredAssignmentFilters)
             or nameof(MainWindowViewModel.FilteredPolicySets)
+            or nameof(MainWindowViewModel.FilteredAutopilotProfiles)
+            or nameof(MainWindowViewModel.FilteredDeviceHealthScripts)
+            or nameof(MainWindowViewModel.FilteredMacCustomAttributes)
+            or nameof(MainWindowViewModel.FilteredFeatureUpdateProfiles)
+            or nameof(MainWindowViewModel.FilteredNamedLocations)
+            or nameof(MainWindowViewModel.FilteredAuthenticationStrengthPolicies)
+            or nameof(MainWindowViewModel.FilteredAuthenticationContextClassReferences)
+            or nameof(MainWindowViewModel.FilteredTermsOfUseAgreements)
             or nameof(MainWindowViewModel.FilteredDynamicGroupRows)
             or nameof(MainWindowViewModel.FilteredAssignedGroupRows))
         {
@@ -179,6 +195,14 @@ public partial class MainWindow : Window
             nameof(MainWindowViewModel.FilteredConditionalAccessPolicies) => _vm.IsConditionalAccessCategory,
             nameof(MainWindowViewModel.FilteredAssignmentFilters)   => _vm.IsAssignmentFiltersCategory,
             nameof(MainWindowViewModel.FilteredPolicySets)          => _vm.IsPolicySetsCategory,
+            nameof(MainWindowViewModel.FilteredAutopilotProfiles) => _vm.IsAutopilotProfilesCategory,
+            nameof(MainWindowViewModel.FilteredDeviceHealthScripts) => _vm.IsDeviceHealthScriptsCategory,
+            nameof(MainWindowViewModel.FilteredMacCustomAttributes) => _vm.IsMacCustomAttributesCategory,
+            nameof(MainWindowViewModel.FilteredFeatureUpdateProfiles) => _vm.IsFeatureUpdatesCategory,
+            nameof(MainWindowViewModel.FilteredNamedLocations) => _vm.IsNamedLocationsCategory,
+            nameof(MainWindowViewModel.FilteredAuthenticationStrengthPolicies) => _vm.IsAuthenticationStrengthsCategory,
+            nameof(MainWindowViewModel.FilteredAuthenticationContextClassReferences) => _vm.IsAuthenticationContextsCategory,
+            nameof(MainWindowViewModel.FilteredTermsOfUseAgreements) => _vm.IsTermsOfUseCategory,
             nameof(MainWindowViewModel.FilteredDynamicGroupRows)    => _vm.IsDynamicGroupsCategory,
             nameof(MainWindowViewModel.FilteredAssignedGroupRows)   => _vm.IsAssignedGroupsCategory,
             _ => false
@@ -325,6 +349,62 @@ public partial class MainWindow : Window
                 new Binding(nameof(_vm.FilteredPolicySets)) { Source = _vm });
             _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
                 new Binding(nameof(_vm.SelectedPolicySet)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
+        else if (_vm.IsAutopilotProfilesCategory)
+        {
+            _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
+                new Binding(nameof(_vm.FilteredAutopilotProfiles)) { Source = _vm });
+            _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
+                new Binding(nameof(_vm.SelectedAutopilotProfile)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
+        else if (_vm.IsDeviceHealthScriptsCategory)
+        {
+            _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
+                new Binding(nameof(_vm.FilteredDeviceHealthScripts)) { Source = _vm });
+            _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
+                new Binding(nameof(_vm.SelectedDeviceHealthScript)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
+        else if (_vm.IsMacCustomAttributesCategory)
+        {
+            _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
+                new Binding(nameof(_vm.FilteredMacCustomAttributes)) { Source = _vm });
+            _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
+                new Binding(nameof(_vm.SelectedMacCustomAttribute)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
+        else if (_vm.IsFeatureUpdatesCategory)
+        {
+            _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
+                new Binding(nameof(_vm.FilteredFeatureUpdateProfiles)) { Source = _vm });
+            _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
+                new Binding(nameof(_vm.SelectedFeatureUpdateProfile)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
+        else if (_vm.IsNamedLocationsCategory)
+        {
+            _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
+                new Binding(nameof(_vm.FilteredNamedLocations)) { Source = _vm });
+            _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
+                new Binding(nameof(_vm.SelectedNamedLocation)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
+        else if (_vm.IsAuthenticationStrengthsCategory)
+        {
+            _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
+                new Binding(nameof(_vm.FilteredAuthenticationStrengthPolicies)) { Source = _vm });
+            _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
+                new Binding(nameof(_vm.SelectedAuthenticationStrengthPolicy)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
+        else if (_vm.IsAuthenticationContextsCategory)
+        {
+            _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
+                new Binding(nameof(_vm.FilteredAuthenticationContextClassReferences)) { Source = _vm });
+            _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
+                new Binding(nameof(_vm.SelectedAuthenticationContextClassReference)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
+        else if (_vm.IsTermsOfUseCategory)
+        {
+            _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
+                new Binding(nameof(_vm.FilteredTermsOfUseAgreements)) { Source = _vm });
+            _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
+                new Binding(nameof(_vm.SelectedTermsOfUseAgreement)) { Source = _vm, Mode = BindingMode.TwoWay });
         }
         else if (_vm.IsDynamicGroupsCategory)
         {

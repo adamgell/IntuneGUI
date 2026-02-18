@@ -22,6 +22,16 @@ All notable changes to this project are documented in this file.
   - cache persistence on successful loads
 - Added asynchronous lazy loading for the new categories when navigating to their tabs.
 - Added `HumanDateTimeConverter` and applied it to detail-pane timestamp displays.
+- Added Wave 4–5 Graph-backed services and interfaces for:
+  - Windows Autopilot deployment profiles
+  - Device Health Scripts
+  - macOS Custom Attributes
+  - Feature Update Profiles
+  - Named Locations
+  - Authentication Strength policies
+  - Authentication Context references
+  - Terms of Use agreements
+- Added Wave 4–5 export/import parity coverage in core tests, including new service contract tests.
 - Added Graph endpoint audit artifacts:
   - `docs/graph-uri-inventory.csv`
   - `docs/GRAPH_URI_AUDIT.md`
@@ -34,6 +44,7 @@ All notable changes to this project are documented in this file.
 - Improved dark/light theme behavior by moving hardcoded UI text/error colors to dynamic theme brushes.
 - Tuned left navigation text color for dark mode readability with a dedicated nav text brush.
 - Expanded `MainWindowViewModel` category refresh/filter/selection flows to include new service categories.
+- Extended `IExportService` / `ExportService` and `IImportService` / `ImportService` with Wave 4–5 object types and migration-map support.
 - Updated connection flow to use cache-first behavior for expanded cached dataset coverage.
 - Updated refresh behavior to keep new categories lazy (load on selected tab) instead of always eagerly fetching.
 
@@ -44,6 +55,7 @@ All notable changes to this project are documented in this file.
   - invalid `PolicySet` property binding
 - Resolved startup/runtime XAML load instability by correcting compile-time XAML errors and validating clean rebuilds.
 - Fixed build regressions caused by temporary method-placement/bracing conflicts in `MainWindowViewModel`.
+- Fixed remaining Avalonia compiled binding errors in detail panes by replacing invalid `Description` bindings for `NamedLocation` and `Agreement` with valid model properties.
 
 ### UX Improvements
 - Improved readability of secondary text and error text in dark theme.
@@ -59,3 +71,4 @@ All notable changes to this project are documented in this file.
 ### Build & Validation
 - Verified successful desktop project builds after each major implementation wave.
 - Validated no remaining compile diagnostics for impacted files at release cut.
+- Confirmed full core test pass (`175` passed) via `dotnet test` after Wave 4–5 integration.

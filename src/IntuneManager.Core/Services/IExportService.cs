@@ -47,5 +47,29 @@ public interface IExportService
     Task ExportAzureBrandingLocalizationAsync(OrganizationalBrandingLocalization localization, string outputPath, MigrationTable migrationTable, CancellationToken cancellationToken = default);
     Task ExportAzureBrandingLocalizationsAsync(IEnumerable<OrganizationalBrandingLocalization> localizations, string outputPath, CancellationToken cancellationToken = default);
 
+    Task ExportAutopilotProfileAsync(WindowsAutopilotDeploymentProfile profile, string outputPath, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+    Task ExportAutopilotProfilesAsync(IEnumerable<WindowsAutopilotDeploymentProfile> profiles, string outputPath, CancellationToken cancellationToken = default);
+
+    Task ExportDeviceHealthScriptAsync(DeviceHealthScript script, string outputPath, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+    Task ExportDeviceHealthScriptsAsync(IEnumerable<DeviceHealthScript> scripts, string outputPath, CancellationToken cancellationToken = default);
+
+    Task ExportMacCustomAttributeAsync(DeviceCustomAttributeShellScript script, string outputPath, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+    Task ExportMacCustomAttributesAsync(IEnumerable<DeviceCustomAttributeShellScript> scripts, string outputPath, CancellationToken cancellationToken = default);
+
+    Task ExportFeatureUpdateProfileAsync(WindowsFeatureUpdateProfile profile, string outputPath, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+    Task ExportFeatureUpdateProfilesAsync(IEnumerable<WindowsFeatureUpdateProfile> profiles, string outputPath, CancellationToken cancellationToken = default);
+
+    Task ExportNamedLocationAsync(NamedLocation namedLocation, string outputPath, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+    Task ExportNamedLocationsAsync(IEnumerable<NamedLocation> namedLocations, string outputPath, CancellationToken cancellationToken = default);
+
+    Task ExportAuthenticationStrengthPolicyAsync(AuthenticationStrengthPolicy policy, string outputPath, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+    Task ExportAuthenticationStrengthPoliciesAsync(IEnumerable<AuthenticationStrengthPolicy> policies, string outputPath, CancellationToken cancellationToken = default);
+
+    Task ExportAuthenticationContextAsync(AuthenticationContextClassReference contextClassReference, string outputPath, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+    Task ExportAuthenticationContextsAsync(IEnumerable<AuthenticationContextClassReference> contextClassReferences, string outputPath, CancellationToken cancellationToken = default);
+
+    Task ExportTermsOfUseAgreementAsync(Agreement agreement, string outputPath, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+    Task ExportTermsOfUseAgreementsAsync(IEnumerable<Agreement> agreements, string outputPath, CancellationToken cancellationToken = default);
+
     Task SaveMigrationTableAsync(MigrationTable table, string outputPath, CancellationToken cancellationToken = default);
 }

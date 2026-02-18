@@ -190,6 +190,196 @@ public class ImportServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ImportEndpointSecurityIntentAsync_WithoutService_Throws()
+    {
+        var sut = new ImportService(new StubConfigurationService(), null);
+        var table = new MigrationTable();
+        var export = new EndpointSecurityExport { Intent = new DeviceManagementIntent { Id = "old", DisplayName = "Old" } };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ImportEndpointSecurityIntentAsync(export, table));
+    }
+
+    [Fact]
+    public async Task ImportAdministrativeTemplateAsync_WithoutService_Throws()
+    {
+        var sut = new ImportService(new StubConfigurationService(), null);
+        var table = new MigrationTable();
+        var export = new AdministrativeTemplateExport { Template = new GroupPolicyConfiguration { Id = "old", DisplayName = "Old" } };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ImportAdministrativeTemplateAsync(export, table));
+    }
+
+    [Fact]
+    public async Task ImportEnrollmentConfigurationAsync_WithoutService_Throws()
+    {
+        var sut = new ImportService(new StubConfigurationService(), null);
+        var table = new MigrationTable();
+        var config = new DeviceEnrollmentConfiguration { Id = "old", DisplayName = "Old" };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ImportEnrollmentConfigurationAsync(config, table));
+    }
+
+    [Fact]
+    public async Task ImportAppProtectionPolicyAsync_WithoutService_Throws()
+    {
+        var sut = new ImportService(new StubConfigurationService(), null);
+        var table = new MigrationTable();
+        var policy = new AndroidManagedAppProtection { Id = "old", DisplayName = "Old" };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ImportAppProtectionPolicyAsync(policy, table));
+    }
+
+    [Fact]
+    public async Task ImportManagedDeviceAppConfigurationAsync_WithoutService_Throws()
+    {
+        var sut = new ImportService(new StubConfigurationService(), null);
+        var table = new MigrationTable();
+        var config = new ManagedDeviceMobileAppConfiguration { Id = "old", DisplayName = "Old" };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ImportManagedDeviceAppConfigurationAsync(config, table));
+    }
+
+    [Fact]
+    public async Task ImportTargetedManagedAppConfigurationAsync_WithoutService_Throws()
+    {
+        var sut = new ImportService(new StubConfigurationService(), null);
+        var table = new MigrationTable();
+        var config = new TargetedManagedAppConfiguration { Id = "old", DisplayName = "Old" };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ImportTargetedManagedAppConfigurationAsync(config, table));
+    }
+
+    [Fact]
+    public async Task ImportTermsAndConditionsAsync_WithoutService_Throws()
+    {
+        var sut = new ImportService(new StubConfigurationService(), null);
+        var table = new MigrationTable();
+        var terms = new TermsAndConditions { Id = "old", DisplayName = "Old" };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ImportTermsAndConditionsAsync(terms, table));
+    }
+
+    [Fact]
+    public async Task ImportScopeTagAsync_WithoutService_Throws()
+    {
+        var sut = new ImportService(new StubConfigurationService(), null);
+        var table = new MigrationTable();
+        var scopeTag = new RoleScopeTag { Id = "old", DisplayName = "Old" };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ImportScopeTagAsync(scopeTag, table));
+    }
+
+    [Fact]
+    public async Task ImportRoleDefinitionAsync_WithoutService_Throws()
+    {
+        var sut = new ImportService(new StubConfigurationService(), null);
+        var table = new MigrationTable();
+        var roleDefinition = new RoleDefinition { Id = "old", DisplayName = "Old" };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ImportRoleDefinitionAsync(roleDefinition, table));
+    }
+
+    [Fact]
+    public async Task ImportIntuneBrandingProfileAsync_WithoutService_Throws()
+    {
+        var sut = new ImportService(new StubConfigurationService(), null);
+        var table = new MigrationTable();
+        var profile = new IntuneBrandingProfile { Id = "old", ProfileName = "Old" };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ImportIntuneBrandingProfileAsync(profile, table));
+    }
+
+    [Fact]
+    public async Task ImportAzureBrandingLocalizationAsync_WithoutService_Throws()
+    {
+        var sut = new ImportService(new StubConfigurationService(), null);
+        var table = new MigrationTable();
+        var localization = new OrganizationalBrandingLocalization { Id = "old" };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ImportAzureBrandingLocalizationAsync(localization, table));
+    }
+
+    [Fact]
+    public async Task ImportAutopilotProfileAsync_WithoutService_Throws()
+    {
+        var sut = new ImportService(new StubConfigurationService(), null);
+        var table = new MigrationTable();
+        var profile = new WindowsAutopilotDeploymentProfile { Id = "old", DisplayName = "Old" };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ImportAutopilotProfileAsync(profile, table));
+    }
+
+    [Fact]
+    public async Task ImportDeviceHealthScriptAsync_WithoutService_Throws()
+    {
+        var sut = new ImportService(new StubConfigurationService(), null);
+        var table = new MigrationTable();
+        var script = new DeviceHealthScript { Id = "old", DisplayName = "Old" };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ImportDeviceHealthScriptAsync(script, table));
+    }
+
+    [Fact]
+    public async Task ImportMacCustomAttributeAsync_WithoutService_Throws()
+    {
+        var sut = new ImportService(new StubConfigurationService(), null);
+        var table = new MigrationTable();
+        var script = new DeviceCustomAttributeShellScript { Id = "old", DisplayName = "Old" };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ImportMacCustomAttributeAsync(script, table));
+    }
+
+    [Fact]
+    public async Task ImportFeatureUpdateProfileAsync_WithoutService_Throws()
+    {
+        var sut = new ImportService(new StubConfigurationService(), null);
+        var table = new MigrationTable();
+        var profile = new WindowsFeatureUpdateProfile { Id = "old", DisplayName = "Old" };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ImportFeatureUpdateProfileAsync(profile, table));
+    }
+
+    [Fact]
+    public async Task ImportNamedLocationAsync_WithoutService_Throws()
+    {
+        var sut = new ImportService(new StubConfigurationService(), null);
+        var table = new MigrationTable();
+        var namedLocation = new NamedLocation { Id = "old" };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ImportNamedLocationAsync(namedLocation, table));
+    }
+
+    [Fact]
+    public async Task ImportAuthenticationStrengthPolicyAsync_WithoutService_Throws()
+    {
+        var sut = new ImportService(new StubConfigurationService(), null);
+        var table = new MigrationTable();
+        var policy = new AuthenticationStrengthPolicy { Id = "old", DisplayName = "Old" };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ImportAuthenticationStrengthPolicyAsync(policy, table));
+    }
+
+    [Fact]
+    public async Task ImportAuthenticationContextAsync_WithoutService_Throws()
+    {
+        var sut = new ImportService(new StubConfigurationService(), null);
+        var table = new MigrationTable();
+        var context = new AuthenticationContextClassReference { Id = "old", DisplayName = "Old" };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ImportAuthenticationContextAsync(context, table));
+    }
+
+    [Fact]
+    public async Task ImportTermsOfUseAgreementAsync_WithoutService_Throws()
+    {
+        var sut = new ImportService(new StubConfigurationService(), null);
+        var table = new MigrationTable();
+        var agreement = new Agreement { Id = "old", DisplayName = "Old" };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ImportTermsOfUseAgreementAsync(agreement, table));
+    }
+
+    [Fact]
     public async Task ImportCompliancePolicyAsync_AssignsAndUpdatesMigration()
     {
         var complianceService = new StubComplianceService
@@ -566,6 +756,60 @@ public class ImportServiceTests : IDisposable
         Assert.Equal("new-locale", table.Entries[0].NewId);
     }
 
+    [Fact]
+    public async Task ImportAutopilotProfileAsync_UpdatesMigration()
+    {
+        var autopilotService = new StubAutopilotService
+        {
+            CreateResult = new WindowsAutopilotDeploymentProfile { Id = "new-autopilot", DisplayName = "Created Autopilot" }
+        };
+        var sut = new ImportService(new StubConfigurationService(), null, autopilotService: autopilotService);
+        var table = new MigrationTable();
+
+        var profile = new WindowsAutopilotDeploymentProfile
+        {
+            Id = "old-autopilot",
+            DisplayName = "Source Autopilot"
+        };
+
+        var created = await sut.ImportAutopilotProfileAsync(profile, table);
+
+        Assert.Equal("new-autopilot", created.Id);
+        Assert.NotNull(autopilotService.LastCreatedProfile);
+        Assert.Null(autopilotService.LastCreatedProfile!.Id);
+        Assert.Single(table.Entries);
+        Assert.Equal("AutopilotProfile", table.Entries[0].ObjectType);
+        Assert.Equal("old-autopilot", table.Entries[0].OriginalId);
+        Assert.Equal("new-autopilot", table.Entries[0].NewId);
+    }
+
+    [Fact]
+    public async Task ImportTermsOfUseAgreementAsync_UpdatesMigration()
+    {
+        var termsOfUseService = new StubTermsOfUseService
+        {
+            CreateResult = new Agreement { Id = "new-tou", DisplayName = "Created Terms" }
+        };
+        var sut = new ImportService(new StubConfigurationService(), null, termsOfUseService: termsOfUseService);
+        var table = new MigrationTable();
+
+        var agreement = new Agreement
+        {
+            Id = "old-tou",
+            DisplayName = "Source Terms"
+        };
+
+        var created = await sut.ImportTermsOfUseAgreementAsync(agreement, table);
+
+        Assert.Equal("new-tou", created.Id);
+        Assert.NotNull(termsOfUseService.LastCreatedAgreement);
+        Assert.Null(termsOfUseService.LastCreatedAgreement!.Id);
+        Assert.Single(table.Entries);
+        Assert.Equal("TermsOfUseAgreement", table.Entries[0].ObjectType);
+        Assert.Equal("old-tou", table.Entries[0].OriginalId);
+        Assert.Equal("new-tou", table.Entries[0].NewId);
+    }
+
     private sealed class StubConfigurationService : IConfigurationProfileService
     {
         public DeviceConfiguration? LastCreatedConfig { get; private set; }
@@ -928,6 +1172,54 @@ public class ImportServiceTests : IDisposable
             => Task.FromResult(localization);
 
         public Task DeleteBrandingLocalizationAsync(string id, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+    }
+
+    private sealed class StubAutopilotService : IAutopilotService
+    {
+        public WindowsAutopilotDeploymentProfile? LastCreatedProfile { get; private set; }
+        public WindowsAutopilotDeploymentProfile CreateResult { get; set; } = new() { Id = "created-autopilot", DisplayName = "Created" };
+
+        public Task<List<WindowsAutopilotDeploymentProfile>> ListAutopilotProfilesAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(new List<WindowsAutopilotDeploymentProfile>());
+
+        public Task<WindowsAutopilotDeploymentProfile?> GetAutopilotProfileAsync(string id, CancellationToken cancellationToken = default)
+            => Task.FromResult<WindowsAutopilotDeploymentProfile?>(null);
+
+        public Task<WindowsAutopilotDeploymentProfile> CreateAutopilotProfileAsync(WindowsAutopilotDeploymentProfile profile, CancellationToken cancellationToken = default)
+        {
+            LastCreatedProfile = profile;
+            return Task.FromResult(CreateResult);
+        }
+
+        public Task<WindowsAutopilotDeploymentProfile> UpdateAutopilotProfileAsync(WindowsAutopilotDeploymentProfile profile, CancellationToken cancellationToken = default)
+            => Task.FromResult(profile);
+
+        public Task DeleteAutopilotProfileAsync(string id, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+    }
+
+    private sealed class StubTermsOfUseService : ITermsOfUseService
+    {
+        public Agreement? LastCreatedAgreement { get; private set; }
+        public Agreement CreateResult { get; set; } = new() { Id = "created-tou", DisplayName = "Created" };
+
+        public Task<List<Agreement>> ListTermsOfUseAgreementsAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(new List<Agreement>());
+
+        public Task<Agreement?> GetTermsOfUseAgreementAsync(string id, CancellationToken cancellationToken = default)
+            => Task.FromResult<Agreement?>(null);
+
+        public Task<Agreement> CreateTermsOfUseAgreementAsync(Agreement agreement, CancellationToken cancellationToken = default)
+        {
+            LastCreatedAgreement = agreement;
+            return Task.FromResult(CreateResult);
+        }
+
+        public Task<Agreement> UpdateTermsOfUseAgreementAsync(Agreement agreement, CancellationToken cancellationToken = default)
+            => Task.FromResult(agreement);
+
+        public Task DeleteTermsOfUseAgreementAsync(string id, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
     }
 }

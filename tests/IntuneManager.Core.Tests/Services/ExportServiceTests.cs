@@ -450,4 +450,280 @@ public class ExportServiceTests : IDisposable
         Assert.True(File.Exists(expectedPath));
         Assert.Contains(table.Entries, e => e.ObjectType == "AzureBrandingLocalization" && e.OriginalId == "en-US");
     }
+
+    [Fact]
+    public async Task ExportEndpointSecurityIntents_ExportsMultipleAndWritesMigrationTable()
+    {
+        var intents = new (DeviceManagementIntent Intent, IReadOnlyList<DeviceManagementIntentAssignment> Assignments)[]
+        {
+            (new DeviceManagementIntent { Id = "intent-1", DisplayName = "Endpoint One" }, Array.Empty<DeviceManagementIntentAssignment>()),
+            (new DeviceManagementIntent { Id = "intent-2", DisplayName = "Endpoint Two" }, Array.Empty<DeviceManagementIntentAssignment>())
+        };
+
+        await _service.ExportEndpointSecurityIntentsAsync(intents, _tempDir);
+
+        var folder = Path.Combine(_tempDir, "EndpointSecurity");
+        Assert.Equal(2, Directory.GetFiles(folder, "*.json").Length);
+        Assert.True(File.Exists(Path.Combine(_tempDir, "migration-table.json")));
+    }
+
+    [Fact]
+    public async Task ExportAdministrativeTemplates_ExportsMultipleAndWritesMigrationTable()
+    {
+        var templates = new (GroupPolicyConfiguration Template, IReadOnlyList<GroupPolicyConfigurationAssignment> Assignments)[]
+        {
+            (new GroupPolicyConfiguration { Id = "template-1", DisplayName = "Template One" }, Array.Empty<GroupPolicyConfigurationAssignment>()),
+            (new GroupPolicyConfiguration { Id = "template-2", DisplayName = "Template Two" }, Array.Empty<GroupPolicyConfigurationAssignment>())
+        };
+
+        await _service.ExportAdministrativeTemplatesAsync(templates, _tempDir);
+
+        var folder = Path.Combine(_tempDir, "AdministrativeTemplates");
+        Assert.Equal(2, Directory.GetFiles(folder, "*.json").Length);
+        Assert.True(File.Exists(Path.Combine(_tempDir, "migration-table.json")));
+    }
+
+    [Fact]
+    public async Task ExportEnrollmentConfigurations_ExportsMultipleAndWritesMigrationTable()
+    {
+        var configurations = new[]
+        {
+            new DeviceEnrollmentConfiguration { Id = "enroll-1", DisplayName = "Enrollment One" },
+            new DeviceEnrollmentConfiguration { Id = "enroll-2", DisplayName = "Enrollment Two" }
+        };
+
+        await _service.ExportEnrollmentConfigurationsAsync(configurations, _tempDir);
+
+        var folder = Path.Combine(_tempDir, "EnrollmentConfigurations");
+        Assert.Equal(2, Directory.GetFiles(folder, "*.json").Length);
+        Assert.True(File.Exists(Path.Combine(_tempDir, "migration-table.json")));
+    }
+
+    [Fact]
+    public async Task ExportAppProtectionPolicies_ExportsMultipleAndWritesMigrationTable()
+    {
+        var policies = new ManagedAppPolicy[]
+        {
+            new AndroidManagedAppProtection { Id = "app-protect-1", DisplayName = "Policy One" },
+            new AndroidManagedAppProtection { Id = "app-protect-2", DisplayName = "Policy Two" }
+        };
+
+        await _service.ExportAppProtectionPoliciesAsync(policies, _tempDir);
+
+        var folder = Path.Combine(_tempDir, "AppProtectionPolicies");
+        Assert.Equal(2, Directory.GetFiles(folder, "*.json").Length);
+        Assert.True(File.Exists(Path.Combine(_tempDir, "migration-table.json")));
+    }
+
+    [Fact]
+    public async Task ExportManagedDeviceAppConfigurations_ExportsMultipleAndWritesMigrationTable()
+    {
+        var configurations = new[]
+        {
+            new ManagedDeviceMobileAppConfiguration { Id = "mdac-1", DisplayName = "Managed One" },
+            new ManagedDeviceMobileAppConfiguration { Id = "mdac-2", DisplayName = "Managed Two" }
+        };
+
+        await _service.ExportManagedDeviceAppConfigurationsAsync(configurations, _tempDir);
+
+        var folder = Path.Combine(_tempDir, "ManagedDeviceAppConfigurations");
+        Assert.Equal(2, Directory.GetFiles(folder, "*.json").Length);
+        Assert.True(File.Exists(Path.Combine(_tempDir, "migration-table.json")));
+    }
+
+    [Fact]
+    public async Task ExportTargetedManagedAppConfigurations_ExportsMultipleAndWritesMigrationTable()
+    {
+        var configurations = new[]
+        {
+            new TargetedManagedAppConfiguration { Id = "tmac-1", DisplayName = "Targeted One" },
+            new TargetedManagedAppConfiguration { Id = "tmac-2", DisplayName = "Targeted Two" }
+        };
+
+        await _service.ExportTargetedManagedAppConfigurationsAsync(configurations, _tempDir);
+
+        var folder = Path.Combine(_tempDir, "TargetedManagedAppConfigurations");
+        Assert.Equal(2, Directory.GetFiles(folder, "*.json").Length);
+        Assert.True(File.Exists(Path.Combine(_tempDir, "migration-table.json")));
+    }
+
+    [Fact]
+    public async Task ExportTermsAndConditionsCollection_ExportsMultipleAndWritesMigrationTable()
+    {
+        var termsCollection = new[]
+        {
+            new TermsAndConditions { Id = "terms-1", DisplayName = "Terms One" },
+            new TermsAndConditions { Id = "terms-2", DisplayName = "Terms Two" }
+        };
+
+        await _service.ExportTermsAndConditionsCollectionAsync(termsCollection, _tempDir);
+
+        var folder = Path.Combine(_tempDir, "TermsAndConditions");
+        Assert.Equal(2, Directory.GetFiles(folder, "*.json").Length);
+        Assert.True(File.Exists(Path.Combine(_tempDir, "migration-table.json")));
+    }
+
+    [Fact]
+    public async Task ExportScopeTags_ExportsMultipleAndWritesMigrationTable()
+    {
+        var scopeTags = new[]
+        {
+            new RoleScopeTag { Id = "scope-1", DisplayName = "Scope One" },
+            new RoleScopeTag { Id = "scope-2", DisplayName = "Scope Two" }
+        };
+
+        await _service.ExportScopeTagsAsync(scopeTags, _tempDir);
+
+        var folder = Path.Combine(_tempDir, "ScopeTags");
+        Assert.Equal(2, Directory.GetFiles(folder, "*.json").Length);
+        Assert.True(File.Exists(Path.Combine(_tempDir, "migration-table.json")));
+    }
+
+    [Fact]
+    public async Task ExportRoleDefinitions_ExportsMultipleAndWritesMigrationTable()
+    {
+        var roleDefinitions = new[]
+        {
+            new RoleDefinition { Id = "role-1", DisplayName = "Role One" },
+            new RoleDefinition { Id = "role-2", DisplayName = "Role Two" }
+        };
+
+        await _service.ExportRoleDefinitionsAsync(roleDefinitions, _tempDir);
+
+        var folder = Path.Combine(_tempDir, "RoleDefinitions");
+        Assert.Equal(2, Directory.GetFiles(folder, "*.json").Length);
+        Assert.True(File.Exists(Path.Combine(_tempDir, "migration-table.json")));
+    }
+
+    [Fact]
+    public async Task ExportIntuneBrandingProfiles_ExportsMultipleAndWritesMigrationTable()
+    {
+        var profiles = new[]
+        {
+            new IntuneBrandingProfile { Id = "branding-1", ProfileName = "Branding One" },
+            new IntuneBrandingProfile { Id = "branding-2", ProfileName = "Branding Two" }
+        };
+
+        await _service.ExportIntuneBrandingProfilesAsync(profiles, _tempDir);
+
+        var folder = Path.Combine(_tempDir, "IntuneBrandingProfiles");
+        Assert.Equal(2, Directory.GetFiles(folder, "*.json").Length);
+        Assert.True(File.Exists(Path.Combine(_tempDir, "migration-table.json")));
+    }
+
+    [Fact]
+    public async Task ExportAzureBrandingLocalizations_ExportsMultipleAndWritesMigrationTable()
+    {
+        var localizations = new[]
+        {
+            new OrganizationalBrandingLocalization { Id = "en-US" },
+            new OrganizationalBrandingLocalization { Id = "fr-FR" }
+        };
+
+        await _service.ExportAzureBrandingLocalizationsAsync(localizations, _tempDir);
+
+        var folder = Path.Combine(_tempDir, "AzureBrandingLocalizations");
+        Assert.Equal(2, Directory.GetFiles(folder, "*.json").Length);
+        Assert.True(File.Exists(Path.Combine(_tempDir, "migration-table.json")));
+    }
+
+    [Fact]
+    public async Task ExportAutopilotProfile_CreatesJsonFile()
+    {
+        var profile = new WindowsAutopilotDeploymentProfile { Id = "autopilot-id", DisplayName = "Autopilot One" };
+        var table = new MigrationTable();
+
+        await _service.ExportAutopilotProfileAsync(profile, _tempDir, table);
+
+        Assert.True(File.Exists(Path.Combine(_tempDir, "AutopilotProfiles", "Autopilot One.json")));
+        Assert.Contains(table.Entries, e => e.ObjectType == "AutopilotProfile" && e.OriginalId == "autopilot-id");
+    }
+
+    [Fact]
+    public async Task ExportDeviceHealthScript_CreatesJsonFile()
+    {
+        var script = new DeviceHealthScript { Id = "dhs-id", DisplayName = "Health Script" };
+        var table = new MigrationTable();
+
+        await _service.ExportDeviceHealthScriptAsync(script, _tempDir, table);
+
+        Assert.True(File.Exists(Path.Combine(_tempDir, "DeviceHealthScripts", "Health Script.json")));
+        Assert.Contains(table.Entries, e => e.ObjectType == "DeviceHealthScript" && e.OriginalId == "dhs-id");
+    }
+
+    [Fact]
+    public async Task ExportMacCustomAttribute_CreatesJsonFile()
+    {
+        var script = new DeviceCustomAttributeShellScript { Id = "mac-id", DisplayName = "Mac Attr" };
+        var table = new MigrationTable();
+
+        await _service.ExportMacCustomAttributeAsync(script, _tempDir, table);
+
+        Assert.True(File.Exists(Path.Combine(_tempDir, "MacCustomAttributes", "Mac Attr.json")));
+        Assert.Contains(table.Entries, e => e.ObjectType == "MacCustomAttribute" && e.OriginalId == "mac-id");
+    }
+
+    [Fact]
+    public async Task ExportFeatureUpdateProfile_CreatesJsonFile()
+    {
+        var profile = new WindowsFeatureUpdateProfile { Id = "fup-id", DisplayName = "Feature Update" };
+        var table = new MigrationTable();
+
+        await _service.ExportFeatureUpdateProfileAsync(profile, _tempDir, table);
+
+        Assert.True(File.Exists(Path.Combine(_tempDir, "FeatureUpdates", "Feature Update.json")));
+        Assert.Contains(table.Entries, e => e.ObjectType == "FeatureUpdateProfile" && e.OriginalId == "fup-id");
+    }
+
+    [Fact]
+    public async Task ExportNamedLocation_CreatesJsonFile()
+    {
+        var namedLocation = new NamedLocation
+        {
+            Id = "named-loc-id",
+            AdditionalData = new Dictionary<string, object> { ["displayName"] = "HQ" }
+        };
+        var table = new MigrationTable();
+
+        await _service.ExportNamedLocationAsync(namedLocation, _tempDir, table);
+
+        Assert.True(File.Exists(Path.Combine(_tempDir, "NamedLocations", "HQ.json")));
+        Assert.Contains(table.Entries, e => e.ObjectType == "NamedLocation" && e.OriginalId == "named-loc-id");
+    }
+
+    [Fact]
+    public async Task ExportAuthenticationStrengthPolicy_CreatesJsonFile()
+    {
+        var policy = new AuthenticationStrengthPolicy { Id = "asp-id", DisplayName = "Strong MFA" };
+        var table = new MigrationTable();
+
+        await _service.ExportAuthenticationStrengthPolicyAsync(policy, _tempDir, table);
+
+        Assert.True(File.Exists(Path.Combine(_tempDir, "AuthenticationStrengths", "Strong MFA.json")));
+        Assert.Contains(table.Entries, e => e.ObjectType == "AuthenticationStrengthPolicy" && e.OriginalId == "asp-id");
+    }
+
+    [Fact]
+    public async Task ExportAuthenticationContext_CreatesJsonFile()
+    {
+        var context = new AuthenticationContextClassReference { Id = "ctx-id", DisplayName = "Context One" };
+        var table = new MigrationTable();
+
+        await _service.ExportAuthenticationContextAsync(context, _tempDir, table);
+
+        Assert.True(File.Exists(Path.Combine(_tempDir, "AuthenticationContexts", "Context One.json")));
+        Assert.Contains(table.Entries, e => e.ObjectType == "AuthenticationContext" && e.OriginalId == "ctx-id");
+    }
+
+    [Fact]
+    public async Task ExportTermsOfUseAgreement_CreatesJsonFile()
+    {
+        var agreement = new Agreement { Id = "tou-id", DisplayName = "Employee Terms" };
+        var table = new MigrationTable();
+
+        await _service.ExportTermsOfUseAgreementAsync(agreement, _tempDir, table);
+
+        Assert.True(File.Exists(Path.Combine(_tempDir, "TermsOfUse", "Employee Terms.json")));
+        Assert.Contains(table.Entries, e => e.ObjectType == "TermsOfUseAgreement" && e.OriginalId == "tou-id");
+    }
 }

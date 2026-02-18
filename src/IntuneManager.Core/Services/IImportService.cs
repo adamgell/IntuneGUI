@@ -57,4 +57,36 @@ public interface IImportService
     Task<OrganizationalBrandingLocalization?> ReadAzureBrandingLocalizationAsync(string filePath, CancellationToken cancellationToken = default);
     Task<List<OrganizationalBrandingLocalization>> ReadAzureBrandingLocalizationsFromFolderAsync(string folderPath, CancellationToken cancellationToken = default);
     Task<OrganizationalBrandingLocalization> ImportAzureBrandingLocalizationAsync(OrganizationalBrandingLocalization localization, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+
+    Task<WindowsAutopilotDeploymentProfile?> ReadAutopilotProfileAsync(string filePath, CancellationToken cancellationToken = default);
+    Task<List<WindowsAutopilotDeploymentProfile>> ReadAutopilotProfilesFromFolderAsync(string folderPath, CancellationToken cancellationToken = default);
+    Task<WindowsAutopilotDeploymentProfile> ImportAutopilotProfileAsync(WindowsAutopilotDeploymentProfile profile, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+
+    Task<DeviceHealthScript?> ReadDeviceHealthScriptAsync(string filePath, CancellationToken cancellationToken = default);
+    Task<List<DeviceHealthScript>> ReadDeviceHealthScriptsFromFolderAsync(string folderPath, CancellationToken cancellationToken = default);
+    Task<DeviceHealthScript> ImportDeviceHealthScriptAsync(DeviceHealthScript script, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+
+    Task<DeviceCustomAttributeShellScript?> ReadMacCustomAttributeAsync(string filePath, CancellationToken cancellationToken = default);
+    Task<List<DeviceCustomAttributeShellScript>> ReadMacCustomAttributesFromFolderAsync(string folderPath, CancellationToken cancellationToken = default);
+    Task<DeviceCustomAttributeShellScript> ImportMacCustomAttributeAsync(DeviceCustomAttributeShellScript script, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+
+    Task<WindowsFeatureUpdateProfile?> ReadFeatureUpdateProfileAsync(string filePath, CancellationToken cancellationToken = default);
+    Task<List<WindowsFeatureUpdateProfile>> ReadFeatureUpdateProfilesFromFolderAsync(string folderPath, CancellationToken cancellationToken = default);
+    Task<WindowsFeatureUpdateProfile> ImportFeatureUpdateProfileAsync(WindowsFeatureUpdateProfile profile, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+
+    Task<NamedLocation?> ReadNamedLocationAsync(string filePath, CancellationToken cancellationToken = default);
+    Task<List<NamedLocation>> ReadNamedLocationsFromFolderAsync(string folderPath, CancellationToken cancellationToken = default);
+    Task<NamedLocation> ImportNamedLocationAsync(NamedLocation namedLocation, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+
+    Task<AuthenticationStrengthPolicy?> ReadAuthenticationStrengthPolicyAsync(string filePath, CancellationToken cancellationToken = default);
+    Task<List<AuthenticationStrengthPolicy>> ReadAuthenticationStrengthPoliciesFromFolderAsync(string folderPath, CancellationToken cancellationToken = default);
+    Task<AuthenticationStrengthPolicy> ImportAuthenticationStrengthPolicyAsync(AuthenticationStrengthPolicy policy, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+
+    Task<AuthenticationContextClassReference?> ReadAuthenticationContextAsync(string filePath, CancellationToken cancellationToken = default);
+    Task<List<AuthenticationContextClassReference>> ReadAuthenticationContextsFromFolderAsync(string folderPath, CancellationToken cancellationToken = default);
+    Task<AuthenticationContextClassReference> ImportAuthenticationContextAsync(AuthenticationContextClassReference contextClassReference, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+
+    Task<Agreement?> ReadTermsOfUseAgreementAsync(string filePath, CancellationToken cancellationToken = default);
+    Task<List<Agreement>> ReadTermsOfUseAgreementsFromFolderAsync(string folderPath, CancellationToken cancellationToken = default);
+    Task<Agreement> ImportTermsOfUseAgreementAsync(Agreement agreement, MigrationTable migrationTable, CancellationToken cancellationToken = default);
 }
