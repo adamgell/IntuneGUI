@@ -383,4 +383,71 @@ public class ExportServiceTests : IDisposable
         Assert.True(File.Exists(expectedPath));
         Assert.Contains(table.Entries, e => e.ObjectType == "TermsAndConditions" && e.OriginalId == "terms-id");
     }
+
+    [Fact]
+    public async Task ExportScopeTag_CreatesJsonFile()
+    {
+        var scopeTag = new RoleScopeTag
+        {
+            Id = "scope-id",
+            DisplayName = "Scope Tag One"
+        };
+        var table = new MigrationTable();
+
+        await _service.ExportScopeTagAsync(scopeTag, _tempDir, table);
+
+        var expectedPath = Path.Combine(_tempDir, "ScopeTags", "Scope Tag One.json");
+        Assert.True(File.Exists(expectedPath));
+        Assert.Contains(table.Entries, e => e.ObjectType == "ScopeTag" && e.OriginalId == "scope-id");
+    }
+
+    [Fact]
+    public async Task ExportRoleDefinition_CreatesJsonFile()
+    {
+        var roleDefinition = new RoleDefinition
+        {
+            Id = "role-id",
+            DisplayName = "Role Definition One"
+        };
+        var table = new MigrationTable();
+
+        await _service.ExportRoleDefinitionAsync(roleDefinition, _tempDir, table);
+
+        var expectedPath = Path.Combine(_tempDir, "RoleDefinitions", "Role Definition One.json");
+        Assert.True(File.Exists(expectedPath));
+        Assert.Contains(table.Entries, e => e.ObjectType == "RoleDefinition" && e.OriginalId == "role-id");
+    }
+
+    [Fact]
+    public async Task ExportIntuneBrandingProfile_CreatesJsonFile()
+    {
+        var profile = new IntuneBrandingProfile
+        {
+            Id = "branding-id",
+            ProfileName = "Branding Profile One"
+        };
+        var table = new MigrationTable();
+
+        await _service.ExportIntuneBrandingProfileAsync(profile, _tempDir, table);
+
+        var expectedPath = Path.Combine(_tempDir, "IntuneBrandingProfiles", "Branding Profile One.json");
+        Assert.True(File.Exists(expectedPath));
+        Assert.Contains(table.Entries, e => e.ObjectType == "IntuneBrandingProfile" && e.OriginalId == "branding-id");
+    }
+
+    [Fact]
+    public async Task ExportAzureBrandingLocalization_CreatesJsonFile()
+    {
+        var localization = new OrganizationalBrandingLocalization
+        {
+            Id = "en-US"
+        };
+        var table = new MigrationTable();
+
+        await _service.ExportAzureBrandingLocalizationAsync(localization, _tempDir, table);
+
+        var expectedPath = Path.Combine(_tempDir, "AzureBrandingLocalizations", "en-US.json");
+        Assert.True(File.Exists(expectedPath));
+        Assert.Contains(table.Entries, e => e.ObjectType == "AzureBrandingLocalization" && e.OriginalId == "en-US");
+    }
 }

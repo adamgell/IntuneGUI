@@ -459,6 +459,113 @@ public class ImportServiceTests : IDisposable
         Assert.Equal("new-terms", table.Entries[0].NewId);
     }
 
+    [Fact]
+    public async Task ImportScopeTagAsync_UpdatesMigration()
+    {
+        var scopeTagService = new StubScopeTagService
+        {
+            CreateResult = new RoleScopeTag { Id = "new-scope", DisplayName = "Created Scope" }
+        };
+        var sut = new ImportService(new StubConfigurationService(), null, scopeTagService: scopeTagService);
+        var table = new MigrationTable();
+
+        var scopeTag = new RoleScopeTag
+        {
+            Id = "old-scope",
+            DisplayName = "Source Scope"
+        };
+
+        var created = await sut.ImportScopeTagAsync(scopeTag, table);
+
+        Assert.Equal("new-scope", created.Id);
+        Assert.NotNull(scopeTagService.LastCreatedScopeTag);
+        Assert.Null(scopeTagService.LastCreatedScopeTag!.Id);
+        Assert.Single(table.Entries);
+        Assert.Equal("ScopeTag", table.Entries[0].ObjectType);
+        Assert.Equal("old-scope", table.Entries[0].OriginalId);
+        Assert.Equal("new-scope", table.Entries[0].NewId);
+    }
+
+    [Fact]
+    public async Task ImportRoleDefinitionAsync_UpdatesMigration()
+    {
+        var roleDefinitionService = new StubRoleDefinitionService
+        {
+            CreateResult = new RoleDefinition { Id = "new-role", DisplayName = "Created Role" }
+        };
+        var sut = new ImportService(new StubConfigurationService(), null, roleDefinitionService: roleDefinitionService);
+        var table = new MigrationTable();
+
+        var roleDefinition = new RoleDefinition
+        {
+            Id = "old-role",
+            DisplayName = "Source Role"
+        };
+
+        var created = await sut.ImportRoleDefinitionAsync(roleDefinition, table);
+
+        Assert.Equal("new-role", created.Id);
+        Assert.NotNull(roleDefinitionService.LastCreatedRoleDefinition);
+        Assert.Null(roleDefinitionService.LastCreatedRoleDefinition!.Id);
+        Assert.Single(table.Entries);
+        Assert.Equal("RoleDefinition", table.Entries[0].ObjectType);
+        Assert.Equal("old-role", table.Entries[0].OriginalId);
+        Assert.Equal("new-role", table.Entries[0].NewId);
+    }
+
+    [Fact]
+    public async Task ImportIntuneBrandingProfileAsync_UpdatesMigration()
+    {
+        var brandingService = new StubIntuneBrandingService
+        {
+            CreateResult = new IntuneBrandingProfile { Id = "new-branding", ProfileName = "Created Branding" }
+        };
+        var sut = new ImportService(new StubConfigurationService(), null, intuneBrandingService: brandingService);
+        var table = new MigrationTable();
+
+        var profile = new IntuneBrandingProfile
+        {
+            Id = "old-branding",
+            ProfileName = "Source Branding"
+        };
+
+        var created = await sut.ImportIntuneBrandingProfileAsync(profile, table);
+
+        Assert.Equal("new-branding", created.Id);
+        Assert.NotNull(brandingService.LastCreatedProfile);
+        Assert.Null(brandingService.LastCreatedProfile!.Id);
+        Assert.Single(table.Entries);
+        Assert.Equal("IntuneBrandingProfile", table.Entries[0].ObjectType);
+        Assert.Equal("old-branding", table.Entries[0].OriginalId);
+        Assert.Equal("new-branding", table.Entries[0].NewId);
+    }
+
+    [Fact]
+    public async Task ImportAzureBrandingLocalizationAsync_UpdatesMigration()
+    {
+        var azureBrandingService = new StubAzureBrandingService
+        {
+            CreateResult = new OrganizationalBrandingLocalization { Id = "new-locale" }
+        };
+        var sut = new ImportService(new StubConfigurationService(), null, azureBrandingService: azureBrandingService);
+        var table = new MigrationTable();
+
+        var localization = new OrganizationalBrandingLocalization
+        {
+            Id = "old-locale"
+        };
+
+        var created = await sut.ImportAzureBrandingLocalizationAsync(localization, table);
+
+        Assert.Equal("new-locale", created.Id);
+        Assert.NotNull(azureBrandingService.LastCreatedLocalization);
+        Assert.Null(azureBrandingService.LastCreatedLocalization!.Id);
+        Assert.Single(table.Entries);
+        Assert.Equal("AzureBrandingLocalization", table.Entries[0].ObjectType);
+        Assert.Equal("old-locale", table.Entries[0].OriginalId);
+        Assert.Equal("new-locale", table.Entries[0].NewId);
+    }
+
     private sealed class StubConfigurationService : IConfigurationProfileService
     {
         public DeviceConfiguration? LastCreatedConfig { get; private set; }
@@ -725,6 +832,102 @@ public class ImportServiceTests : IDisposable
             => Task.FromResult(termsAndConditions);
 
         public Task DeleteTermsAndConditionsAsync(string id, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+    }
+
+    private sealed class StubScopeTagService : IScopeTagService
+    {
+        public RoleScopeTag? LastCreatedScopeTag { get; private set; }
+        public RoleScopeTag CreateResult { get; set; } = new() { Id = "created-scope", DisplayName = "Created" };
+
+        public Task<List<RoleScopeTag>> ListScopeTagsAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(new List<RoleScopeTag>());
+
+        public Task<RoleScopeTag?> GetScopeTagAsync(string id, CancellationToken cancellationToken = default)
+            => Task.FromResult<RoleScopeTag?>(null);
+
+        public Task<RoleScopeTag> CreateScopeTagAsync(RoleScopeTag scopeTag, CancellationToken cancellationToken = default)
+        {
+            LastCreatedScopeTag = scopeTag;
+            return Task.FromResult(CreateResult);
+        }
+
+        public Task<RoleScopeTag> UpdateScopeTagAsync(RoleScopeTag scopeTag, CancellationToken cancellationToken = default)
+            => Task.FromResult(scopeTag);
+
+        public Task DeleteScopeTagAsync(string id, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+    }
+
+    private sealed class StubRoleDefinitionService : IRoleDefinitionService
+    {
+        public RoleDefinition? LastCreatedRoleDefinition { get; private set; }
+        public RoleDefinition CreateResult { get; set; } = new() { Id = "created-role", DisplayName = "Created" };
+
+        public Task<List<RoleDefinition>> ListRoleDefinitionsAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(new List<RoleDefinition>());
+
+        public Task<RoleDefinition?> GetRoleDefinitionAsync(string id, CancellationToken cancellationToken = default)
+            => Task.FromResult<RoleDefinition?>(null);
+
+        public Task<RoleDefinition> CreateRoleDefinitionAsync(RoleDefinition roleDefinition, CancellationToken cancellationToken = default)
+        {
+            LastCreatedRoleDefinition = roleDefinition;
+            return Task.FromResult(CreateResult);
+        }
+
+        public Task<RoleDefinition> UpdateRoleDefinitionAsync(RoleDefinition roleDefinition, CancellationToken cancellationToken = default)
+            => Task.FromResult(roleDefinition);
+
+        public Task DeleteRoleDefinitionAsync(string id, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+    }
+
+    private sealed class StubIntuneBrandingService : IIntuneBrandingService
+    {
+        public IntuneBrandingProfile? LastCreatedProfile { get; private set; }
+        public IntuneBrandingProfile CreateResult { get; set; } = new() { Id = "created-branding", ProfileName = "Created" };
+
+        public Task<List<IntuneBrandingProfile>> ListIntuneBrandingProfilesAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(new List<IntuneBrandingProfile>());
+
+        public Task<IntuneBrandingProfile?> GetIntuneBrandingProfileAsync(string id, CancellationToken cancellationToken = default)
+            => Task.FromResult<IntuneBrandingProfile?>(null);
+
+        public Task<IntuneBrandingProfile> CreateIntuneBrandingProfileAsync(IntuneBrandingProfile profile, CancellationToken cancellationToken = default)
+        {
+            LastCreatedProfile = profile;
+            return Task.FromResult(CreateResult);
+        }
+
+        public Task<IntuneBrandingProfile> UpdateIntuneBrandingProfileAsync(IntuneBrandingProfile profile, CancellationToken cancellationToken = default)
+            => Task.FromResult(profile);
+
+        public Task DeleteIntuneBrandingProfileAsync(string id, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+    }
+
+    private sealed class StubAzureBrandingService : IAzureBrandingService
+    {
+        public OrganizationalBrandingLocalization? LastCreatedLocalization { get; private set; }
+        public OrganizationalBrandingLocalization CreateResult { get; set; } = new() { Id = "created-locale" };
+
+        public Task<List<OrganizationalBrandingLocalization>> ListBrandingLocalizationsAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(new List<OrganizationalBrandingLocalization>());
+
+        public Task<OrganizationalBrandingLocalization?> GetBrandingLocalizationAsync(string id, CancellationToken cancellationToken = default)
+            => Task.FromResult<OrganizationalBrandingLocalization?>(null);
+
+        public Task<OrganizationalBrandingLocalization> CreateBrandingLocalizationAsync(OrganizationalBrandingLocalization localization, CancellationToken cancellationToken = default)
+        {
+            LastCreatedLocalization = localization;
+            return Task.FromResult(CreateResult);
+        }
+
+        public Task<OrganizationalBrandingLocalization> UpdateBrandingLocalizationAsync(OrganizationalBrandingLocalization localization, CancellationToken cancellationToken = default)
+            => Task.FromResult(localization);
+
+        public Task DeleteBrandingLocalizationAsync(string id, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
     }
 }

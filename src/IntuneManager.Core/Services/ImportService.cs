@@ -14,6 +14,10 @@ public class ImportService : IImportService
     private readonly IAppProtectionPolicyService? _appProtectionPolicyService;
     private readonly IManagedAppConfigurationService? _managedAppConfigurationService;
     private readonly ITermsAndConditionsService? _termsAndConditionsService;
+    private readonly IScopeTagService? _scopeTagService;
+    private readonly IRoleDefinitionService? _roleDefinitionService;
+    private readonly IIntuneBrandingService? _intuneBrandingService;
+    private readonly IAzureBrandingService? _azureBrandingService;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -28,7 +32,11 @@ public class ImportService : IImportService
         IEnrollmentConfigurationService? enrollmentConfigurationService = null,
         IAppProtectionPolicyService? appProtectionPolicyService = null,
         IManagedAppConfigurationService? managedAppConfigurationService = null,
-        ITermsAndConditionsService? termsAndConditionsService = null)
+        ITermsAndConditionsService? termsAndConditionsService = null,
+        IScopeTagService? scopeTagService = null,
+        IRoleDefinitionService? roleDefinitionService = null,
+        IIntuneBrandingService? intuneBrandingService = null,
+        IAzureBrandingService? azureBrandingService = null)
     {
         _configProfileService = configProfileService;
         _compliancePolicyService = compliancePolicyService;
@@ -38,6 +46,10 @@ public class ImportService : IImportService
         _appProtectionPolicyService = appProtectionPolicyService;
         _managedAppConfigurationService = managedAppConfigurationService;
         _termsAndConditionsService = termsAndConditionsService;
+        _scopeTagService = scopeTagService;
+        _roleDefinitionService = roleDefinitionService;
+        _intuneBrandingService = intuneBrandingService;
+        _azureBrandingService = azureBrandingService;
     }
 
     public async Task<DeviceConfiguration?> ReadDeviceConfigurationAsync(string filePath, CancellationToken cancellationToken = default)
@@ -569,6 +581,214 @@ public class ImportService : IImportService
                 OriginalId = originalId,
                 NewId = created.Id,
                 Name = created.DisplayName ?? "Unknown"
+            });
+        }
+
+        return created;
+    }
+
+    public async Task<RoleScopeTag?> ReadScopeTagAsync(string filePath, CancellationToken cancellationToken = default)
+    {
+        var json = await File.ReadAllTextAsync(filePath, cancellationToken);
+        return JsonSerializer.Deserialize<RoleScopeTag>(json, JsonOptions);
+    }
+
+    public async Task<List<RoleScopeTag>> ReadScopeTagsFromFolderAsync(string folderPath, CancellationToken cancellationToken = default)
+    {
+        var results = new List<RoleScopeTag>();
+        var folder = Path.Combine(folderPath, "ScopeTags");
+
+        if (!Directory.Exists(folder))
+            return results;
+
+        foreach (var file in Directory.GetFiles(folder, "*.json"))
+        {
+            var scopeTag = await ReadScopeTagAsync(file, cancellationToken);
+            if (scopeTag != null)
+                results.Add(scopeTag);
+        }
+
+        return results;
+    }
+
+    public async Task<RoleScopeTag> ImportScopeTagAsync(
+        RoleScopeTag scopeTag,
+        MigrationTable migrationTable,
+        CancellationToken cancellationToken = default)
+    {
+        if (_scopeTagService == null)
+            throw new InvalidOperationException("Scope tag service is not available");
+
+        var originalId = scopeTag.Id;
+
+        scopeTag.Id = null;
+
+        var created = await _scopeTagService.CreateScopeTagAsync(scopeTag, cancellationToken);
+
+        if (originalId != null && created.Id != null)
+        {
+            migrationTable.AddOrUpdate(new MigrationEntry
+            {
+                ObjectType = "ScopeTag",
+                OriginalId = originalId,
+                NewId = created.Id,
+                Name = created.DisplayName ?? "Unknown"
+            });
+        }
+
+        return created;
+    }
+
+    public async Task<RoleDefinition?> ReadRoleDefinitionAsync(string filePath, CancellationToken cancellationToken = default)
+    {
+        var json = await File.ReadAllTextAsync(filePath, cancellationToken);
+        return JsonSerializer.Deserialize<RoleDefinition>(json, JsonOptions);
+    }
+
+    public async Task<List<RoleDefinition>> ReadRoleDefinitionsFromFolderAsync(string folderPath, CancellationToken cancellationToken = default)
+    {
+        var results = new List<RoleDefinition>();
+        var folder = Path.Combine(folderPath, "RoleDefinitions");
+
+        if (!Directory.Exists(folder))
+            return results;
+
+        foreach (var file in Directory.GetFiles(folder, "*.json"))
+        {
+            var roleDefinition = await ReadRoleDefinitionAsync(file, cancellationToken);
+            if (roleDefinition != null)
+                results.Add(roleDefinition);
+        }
+
+        return results;
+    }
+
+    public async Task<RoleDefinition> ImportRoleDefinitionAsync(
+        RoleDefinition roleDefinition,
+        MigrationTable migrationTable,
+        CancellationToken cancellationToken = default)
+    {
+        if (_roleDefinitionService == null)
+            throw new InvalidOperationException("Role definition service is not available");
+
+        var originalId = roleDefinition.Id;
+
+        roleDefinition.Id = null;
+
+        var created = await _roleDefinitionService.CreateRoleDefinitionAsync(roleDefinition, cancellationToken);
+
+        if (originalId != null && created.Id != null)
+        {
+            migrationTable.AddOrUpdate(new MigrationEntry
+            {
+                ObjectType = "RoleDefinition",
+                OriginalId = originalId,
+                NewId = created.Id,
+                Name = created.DisplayName ?? "Unknown"
+            });
+        }
+
+        return created;
+    }
+
+    public async Task<IntuneBrandingProfile?> ReadIntuneBrandingProfileAsync(string filePath, CancellationToken cancellationToken = default)
+    {
+        var json = await File.ReadAllTextAsync(filePath, cancellationToken);
+        return JsonSerializer.Deserialize<IntuneBrandingProfile>(json, JsonOptions);
+    }
+
+    public async Task<List<IntuneBrandingProfile>> ReadIntuneBrandingProfilesFromFolderAsync(string folderPath, CancellationToken cancellationToken = default)
+    {
+        var results = new List<IntuneBrandingProfile>();
+        var folder = Path.Combine(folderPath, "IntuneBrandingProfiles");
+
+        if (!Directory.Exists(folder))
+            return results;
+
+        foreach (var file in Directory.GetFiles(folder, "*.json"))
+        {
+            var profile = await ReadIntuneBrandingProfileAsync(file, cancellationToken);
+            if (profile != null)
+                results.Add(profile);
+        }
+
+        return results;
+    }
+
+    public async Task<IntuneBrandingProfile> ImportIntuneBrandingProfileAsync(
+        IntuneBrandingProfile profile,
+        MigrationTable migrationTable,
+        CancellationToken cancellationToken = default)
+    {
+        if (_intuneBrandingService == null)
+            throw new InvalidOperationException("Intune branding service is not available");
+
+        var originalId = profile.Id;
+
+        profile.Id = null;
+
+        var created = await _intuneBrandingService.CreateIntuneBrandingProfileAsync(profile, cancellationToken);
+
+        if (originalId != null && created.Id != null)
+        {
+            migrationTable.AddOrUpdate(new MigrationEntry
+            {
+                ObjectType = "IntuneBrandingProfile",
+                OriginalId = originalId,
+                NewId = created.Id,
+                Name = created.ProfileName ?? "Unknown"
+            });
+        }
+
+        return created;
+    }
+
+    public async Task<OrganizationalBrandingLocalization?> ReadAzureBrandingLocalizationAsync(string filePath, CancellationToken cancellationToken = default)
+    {
+        var json = await File.ReadAllTextAsync(filePath, cancellationToken);
+        return JsonSerializer.Deserialize<OrganizationalBrandingLocalization>(json, JsonOptions);
+    }
+
+    public async Task<List<OrganizationalBrandingLocalization>> ReadAzureBrandingLocalizationsFromFolderAsync(string folderPath, CancellationToken cancellationToken = default)
+    {
+        var results = new List<OrganizationalBrandingLocalization>();
+        var folder = Path.Combine(folderPath, "AzureBrandingLocalizations");
+
+        if (!Directory.Exists(folder))
+            return results;
+
+        foreach (var file in Directory.GetFiles(folder, "*.json"))
+        {
+            var localization = await ReadAzureBrandingLocalizationAsync(file, cancellationToken);
+            if (localization != null)
+                results.Add(localization);
+        }
+
+        return results;
+    }
+
+    public async Task<OrganizationalBrandingLocalization> ImportAzureBrandingLocalizationAsync(
+        OrganizationalBrandingLocalization localization,
+        MigrationTable migrationTable,
+        CancellationToken cancellationToken = default)
+    {
+        if (_azureBrandingService == null)
+            throw new InvalidOperationException("Azure branding service is not available");
+
+        var originalId = localization.Id;
+
+        localization.Id = null;
+
+        var created = await _azureBrandingService.CreateBrandingLocalizationAsync(localization, cancellationToken);
+
+        if (originalId != null && created.Id != null)
+        {
+            migrationTable.AddOrUpdate(new MigrationEntry
+            {
+                ObjectType = "AzureBrandingLocalization",
+                OriginalId = originalId,
+                NewId = created.Id,
+                Name = created.Id ?? "Unknown"
             });
         }
 

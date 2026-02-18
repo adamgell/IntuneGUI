@@ -35,5 +35,17 @@ public interface IExportService
     Task ExportTermsAndConditionsAsync(TermsAndConditions termsAndConditions, string outputPath, MigrationTable migrationTable, CancellationToken cancellationToken = default);
     Task ExportTermsAndConditionsCollectionAsync(IEnumerable<TermsAndConditions> termsCollection, string outputPath, CancellationToken cancellationToken = default);
 
+    Task ExportScopeTagAsync(RoleScopeTag scopeTag, string outputPath, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+    Task ExportScopeTagsAsync(IEnumerable<RoleScopeTag> scopeTags, string outputPath, CancellationToken cancellationToken = default);
+
+    Task ExportRoleDefinitionAsync(RoleDefinition roleDefinition, string outputPath, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+    Task ExportRoleDefinitionsAsync(IEnumerable<RoleDefinition> roleDefinitions, string outputPath, CancellationToken cancellationToken = default);
+
+    Task ExportIntuneBrandingProfileAsync(IntuneBrandingProfile profile, string outputPath, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+    Task ExportIntuneBrandingProfilesAsync(IEnumerable<IntuneBrandingProfile> profiles, string outputPath, CancellationToken cancellationToken = default);
+
+    Task ExportAzureBrandingLocalizationAsync(OrganizationalBrandingLocalization localization, string outputPath, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+    Task ExportAzureBrandingLocalizationsAsync(IEnumerable<OrganizationalBrandingLocalization> localizations, string outputPath, CancellationToken cancellationToken = default);
+
     Task SaveMigrationTableAsync(MigrationTable table, string outputPath, CancellationToken cancellationToken = default);
 }

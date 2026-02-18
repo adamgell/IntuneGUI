@@ -42,6 +42,10 @@ public partial class MainWindowViewModel : ViewModelBase
     private const string CacheKeyManagedDeviceAppConfigurations = "ManagedDeviceAppConfigurations";
     private const string CacheKeyTargetedManagedAppConfigurations = "TargetedManagedAppConfigurations";
     private const string CacheKeyTermsAndConditions = "TermsAndConditions";
+    private const string CacheKeyScopeTags = "ScopeTags";
+    private const string CacheKeyRoleDefinitions = "RoleDefinitions";
+    private const string CacheKeyIntuneBrandingProfiles = "IntuneBrandingProfiles";
+    private const string CacheKeyAzureBrandingLocalizations = "AzureBrandingLocalizations";
     private const string CacheKeyAppAssignments = "AppAssignments";
     private const string CacheKeyDynamicGroups = "DynamicGroups";
     private const string CacheKeyAssignedGroups = "AssignedGroups";
@@ -62,6 +66,10 @@ public partial class MainWindowViewModel : ViewModelBase
     private IAppProtectionPolicyService? _appProtectionPolicyService;
     private IManagedAppConfigurationService? _managedAppConfigurationService;
     private ITermsAndConditionsService? _termsAndConditionsService;
+    private IScopeTagService? _scopeTagService;
+    private IRoleDefinitionService? _roleDefinitionService;
+    private IIntuneBrandingService? _intuneBrandingService;
+    private IAzureBrandingService? _azureBrandingService;
 
     [ObservableProperty]
     private ViewModelBase? _currentView;
@@ -105,6 +113,10 @@ public partial class MainWindowViewModel : ViewModelBase
         new NavCategory { Name = "Managed Device App Configurations", Icon = "📱" },
         new NavCategory { Name = "Targeted Managed App Configurations", Icon = "🎯" },
         new NavCategory { Name = "Terms and Conditions", Icon = "📜" },
+        new NavCategory { Name = "Scope Tags", Icon = "🏷" },
+        new NavCategory { Name = "Role Definitions", Icon = "🧑‍💼" },
+        new NavCategory { Name = "Intune Branding", Icon = "🎨" },
+        new NavCategory { Name = "Azure Branding", Icon = "🟦" },
         new NavCategory { Name = "Conditional Access", Icon = "🔐" },
         new NavCategory { Name = "Assignment Filters", Icon = "🧩" },
         new NavCategory { Name = "Policy Sets", Icon = "🗂" },
@@ -205,6 +217,42 @@ public partial class MainWindowViewModel : ViewModelBase
     private TermsAndConditions? _selectedTermsAndConditions;
 
     private bool _termsAndConditionsLoaded;
+
+    // --- Scope Tags ---
+    [ObservableProperty]
+    private ObservableCollection<RoleScopeTag> _scopeTags = [];
+
+    [ObservableProperty]
+    private RoleScopeTag? _selectedScopeTag;
+
+    private bool _scopeTagsLoaded;
+
+    // --- Role Definitions ---
+    [ObservableProperty]
+    private ObservableCollection<RoleDefinition> _roleDefinitions = [];
+
+    [ObservableProperty]
+    private RoleDefinition? _selectedRoleDefinition;
+
+    private bool _roleDefinitionsLoaded;
+
+    // --- Intune Branding ---
+    [ObservableProperty]
+    private ObservableCollection<IntuneBrandingProfile> _intuneBrandingProfiles = [];
+
+    [ObservableProperty]
+    private IntuneBrandingProfile? _selectedIntuneBrandingProfile;
+
+    private bool _intuneBrandingProfilesLoaded;
+
+    // --- Azure Branding ---
+    [ObservableProperty]
+    private ObservableCollection<OrganizationalBrandingLocalization> _azureBrandingLocalizations = [];
+
+    [ObservableProperty]
+    private OrganizationalBrandingLocalization? _selectedAzureBrandingLocalization;
+
+    private bool _azureBrandingLocalizationsLoaded;
 
     // --- Conditional Access ---
     [ObservableProperty]
@@ -322,6 +370,10 @@ public partial class MainWindowViewModel : ViewModelBase
             ?? SelectedManagedDeviceAppConfiguration as object
             ?? SelectedTargetedManagedAppConfiguration as object
             ?? SelectedTermsAndConditions as object
+            ?? SelectedScopeTag as object
+            ?? SelectedRoleDefinition as object
+            ?? SelectedIntuneBrandingProfile as object
+            ?? SelectedAzureBrandingLocalization as object
             ?? SelectedConditionalAccessPolicy as object
             ?? SelectedAssignmentFilter as object
             ?? SelectedPolicySet as object;
@@ -341,6 +393,10 @@ public partial class MainWindowViewModel : ViewModelBase
             TargetedManagedAppConfiguration targetedConfig => targetedConfig.DisplayName ?? "Targeted Managed App Configuration",
             ManagedAppPolicy appProtection => appProtection.DisplayName ?? "App Protection Policy",
             TermsAndConditions terms => terms.DisplayName ?? "Terms and Conditions",
+            RoleScopeTag scopeTag => scopeTag.DisplayName ?? "Scope Tag",
+            RoleDefinition roleDefinition => roleDefinition.DisplayName ?? "Role Definition",
+            IntuneBrandingProfile brandingProfile => brandingProfile.ProfileName ?? "Intune Branding",
+            OrganizationalBrandingLocalization azureBranding => azureBranding.Id ?? "Azure Branding",
             ConditionalAccessPolicy cap => cap.DisplayName ?? "Conditional Access Policy",
             DeviceAndAppManagementAssignmentFilter af => af.DisplayName ?? "Assignment Filter",
             PolicySet ps => ps.DisplayName ?? "Policy Set",
@@ -465,6 +521,40 @@ public partial class MainWindowViewModel : ViewModelBase
             Append(sb, "Version", terms.Version?.ToString());
             Append(sb, "Created", terms.CreatedDateTime?.ToString("g"));
             Append(sb, "Last Modified", terms.LastModifiedDateTime?.ToString("g"));
+        }
+        else if (SelectedScopeTag is { } scopeTag)
+        {
+            sb.AppendLine("=== Scope Tag ===");
+            Append(sb, "Name", scopeTag.DisplayName);
+            Append(sb, "Description", scopeTag.Description);
+            Append(sb, "ID", scopeTag.Id);
+            Append(sb, "Is Built In", scopeTag.IsBuiltIn?.ToString());
+        }
+        else if (SelectedRoleDefinition is { } roleDefinition)
+        {
+            sb.AppendLine("=== Role Definition ===");
+            Append(sb, "Name", roleDefinition.DisplayName);
+            Append(sb, "Description", roleDefinition.Description);
+            Append(sb, "ID", roleDefinition.Id);
+            Append(sb, "Is Built In", roleDefinition.IsBuiltIn?.ToString());
+            Append(sb, "Is Built In Role Definition", roleDefinition.IsBuiltInRoleDefinition?.ToString());
+        }
+        else if (SelectedIntuneBrandingProfile is { } brandingProfile)
+        {
+            sb.AppendLine("=== Intune Branding Profile ===");
+            Append(sb, "Name", brandingProfile.DisplayName);
+            Append(sb, "Profile Name", brandingProfile.ProfileName);
+            Append(sb, "ID", brandingProfile.Id);
+            Append(sb, "Show Logo", brandingProfile.ShowLogo?.ToString());
+        }
+        else if (SelectedAzureBrandingLocalization is { } azureBranding)
+        {
+            sb.AppendLine("=== Azure Branding Localization ===");
+            Append(sb, "Localization ID", azureBranding.Id);
+            Append(sb, "ID", azureBranding.Id);
+            Append(sb, "Sign-in Page Text", azureBranding.SignInPageText);
+            Append(sb, "Username Hint Text", azureBranding.UsernameHintText);
+            Append(sb, "Tenant Banner Logo Relative URL", azureBranding.BannerLogoRelativeUrl);
         }
         else if (SelectedConditionalAccessPolicy is { } cap)
         {
@@ -633,6 +723,18 @@ public partial class MainWindowViewModel : ViewModelBase
     private ObservableCollection<TermsAndConditions> _filteredTermsAndConditionsCollection = [];
 
     [ObservableProperty]
+    private ObservableCollection<RoleScopeTag> _filteredScopeTags = [];
+
+    [ObservableProperty]
+    private ObservableCollection<RoleDefinition> _filteredRoleDefinitions = [];
+
+    [ObservableProperty]
+    private ObservableCollection<IntuneBrandingProfile> _filteredIntuneBrandingProfiles = [];
+
+    [ObservableProperty]
+    private ObservableCollection<OrganizationalBrandingLocalization> _filteredAzureBrandingLocalizations = [];
+
+    [ObservableProperty]
     private ObservableCollection<ConditionalAccessPolicy> _filteredConditionalAccessPolicies = [];
 
     [ObservableProperty]
@@ -661,6 +763,10 @@ public partial class MainWindowViewModel : ViewModelBase
             FilteredManagedDeviceAppConfigurations = new ObservableCollection<ManagedDeviceMobileAppConfiguration>(ManagedDeviceAppConfigurations);
             FilteredTargetedManagedAppConfigurations = new ObservableCollection<TargetedManagedAppConfiguration>(TargetedManagedAppConfigurations);
             FilteredTermsAndConditionsCollection = new ObservableCollection<TermsAndConditions>(TermsAndConditionsCollection);
+            FilteredScopeTags = new ObservableCollection<RoleScopeTag>(ScopeTags);
+            FilteredRoleDefinitions = new ObservableCollection<RoleDefinition>(RoleDefinitions);
+            FilteredIntuneBrandingProfiles = new ObservableCollection<IntuneBrandingProfile>(IntuneBrandingProfiles);
+            FilteredAzureBrandingLocalizations = new ObservableCollection<OrganizationalBrandingLocalization>(AzureBrandingLocalizations);
             FilteredConditionalAccessPolicies = new ObservableCollection<ConditionalAccessPolicy>(ConditionalAccessPolicies);
             FilteredAssignmentFilters = new ObservableCollection<DeviceAndAppManagementAssignmentFilter>(AssignmentFilters);
             FilteredPolicySets = new ObservableCollection<PolicySet>(PolicySets);
@@ -762,6 +868,28 @@ public partial class MainWindowViewModel : ViewModelBase
                 Contains(t.DisplayName, q) ||
                 Contains(t.Description, q) ||
                 Contains(t.Id, q)));
+
+        FilteredScopeTags = new ObservableCollection<RoleScopeTag>(
+            ScopeTags.Where(t =>
+                Contains(t.DisplayName, q) ||
+                Contains(t.Description, q) ||
+                Contains(t.Id, q)));
+
+        FilteredRoleDefinitions = new ObservableCollection<RoleDefinition>(
+            RoleDefinitions.Where(r =>
+                Contains(r.DisplayName, q) ||
+                Contains(r.Description, q) ||
+                Contains(r.Id, q)));
+
+        FilteredIntuneBrandingProfiles = new ObservableCollection<IntuneBrandingProfile>(
+            IntuneBrandingProfiles.Where(b =>
+                Contains(b.ProfileName, q) ||
+                Contains(b.Id, q)));
+
+        FilteredAzureBrandingLocalizations = new ObservableCollection<OrganizationalBrandingLocalization>(
+            AzureBrandingLocalizations.Where(b =>
+                Contains(b.Id, q) ||
+                Contains(b.SignInPageText, q)));
 
         FilteredConditionalAccessPolicies = new ObservableCollection<ConditionalAccessPolicy>(
             ConditionalAccessPolicies.Where(p =>
@@ -902,6 +1030,41 @@ public partial class MainWindowViewModel : ViewModelBase
         new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
     ];
 
+    public ObservableCollection<DataGridColumnConfig> ScopeTagColumns { get; } =
+    [
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+        new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
+        new() { Header = "Built In", BindingPath = "IsBuiltIn", Width = 90, IsVisible = true },
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+    ];
+
+    public ObservableCollection<DataGridColumnConfig> RoleDefinitionColumns { get; } =
+    [
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+        new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
+        new() { Header = "Built In", BindingPath = "IsBuiltIn", Width = 90, IsVisible = true },
+        new() { Header = "Version", BindingPath = "Version", Width = 90, IsVisible = true },
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+    ];
+
+    public ObservableCollection<DataGridColumnConfig> IntuneBrandingColumns { get; } =
+    [
+        new() { Header = "Profile Name", BindingPath = "ProfileName", IsStar = true, IsVisible = true },
+        new() { Header = "Company Portal Blocked", BindingPath = "IsCompanyPortalBlocked", Width = 140, IsVisible = true },
+        new() { Header = "Light Theme Logo URL", BindingPath = "LightThemeLogoRelativeUrl", Width = 220, IsVisible = true },
+        new() { Header = "Dark Theme Logo URL", BindingPath = "DarkThemeLogoRelativeUrl", Width = 220, IsVisible = false },
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+    ];
+
+    public ObservableCollection<DataGridColumnConfig> AzureBrandingColumns { get; } =
+    [
+        new() { Header = "Locale", BindingPath = "Locale", Width = 120, IsVisible = true },
+        new() { Header = "Sign-in Text", BindingPath = "SignInPageText", IsStar = true, IsVisible = true },
+        new() { Header = "Username Hint", BindingPath = "UsernameHintText", Width = 220, IsVisible = true },
+        new() { Header = "Banner Logo URL", BindingPath = "BannerLogoRelativeUrl", Width = 220, IsVisible = false },
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+    ];
+
     public ObservableCollection<DataGridColumnConfig> ConditionalAccessColumns { get; } =
     [
         new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
@@ -1003,6 +1166,10 @@ public partial class MainWindowViewModel : ViewModelBase
         "Managed Device App Configurations" => ManagedDeviceAppConfigurationColumns,
         "Targeted Managed App Configurations" => TargetedManagedAppConfigurationColumns,
         "Terms and Conditions" => TermsAndConditionsColumns,
+        "Scope Tags" => ScopeTagColumns,
+        "Role Definitions" => RoleDefinitionColumns,
+        "Intune Branding" => IntuneBrandingColumns,
+        "Azure Branding" => AzureBrandingColumns,
         "Conditional Access" => ConditionalAccessColumns,
         "Assignment Filters" => AssignmentFilterColumns,
         "Policy Sets" => PolicySetColumns,
@@ -1098,6 +1265,10 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool IsManagedDeviceAppConfigurationsCategory => SelectedCategory?.Name == "Managed Device App Configurations";
     public bool IsTargetedManagedAppConfigurationsCategory => SelectedCategory?.Name == "Targeted Managed App Configurations";
     public bool IsTermsAndConditionsCategory => SelectedCategory?.Name == "Terms and Conditions";
+    public bool IsScopeTagsCategory => SelectedCategory?.Name == "Scope Tags";
+    public bool IsRoleDefinitionsCategory => SelectedCategory?.Name == "Role Definitions";
+    public bool IsIntuneBrandingCategory => SelectedCategory?.Name == "Intune Branding";
+    public bool IsAzureBrandingCategory => SelectedCategory?.Name == "Azure Branding";
     public bool IsConditionalAccessCategory => SelectedCategory?.Name == "Conditional Access";
     public bool IsAssignmentFiltersCategory => SelectedCategory?.Name == "Assignment Filters";
     public bool IsPolicySetsCategory => SelectedCategory?.Name == "Policy Sets";
@@ -1119,6 +1290,10 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedManagedDeviceAppConfiguration = null;
         SelectedTargetedManagedAppConfiguration = null;
         SelectedTermsAndConditions = null;
+        SelectedScopeTag = null;
+        SelectedRoleDefinition = null;
+        SelectedIntuneBrandingProfile = null;
+        SelectedAzureBrandingLocalization = null;
         SelectedConditionalAccessPolicy = null;
         SelectedAssignmentFilter = null;
         SelectedPolicySet = null;
@@ -1146,6 +1321,10 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsManagedDeviceAppConfigurationsCategory));
         OnPropertyChanged(nameof(IsTargetedManagedAppConfigurationsCategory));
         OnPropertyChanged(nameof(IsTermsAndConditionsCategory));
+        OnPropertyChanged(nameof(IsScopeTagsCategory));
+        OnPropertyChanged(nameof(IsRoleDefinitionsCategory));
+        OnPropertyChanged(nameof(IsIntuneBrandingCategory));
+        OnPropertyChanged(nameof(IsAzureBrandingCategory));
         OnPropertyChanged(nameof(IsConditionalAccessCategory));
         OnPropertyChanged(nameof(IsAssignmentFiltersCategory));
         OnPropertyChanged(nameof(IsPolicySetsCategory));
@@ -1344,6 +1523,62 @@ public partial class MainWindowViewModel : ViewModelBase
             }))
             {
                 _ = LoadTermsAndConditionsAsync();
+            }
+        }
+
+        if (value?.Name == "Scope Tags" && !_scopeTagsLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<RoleScopeTag>(CacheKeyScopeTags, rows =>
+            {
+                ScopeTags = new ObservableCollection<RoleScopeTag>(rows);
+                _scopeTagsLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} scope tag(s) from cache";
+            }))
+            {
+                _ = LoadScopeTagsAsync();
+            }
+        }
+
+        if (value?.Name == "Role Definitions" && !_roleDefinitionsLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<RoleDefinition>(CacheKeyRoleDefinitions, rows =>
+            {
+                RoleDefinitions = new ObservableCollection<RoleDefinition>(rows);
+                _roleDefinitionsLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} role definition(s) from cache";
+            }))
+            {
+                _ = LoadRoleDefinitionsAsync();
+            }
+        }
+
+        if (value?.Name == "Intune Branding" && !_intuneBrandingProfilesLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<IntuneBrandingProfile>(CacheKeyIntuneBrandingProfiles, rows =>
+            {
+                IntuneBrandingProfiles = new ObservableCollection<IntuneBrandingProfile>(rows);
+                _intuneBrandingProfilesLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} Intune branding profile(s) from cache";
+            }))
+            {
+                _ = LoadIntuneBrandingProfilesAsync();
+            }
+        }
+
+        if (value?.Name == "Azure Branding" && !_azureBrandingLocalizationsLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<OrganizationalBrandingLocalization>(CacheKeyAzureBrandingLocalizations, rows =>
+            {
+                AzureBrandingLocalizations = new ObservableCollection<OrganizationalBrandingLocalization>(rows);
+                _azureBrandingLocalizationsLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} Azure branding localization(s) from cache";
+            }))
+            {
+                _ = LoadAzureBrandingLocalizationsAsync();
             }
         }
     }
@@ -1594,6 +1829,10 @@ public partial class MainWindowViewModel : ViewModelBase
         (IsManagedDeviceAppConfigurationsCategory && SelectedManagedDeviceAppConfiguration != null) ||
         (IsTargetedManagedAppConfigurationsCategory && SelectedTargetedManagedAppConfiguration != null) ||
         (IsTermsAndConditionsCategory && SelectedTermsAndConditions != null) ||
+        (IsScopeTagsCategory && SelectedScopeTag != null) ||
+        (IsRoleDefinitionsCategory && SelectedRoleDefinition != null) ||
+        (IsIntuneBrandingCategory && SelectedIntuneBrandingProfile != null) ||
+        (IsAzureBrandingCategory && SelectedAzureBrandingLocalization != null) ||
         (IsConditionalAccessCategory && SelectedConditionalAccessPolicy != null) ||
         (IsAssignmentFiltersCategory && SelectedAssignmentFilter != null) ||
         (IsPolicySetsCategory && SelectedPolicySet != null);
@@ -1698,6 +1937,38 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         SelectedItemAssignments.Clear();
         SelectedItemTypeName = "Terms and Conditions";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedScopeTagChanged(RoleScopeTag? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Scope Tag";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedRoleDefinitionChanged(RoleDefinition? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Role Definition";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedIntuneBrandingProfileChanged(IntuneBrandingProfile? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Intune Branding";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedAzureBrandingLocalizationChanged(OrganizationalBrandingLocalization? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Azure Branding";
         SelectedItemPlatform = "";
         OnPropertyChanged(nameof(CanRefreshSelectedItem));
     }
@@ -2888,6 +3159,146 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    // --- Scope Tags view ---
+
+    private async Task LoadScopeTagsAsync()
+    {
+        if (_scopeTagService == null) return;
+
+        IsBusy = true;
+        StatusText = "Loading scope tags...";
+
+        try
+        {
+            var scopeTags = await _scopeTagService.ListScopeTagsAsync();
+            ScopeTags = new ObservableCollection<RoleScopeTag>(scopeTags);
+            _scopeTagsLoaded = true;
+            ApplyFilter();
+
+            if (ActiveProfile?.TenantId != null)
+            {
+                _cacheService.Set(ActiveProfile.TenantId, CacheKeyScopeTags, scopeTags);
+                DebugLog.Log("Cache", $"Saved {scopeTags.Count} scope tag(s) to cache");
+            }
+
+            StatusText = $"Loaded {scopeTags.Count} scope tag(s)";
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to load scope tags: {FormatGraphError(ex)}");
+            StatusText = "Error loading scope tags";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    // --- Role Definitions view ---
+
+    private async Task LoadRoleDefinitionsAsync()
+    {
+        if (_roleDefinitionService == null) return;
+
+        IsBusy = true;
+        StatusText = "Loading role definitions...";
+
+        try
+        {
+            var roleDefinitions = await _roleDefinitionService.ListRoleDefinitionsAsync();
+            RoleDefinitions = new ObservableCollection<RoleDefinition>(roleDefinitions);
+            _roleDefinitionsLoaded = true;
+            ApplyFilter();
+
+            if (ActiveProfile?.TenantId != null)
+            {
+                _cacheService.Set(ActiveProfile.TenantId, CacheKeyRoleDefinitions, roleDefinitions);
+                DebugLog.Log("Cache", $"Saved {roleDefinitions.Count} role definition(s) to cache");
+            }
+
+            StatusText = $"Loaded {roleDefinitions.Count} role definition(s)";
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to load role definitions: {FormatGraphError(ex)}");
+            StatusText = "Error loading role definitions";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    // --- Intune Branding view ---
+
+    private async Task LoadIntuneBrandingProfilesAsync()
+    {
+        if (_intuneBrandingService == null) return;
+
+        IsBusy = true;
+        StatusText = "Loading Intune branding profiles...";
+
+        try
+        {
+            var profiles = await _intuneBrandingService.ListIntuneBrandingProfilesAsync();
+            IntuneBrandingProfiles = new ObservableCollection<IntuneBrandingProfile>(profiles);
+            _intuneBrandingProfilesLoaded = true;
+            ApplyFilter();
+
+            if (ActiveProfile?.TenantId != null)
+            {
+                _cacheService.Set(ActiveProfile.TenantId, CacheKeyIntuneBrandingProfiles, profiles);
+                DebugLog.Log("Cache", $"Saved {profiles.Count} Intune branding profile(s) to cache");
+            }
+
+            StatusText = $"Loaded {profiles.Count} Intune branding profile(s)";
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to load Intune branding profiles: {FormatGraphError(ex)}");
+            StatusText = "Error loading Intune branding profiles";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    // --- Azure Branding view ---
+
+    private async Task LoadAzureBrandingLocalizationsAsync()
+    {
+        if (_azureBrandingService == null) return;
+
+        IsBusy = true;
+        StatusText = "Loading Azure branding localizations...";
+
+        try
+        {
+            var localizations = await _azureBrandingService.ListBrandingLocalizationsAsync();
+            AzureBrandingLocalizations = new ObservableCollection<OrganizationalBrandingLocalization>(localizations);
+            _azureBrandingLocalizationsLoaded = true;
+            ApplyFilter();
+
+            if (ActiveProfile?.TenantId != null)
+            {
+                _cacheService.Set(ActiveProfile.TenantId, CacheKeyAzureBrandingLocalizations, localizations);
+                DebugLog.Log("Cache", $"Saved {localizations.Count} Azure branding localization(s) to cache");
+            }
+
+            StatusText = $"Loaded {localizations.Count} Azure branding localization(s)";
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to load Azure branding localizations: {FormatGraphError(ex)}");
+            StatusText = "Error loading Azure branding localizations";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     private static GroupRow BuildGroupRow(Microsoft.Graph.Beta.Models.Group group, GroupMemberCounts counts)
     {
         return new GroupRow
@@ -2945,6 +3356,10 @@ public partial class MainWindowViewModel : ViewModelBase
             _appProtectionPolicyService = new AppProtectionPolicyService(_graphClient);
             _managedAppConfigurationService = new ManagedAppConfigurationService(_graphClient);
             _termsAndConditionsService = new TermsAndConditionsService(_graphClient);
+            _scopeTagService = new ScopeTagService(_graphClient);
+            _roleDefinitionService = new RoleDefinitionService(_graphClient);
+            _intuneBrandingService = new IntuneBrandingService(_graphClient);
+            _azureBrandingService = new AzureBrandingService(_graphClient);
             _importService = new ImportService(
                 _configProfileService,
                 _compliancePolicyService,
@@ -2953,7 +3368,11 @@ public partial class MainWindowViewModel : ViewModelBase
                 _enrollmentConfigurationService,
                 _appProtectionPolicyService,
                 _managedAppConfigurationService,
-                _termsAndConditionsService);
+                _termsAndConditionsService,
+                _scopeTagService,
+                _roleDefinitionService,
+                _intuneBrandingService,
+                _azureBrandingService);
 
             RefreshSwitcherProfiles();
             SelectedSwitchProfile = profile;
@@ -2966,7 +3385,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
             // Try loading cached data — if all primary types are cached, skip Graph refresh
             var cachedCount = TryLoadFromCache(profile.TenantId ?? "");
-            if (cachedCount >= 14)
+            if (cachedCount >= 18)
             {
                 DebugLog.Log("Cache", "All data loaded from cache — skipping Graph refresh");
                 IsBusy = false;
@@ -2974,7 +3393,7 @@ public partial class MainWindowViewModel : ViewModelBase
             else
             {
                 if (cachedCount > 0)
-                    DebugLog.Log("Cache", $"Partial cache hit ({cachedCount}/14) — refreshing from Graph");
+                    DebugLog.Log("Cache", $"Partial cache hit ({cachedCount}/18) — refreshing from Graph");
                 await RefreshAsync(CancellationToken.None);
             }
         }
@@ -3077,6 +3496,10 @@ public partial class MainWindowViewModel : ViewModelBase
         var loadManagedDeviceAppConfigurations = IsManagedDeviceAppConfigurationsCategory;
         var loadTargetedManagedAppConfigurations = IsTargetedManagedAppConfigurationsCategory;
         var loadTermsAndConditions = IsTermsAndConditionsCategory;
+        var loadScopeTags = IsScopeTagsCategory;
+        var loadRoleDefinitions = IsRoleDefinitionsCategory;
+        var loadIntuneBranding = IsIntuneBrandingCategory;
+        var loadAzureBranding = IsAzureBrandingCategory;
 
         try
         {
@@ -3332,6 +3755,98 @@ public partial class MainWindowViewModel : ViewModelBase
                 DebugLog.Log("Graph", "Skipping terms and conditions refresh (lazy-load when tab selected)");
             }
 
+            if (_scopeTagService != null && loadScopeTags)
+            {
+                try
+                {
+                    StatusText = "Loading scope tags...";
+                    var scopeTags = await _scopeTagService.ListScopeTagsAsync(cancellationToken);
+                    ScopeTags = new ObservableCollection<RoleScopeTag>(scopeTags);
+                    _scopeTagsLoaded = true;
+                    DebugLog.Log("Graph", $"Loaded {scopeTags.Count} scope tag(s)");
+                }
+                catch (Exception ex)
+                {
+                    _scopeTagsLoaded = false;
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load scope tags: {detail}", ex);
+                    errors.Add($"Scope Tags: {detail}");
+                }
+            }
+            else if (_scopeTagService != null)
+            {
+                DebugLog.Log("Graph", "Skipping scope tags refresh (lazy-load when tab selected)");
+            }
+
+            if (_roleDefinitionService != null && loadRoleDefinitions)
+            {
+                try
+                {
+                    StatusText = "Loading role definitions...";
+                    var roleDefinitions = await _roleDefinitionService.ListRoleDefinitionsAsync(cancellationToken);
+                    RoleDefinitions = new ObservableCollection<RoleDefinition>(roleDefinitions);
+                    _roleDefinitionsLoaded = true;
+                    DebugLog.Log("Graph", $"Loaded {roleDefinitions.Count} role definition(s)");
+                }
+                catch (Exception ex)
+                {
+                    _roleDefinitionsLoaded = false;
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load role definitions: {detail}", ex);
+                    errors.Add($"Role Definitions: {detail}");
+                }
+            }
+            else if (_roleDefinitionService != null)
+            {
+                DebugLog.Log("Graph", "Skipping role definitions refresh (lazy-load when tab selected)");
+            }
+
+            if (_intuneBrandingService != null && loadIntuneBranding)
+            {
+                try
+                {
+                    StatusText = "Loading Intune branding profiles...";
+                    var profiles = await _intuneBrandingService.ListIntuneBrandingProfilesAsync(cancellationToken);
+                    IntuneBrandingProfiles = new ObservableCollection<IntuneBrandingProfile>(profiles);
+                    _intuneBrandingProfilesLoaded = true;
+                    DebugLog.Log("Graph", $"Loaded {profiles.Count} Intune branding profile(s)");
+                }
+                catch (Exception ex)
+                {
+                    _intuneBrandingProfilesLoaded = false;
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load Intune branding profiles: {detail}", ex);
+                    errors.Add($"Intune Branding: {detail}");
+                }
+            }
+            else if (_intuneBrandingService != null)
+            {
+                DebugLog.Log("Graph", "Skipping Intune branding refresh (lazy-load when tab selected)");
+            }
+
+            if (_azureBrandingService != null && loadAzureBranding)
+            {
+                try
+                {
+                    StatusText = "Loading Azure branding localizations...";
+                    var localizations = await _azureBrandingService.ListBrandingLocalizationsAsync(cancellationToken);
+                    AzureBrandingLocalizations = new ObservableCollection<OrganizationalBrandingLocalization>(localizations);
+                    _azureBrandingLocalizationsLoaded = true;
+                    DebugLog.Log("Graph", $"Loaded {localizations.Count} Azure branding localization(s)");
+                }
+                catch (Exception ex)
+                {
+                    _azureBrandingLocalizationsLoaded = false;
+                    var detail = FormatGraphError(ex);
+                    DebugLog.LogError($"Failed to load Azure branding localizations: {detail}", ex);
+                    errors.Add($"Azure Branding: {detail}");
+                }
+            }
+            else if (_azureBrandingService != null)
+            {
+                DebugLog.Log("Graph", "Skipping Azure branding refresh (lazy-load when tab selected)");
+            }
+
             if (_assignmentFilterService != null && loadAssignmentFilters)
             {
                 try
@@ -3378,8 +3893,8 @@ public partial class MainWindowViewModel : ViewModelBase
                 DebugLog.Log("Graph", "Skipping policy sets refresh (lazy-load when tab selected)");
             }
 
-            var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count + EndpointSecurityIntents.Count + AdministrativeTemplates.Count + EnrollmentConfigurations.Count + AppProtectionPolicies.Count + ManagedDeviceAppConfigurations.Count + TargetedManagedAppConfigurations.Count + TermsAndConditionsCollection.Count + ConditionalAccessPolicies.Count + AssignmentFilters.Count + PolicySets.Count;
-            StatusText = $"Loaded {totalItems} item(s) ({DeviceConfigurations.Count} configs, {CompliancePolicies.Count} compliance, {Applications.Count} apps, {SettingsCatalogPolicies.Count} settings catalog, {EndpointSecurityIntents.Count} endpoint security, {AdministrativeTemplates.Count} admin templates, {EnrollmentConfigurations.Count} enrollment configs, {AppProtectionPolicies.Count} app protection, {ManagedDeviceAppConfigurations.Count} managed device app configs, {TargetedManagedAppConfigurations.Count} targeted app configs, {TermsAndConditionsCollection.Count} terms, {ConditionalAccessPolicies.Count} conditional access, {AssignmentFilters.Count} filters, {PolicySets.Count} policy sets)";
+            var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count + EndpointSecurityIntents.Count + AdministrativeTemplates.Count + EnrollmentConfigurations.Count + AppProtectionPolicies.Count + ManagedDeviceAppConfigurations.Count + TargetedManagedAppConfigurations.Count + TermsAndConditionsCollection.Count + ScopeTags.Count + RoleDefinitions.Count + IntuneBrandingProfiles.Count + AzureBrandingLocalizations.Count + ConditionalAccessPolicies.Count + AssignmentFilters.Count + PolicySets.Count;
+            StatusText = $"Loaded {totalItems} item(s) ({DeviceConfigurations.Count} configs, {CompliancePolicies.Count} compliance, {Applications.Count} apps, {SettingsCatalogPolicies.Count} settings catalog, {EndpointSecurityIntents.Count} endpoint security, {AdministrativeTemplates.Count} admin templates, {EnrollmentConfigurations.Count} enrollment configs, {AppProtectionPolicies.Count} app protection, {ManagedDeviceAppConfigurations.Count} managed device app configs, {TargetedManagedAppConfigurations.Count} targeted app configs, {TermsAndConditionsCollection.Count} terms, {ScopeTags.Count} scope tags, {RoleDefinitions.Count} role definitions, {IntuneBrandingProfiles.Count} intune branding, {AzureBrandingLocalizations.Count} azure branding, {ConditionalAccessPolicies.Count} conditional access, {AssignmentFilters.Count} filters, {PolicySets.Count} policy sets)";
 
             if (errors.Count > 0)
                 SetError($"Some data failed to load — {string.Join("; ", errors)}");
@@ -3501,6 +4016,30 @@ public partial class MainWindowViewModel : ViewModelBase
                 StatusText = $"Exporting {SelectedTermsAndConditions.DisplayName}...";
                 await _exportService.ExportTermsAndConditionsAsync(
                     SelectedTermsAndConditions, outputPath, migrationTable, cancellationToken);
+            }
+            else if (IsScopeTagsCategory && SelectedScopeTag != null)
+            {
+                StatusText = $"Exporting {SelectedScopeTag.DisplayName}...";
+                await _exportService.ExportScopeTagAsync(
+                    SelectedScopeTag, outputPath, migrationTable, cancellationToken);
+            }
+            else if (IsRoleDefinitionsCategory && SelectedRoleDefinition != null)
+            {
+                StatusText = $"Exporting {SelectedRoleDefinition.DisplayName}...";
+                await _exportService.ExportRoleDefinitionAsync(
+                    SelectedRoleDefinition, outputPath, migrationTable, cancellationToken);
+            }
+            else if (IsIntuneBrandingCategory && SelectedIntuneBrandingProfile != null)
+            {
+                StatusText = $"Exporting {SelectedIntuneBrandingProfile.DisplayName}...";
+                await _exportService.ExportIntuneBrandingProfileAsync(
+                    SelectedIntuneBrandingProfile, outputPath, migrationTable, cancellationToken);
+            }
+            else if (IsAzureBrandingCategory && SelectedAzureBrandingLocalization != null)
+            {
+                StatusText = $"Exporting {SelectedAzureBrandingLocalization.Id ?? "branding localization"}...";
+                await _exportService.ExportAzureBrandingLocalizationAsync(
+                    SelectedAzureBrandingLocalization, outputPath, migrationTable, cancellationToken);
             }
             else
             {
@@ -3659,6 +4198,50 @@ public partial class MainWindowViewModel : ViewModelBase
                 }
             }
 
+            // Export scope tags
+            if (ScopeTags.Any())
+            {
+                StatusText = "Exporting scope tags...";
+                foreach (var scopeTag in ScopeTags)
+                {
+                    await _exportService.ExportScopeTagAsync(scopeTag, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
+            // Export role definitions
+            if (RoleDefinitions.Any())
+            {
+                StatusText = "Exporting role definitions...";
+                foreach (var roleDefinition in RoleDefinitions)
+                {
+                    await _exportService.ExportRoleDefinitionAsync(roleDefinition, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
+            // Export Intune branding profiles
+            if (IntuneBrandingProfiles.Any())
+            {
+                StatusText = "Exporting Intune branding profiles...";
+                foreach (var profile in IntuneBrandingProfiles)
+                {
+                    await _exportService.ExportIntuneBrandingProfileAsync(profile, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
+            // Export Azure branding localizations
+            if (AzureBrandingLocalizations.Any())
+            {
+                StatusText = "Exporting Azure branding localizations...";
+                foreach (var localization in AzureBrandingLocalizations)
+                {
+                    await _exportService.ExportAzureBrandingLocalizationAsync(localization, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
             await _exportService.SaveMigrationTableAsync(migrationTable, outputPath, cancellationToken);
             StatusText = $"Exported {count} item(s) to {outputPath}";
         }
@@ -3766,6 +4349,42 @@ public partial class MainWindowViewModel : ViewModelBase
             foreach (var termsAndConditions in termsCollection)
             {
                 await _importService.ImportTermsAndConditionsAsync(termsAndConditions, migrationTable, cancellationToken);
+                imported++;
+                StatusText = $"Imported {imported} item(s)...";
+            }
+
+            // Import scope tags
+            var scopeTags = await _importService.ReadScopeTagsFromFolderAsync(folderPath, cancellationToken);
+            foreach (var scopeTag in scopeTags)
+            {
+                await _importService.ImportScopeTagAsync(scopeTag, migrationTable, cancellationToken);
+                imported++;
+                StatusText = $"Imported {imported} item(s)...";
+            }
+
+            // Import role definitions
+            var roleDefinitions = await _importService.ReadRoleDefinitionsFromFolderAsync(folderPath, cancellationToken);
+            foreach (var roleDefinition in roleDefinitions)
+            {
+                await _importService.ImportRoleDefinitionAsync(roleDefinition, migrationTable, cancellationToken);
+                imported++;
+                StatusText = $"Imported {imported} item(s)...";
+            }
+
+            // Import Intune branding profiles
+            var intuneBrandingProfiles = await _importService.ReadIntuneBrandingProfilesFromFolderAsync(folderPath, cancellationToken);
+            foreach (var profile in intuneBrandingProfiles)
+            {
+                await _importService.ImportIntuneBrandingProfileAsync(profile, migrationTable, cancellationToken);
+                imported++;
+                StatusText = $"Imported {imported} item(s)...";
+            }
+
+            // Import Azure branding localizations
+            var azureBrandingLocalizations = await _importService.ReadAzureBrandingLocalizationsFromFolderAsync(folderPath, cancellationToken);
+            foreach (var localization in azureBrandingLocalizations)
+            {
+                await _importService.ImportAzureBrandingLocalizationAsync(localization, migrationTable, cancellationToken);
                 imported++;
                 StatusText = $"Imported {imported} item(s)...";
             }
@@ -3908,6 +4527,46 @@ public partial class MainWindowViewModel : ViewModelBase
                 UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyTermsAndConditions);
             }
 
+            var scopeTags = _cacheService.Get<RoleScopeTag>(tenantId, CacheKeyScopeTags);
+            if (scopeTags != null)
+            {
+                ScopeTags = new ObservableCollection<RoleScopeTag>(scopeTags);
+                _scopeTagsLoaded = true;
+                DebugLog.Log("Cache", $"Loaded {scopeTags.Count} scope tag(s) from cache");
+                typesLoaded++;
+                UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyScopeTags);
+            }
+
+            var roleDefinitions = _cacheService.Get<RoleDefinition>(tenantId, CacheKeyRoleDefinitions);
+            if (roleDefinitions != null)
+            {
+                RoleDefinitions = new ObservableCollection<RoleDefinition>(roleDefinitions);
+                _roleDefinitionsLoaded = true;
+                DebugLog.Log("Cache", $"Loaded {roleDefinitions.Count} role definition(s) from cache");
+                typesLoaded++;
+                UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyRoleDefinitions);
+            }
+
+            var intuneBrandingProfiles = _cacheService.Get<IntuneBrandingProfile>(tenantId, CacheKeyIntuneBrandingProfiles);
+            if (intuneBrandingProfiles != null)
+            {
+                IntuneBrandingProfiles = new ObservableCollection<IntuneBrandingProfile>(intuneBrandingProfiles);
+                _intuneBrandingProfilesLoaded = true;
+                DebugLog.Log("Cache", $"Loaded {intuneBrandingProfiles.Count} Intune branding profile(s) from cache");
+                typesLoaded++;
+                UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyIntuneBrandingProfiles);
+            }
+
+            var azureBrandingLocalizations = _cacheService.Get<OrganizationalBrandingLocalization>(tenantId, CacheKeyAzureBrandingLocalizations);
+            if (azureBrandingLocalizations != null)
+            {
+                AzureBrandingLocalizations = new ObservableCollection<OrganizationalBrandingLocalization>(azureBrandingLocalizations);
+                _azureBrandingLocalizationsLoaded = true;
+                DebugLog.Log("Cache", $"Loaded {azureBrandingLocalizations.Count} Azure branding localization(s) from cache");
+                typesLoaded++;
+                UpdateOldestCacheTime(ref oldestCacheTime, tenantId, CacheKeyAzureBrandingLocalizations);
+            }
+
             var conditionalAccessPolicies = _cacheService.Get<ConditionalAccessPolicy>(tenantId, CacheKeyConditionalAccess);
             if (conditionalAccessPolicies != null)
             {
@@ -3940,7 +4599,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
             if (typesLoaded > 0)
             {
-                var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count + EndpointSecurityIntents.Count + AdministrativeTemplates.Count + EnrollmentConfigurations.Count + AppProtectionPolicies.Count + ManagedDeviceAppConfigurations.Count + TargetedManagedAppConfigurations.Count + TermsAndConditionsCollection.Count + ConditionalAccessPolicies.Count + AssignmentFilters.Count + PolicySets.Count;
+                var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count + EndpointSecurityIntents.Count + AdministrativeTemplates.Count + EnrollmentConfigurations.Count + AppProtectionPolicies.Count + ManagedDeviceAppConfigurations.Count + TargetedManagedAppConfigurations.Count + TermsAndConditionsCollection.Count + ScopeTags.Count + RoleDefinitions.Count + IntuneBrandingProfiles.Count + AzureBrandingLocalizations.Count + ConditionalAccessPolicies.Count + AssignmentFilters.Count + PolicySets.Count;
                 var ageText = FormatCacheAge(oldestCacheTime);
                 CacheStatusText = oldestCacheTime.HasValue
                     ? $"Cache: {oldestCacheTime.Value.ToLocalTime():MMM dd, h:mm tt}"
@@ -4072,6 +4731,18 @@ public partial class MainWindowViewModel : ViewModelBase
             if (TermsAndConditionsCollection.Count > 0)
                 _cacheService.Set(tenantId, CacheKeyTermsAndConditions, TermsAndConditionsCollection.ToList());
 
+            if (ScopeTags.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyScopeTags, ScopeTags.ToList());
+
+            if (RoleDefinitions.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyRoleDefinitions, RoleDefinitions.ToList());
+
+            if (IntuneBrandingProfiles.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyIntuneBrandingProfiles, IntuneBrandingProfiles.ToList());
+
+            if (AzureBrandingLocalizations.Count > 0)
+                _cacheService.Set(tenantId, CacheKeyAzureBrandingLocalizations, AzureBrandingLocalizations.ToList());
+
             if (ConditionalAccessPolicies.Count > 0)
                 _cacheService.Set(tenantId, CacheKeyConditionalAccess, ConditionalAccessPolicies.ToList());
 
@@ -4124,6 +4795,10 @@ public partial class MainWindowViewModel : ViewModelBase
         _managedDeviceAppConfigurationsLoaded = false;
         _targetedManagedAppConfigurationsLoaded = false;
         _termsAndConditionsLoaded = false;
+        _scopeTagsLoaded = false;
+        _roleDefinitionsLoaded = false;
+        _intuneBrandingProfilesLoaded = false;
+        _azureBrandingLocalizationsLoaded = false;
         _assignmentFiltersLoaded = false;
         _policySetsLoaded = false;
         SettingsCatalogPolicies.Clear();
@@ -4142,6 +4817,14 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedTargetedManagedAppConfiguration = null;
         TermsAndConditionsCollection.Clear();
         SelectedTermsAndConditions = null;
+        ScopeTags.Clear();
+        SelectedScopeTag = null;
+        RoleDefinitions.Clear();
+        SelectedRoleDefinition = null;
+        IntuneBrandingProfiles.Clear();
+        SelectedIntuneBrandingProfile = null;
+        AzureBrandingLocalizations.Clear();
+        SelectedAzureBrandingLocalization = null;
         ConditionalAccessPolicies.Clear();
         SelectedConditionalAccessPolicy = null;
         AssignmentFilters.Clear();
@@ -4171,6 +4854,10 @@ public partial class MainWindowViewModel : ViewModelBase
         _appProtectionPolicyService = null;
         _managedAppConfigurationService = null;
         _termsAndConditionsService = null;
+        _scopeTagService = null;
+        _roleDefinitionService = null;
+        _intuneBrandingService = null;
+        _azureBrandingService = null;
         _importService = null;
         _groupNameCache.Clear();
         CacheStatusText = "";

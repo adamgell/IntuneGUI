@@ -96,6 +96,10 @@ public partial class MainWindow : Window
             or nameof(MainWindowViewModel.IsManagedDeviceAppConfigurationsCategory)
             or nameof(MainWindowViewModel.IsTargetedManagedAppConfigurationsCategory)
             or nameof(MainWindowViewModel.IsTermsAndConditionsCategory)
+            or nameof(MainWindowViewModel.IsScopeTagsCategory)
+            or nameof(MainWindowViewModel.IsRoleDefinitionsCategory)
+            or nameof(MainWindowViewModel.IsIntuneBrandingCategory)
+            or nameof(MainWindowViewModel.IsAzureBrandingCategory)
             or nameof(MainWindowViewModel.IsConditionalAccessCategory)
             or nameof(MainWindowViewModel.IsAssignmentFiltersCategory)
             or nameof(MainWindowViewModel.IsPolicySetsCategory)
@@ -130,6 +134,10 @@ public partial class MainWindow : Window
             or nameof(MainWindowViewModel.FilteredManagedDeviceAppConfigurations)
             or nameof(MainWindowViewModel.FilteredTargetedManagedAppConfigurations)
             or nameof(MainWindowViewModel.FilteredTermsAndConditionsCollection)
+            or nameof(MainWindowViewModel.FilteredScopeTags)
+            or nameof(MainWindowViewModel.FilteredRoleDefinitions)
+            or nameof(MainWindowViewModel.FilteredIntuneBrandingProfiles)
+            or nameof(MainWindowViewModel.FilteredAzureBrandingLocalizations)
             or nameof(MainWindowViewModel.FilteredConditionalAccessPolicies)
             or nameof(MainWindowViewModel.FilteredAssignmentFilters)
             or nameof(MainWindowViewModel.FilteredPolicySets)
@@ -164,6 +172,10 @@ public partial class MainWindow : Window
             nameof(MainWindowViewModel.FilteredManagedDeviceAppConfigurations) => _vm.IsManagedDeviceAppConfigurationsCategory,
             nameof(MainWindowViewModel.FilteredTargetedManagedAppConfigurations) => _vm.IsTargetedManagedAppConfigurationsCategory,
             nameof(MainWindowViewModel.FilteredTermsAndConditionsCollection) => _vm.IsTermsAndConditionsCategory,
+            nameof(MainWindowViewModel.FilteredScopeTags) => _vm.IsScopeTagsCategory,
+            nameof(MainWindowViewModel.FilteredRoleDefinitions) => _vm.IsRoleDefinitionsCategory,
+            nameof(MainWindowViewModel.FilteredIntuneBrandingProfiles) => _vm.IsIntuneBrandingCategory,
+            nameof(MainWindowViewModel.FilteredAzureBrandingLocalizations) => _vm.IsAzureBrandingCategory,
             nameof(MainWindowViewModel.FilteredConditionalAccessPolicies) => _vm.IsConditionalAccessCategory,
             nameof(MainWindowViewModel.FilteredAssignmentFilters)   => _vm.IsAssignmentFiltersCategory,
             nameof(MainWindowViewModel.FilteredPolicySets)          => _vm.IsPolicySetsCategory,
@@ -264,6 +276,34 @@ public partial class MainWindow : Window
                 new Binding(nameof(_vm.FilteredTermsAndConditionsCollection)) { Source = _vm });
             _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
                 new Binding(nameof(_vm.SelectedTermsAndConditions)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
+        else if (_vm.IsScopeTagsCategory)
+        {
+            _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
+                new Binding(nameof(_vm.FilteredScopeTags)) { Source = _vm });
+            _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
+                new Binding(nameof(_vm.SelectedScopeTag)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
+        else if (_vm.IsRoleDefinitionsCategory)
+        {
+            _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
+                new Binding(nameof(_vm.FilteredRoleDefinitions)) { Source = _vm });
+            _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
+                new Binding(nameof(_vm.SelectedRoleDefinition)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
+        else if (_vm.IsIntuneBrandingCategory)
+        {
+            _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
+                new Binding(nameof(_vm.FilteredIntuneBrandingProfiles)) { Source = _vm });
+            _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
+                new Binding(nameof(_vm.SelectedIntuneBrandingProfile)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
+        else if (_vm.IsAzureBrandingCategory)
+        {
+            _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
+                new Binding(nameof(_vm.FilteredAzureBrandingLocalizations)) { Source = _vm });
+            _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
+                new Binding(nameof(_vm.SelectedAzureBrandingLocalization)) { Source = _vm, Mode = BindingMode.TwoWay });
         }
         else if (_vm.IsConditionalAccessCategory)
         {

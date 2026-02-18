@@ -41,4 +41,20 @@ public interface IImportService
     Task<TermsAndConditions?> ReadTermsAndConditionsAsync(string filePath, CancellationToken cancellationToken = default);
     Task<List<TermsAndConditions>> ReadTermsAndConditionsFromFolderAsync(string folderPath, CancellationToken cancellationToken = default);
     Task<TermsAndConditions> ImportTermsAndConditionsAsync(TermsAndConditions termsAndConditions, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+
+    Task<RoleScopeTag?> ReadScopeTagAsync(string filePath, CancellationToken cancellationToken = default);
+    Task<List<RoleScopeTag>> ReadScopeTagsFromFolderAsync(string folderPath, CancellationToken cancellationToken = default);
+    Task<RoleScopeTag> ImportScopeTagAsync(RoleScopeTag scopeTag, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+
+    Task<RoleDefinition?> ReadRoleDefinitionAsync(string filePath, CancellationToken cancellationToken = default);
+    Task<List<RoleDefinition>> ReadRoleDefinitionsFromFolderAsync(string folderPath, CancellationToken cancellationToken = default);
+    Task<RoleDefinition> ImportRoleDefinitionAsync(RoleDefinition roleDefinition, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+
+    Task<IntuneBrandingProfile?> ReadIntuneBrandingProfileAsync(string filePath, CancellationToken cancellationToken = default);
+    Task<List<IntuneBrandingProfile>> ReadIntuneBrandingProfilesFromFolderAsync(string folderPath, CancellationToken cancellationToken = default);
+    Task<IntuneBrandingProfile> ImportIntuneBrandingProfileAsync(IntuneBrandingProfile profile, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+
+    Task<OrganizationalBrandingLocalization?> ReadAzureBrandingLocalizationAsync(string filePath, CancellationToken cancellationToken = default);
+    Task<List<OrganizationalBrandingLocalization>> ReadAzureBrandingLocalizationsFromFolderAsync(string folderPath, CancellationToken cancellationToken = default);
+    Task<OrganizationalBrandingLocalization> ImportAzureBrandingLocalizationAsync(OrganizationalBrandingLocalization localization, MigrationTable migrationTable, CancellationToken cancellationToken = default);
 }

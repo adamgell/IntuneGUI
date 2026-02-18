@@ -464,4 +464,168 @@ public class ExportService : IExportService
 
         await SaveMigrationTableAsync(migrationTable, outputPath, cancellationToken);
     }
+
+    public async Task ExportScopeTagAsync(
+        RoleScopeTag scopeTag,
+        string outputPath,
+        MigrationTable migrationTable,
+        CancellationToken cancellationToken = default)
+    {
+        var folderPath = Path.Combine(outputPath, "ScopeTags");
+        Directory.CreateDirectory(folderPath);
+
+        var sanitizedName = SanitizeFileName(scopeTag.DisplayName ?? scopeTag.Id ?? "unknown");
+        var filePath = Path.Combine(folderPath, $"{sanitizedName}.json");
+
+        var json = JsonSerializer.Serialize(scopeTag, scopeTag.GetType(), JsonOptions);
+        await File.WriteAllTextAsync(filePath, json, cancellationToken);
+
+        if (scopeTag.Id != null)
+        {
+            migrationTable.AddOrUpdate(new MigrationEntry
+            {
+                ObjectType = "ScopeTag",
+                OriginalId = scopeTag.Id,
+                Name = scopeTag.DisplayName ?? "Unknown"
+            });
+        }
+    }
+
+    public async Task ExportScopeTagsAsync(
+        IEnumerable<RoleScopeTag> scopeTags,
+        string outputPath,
+        CancellationToken cancellationToken = default)
+    {
+        var migrationTable = new MigrationTable();
+
+        foreach (var scopeTag in scopeTags)
+        {
+            await ExportScopeTagAsync(scopeTag, outputPath, migrationTable, cancellationToken);
+        }
+
+        await SaveMigrationTableAsync(migrationTable, outputPath, cancellationToken);
+    }
+
+    public async Task ExportRoleDefinitionAsync(
+        RoleDefinition roleDefinition,
+        string outputPath,
+        MigrationTable migrationTable,
+        CancellationToken cancellationToken = default)
+    {
+        var folderPath = Path.Combine(outputPath, "RoleDefinitions");
+        Directory.CreateDirectory(folderPath);
+
+        var sanitizedName = SanitizeFileName(roleDefinition.DisplayName ?? roleDefinition.Id ?? "unknown");
+        var filePath = Path.Combine(folderPath, $"{sanitizedName}.json");
+
+        var json = JsonSerializer.Serialize(roleDefinition, roleDefinition.GetType(), JsonOptions);
+        await File.WriteAllTextAsync(filePath, json, cancellationToken);
+
+        if (roleDefinition.Id != null)
+        {
+            migrationTable.AddOrUpdate(new MigrationEntry
+            {
+                ObjectType = "RoleDefinition",
+                OriginalId = roleDefinition.Id,
+                Name = roleDefinition.DisplayName ?? "Unknown"
+            });
+        }
+    }
+
+    public async Task ExportRoleDefinitionsAsync(
+        IEnumerable<RoleDefinition> roleDefinitions,
+        string outputPath,
+        CancellationToken cancellationToken = default)
+    {
+        var migrationTable = new MigrationTable();
+
+        foreach (var roleDefinition in roleDefinitions)
+        {
+            await ExportRoleDefinitionAsync(roleDefinition, outputPath, migrationTable, cancellationToken);
+        }
+
+        await SaveMigrationTableAsync(migrationTable, outputPath, cancellationToken);
+    }
+
+    public async Task ExportIntuneBrandingProfileAsync(
+        IntuneBrandingProfile profile,
+        string outputPath,
+        MigrationTable migrationTable,
+        CancellationToken cancellationToken = default)
+    {
+        var folderPath = Path.Combine(outputPath, "IntuneBrandingProfiles");
+        Directory.CreateDirectory(folderPath);
+
+        var sanitizedName = SanitizeFileName(profile.ProfileName ?? profile.Id ?? "unknown");
+        var filePath = Path.Combine(folderPath, $"{sanitizedName}.json");
+
+        var json = JsonSerializer.Serialize(profile, profile.GetType(), JsonOptions);
+        await File.WriteAllTextAsync(filePath, json, cancellationToken);
+
+        if (profile.Id != null)
+        {
+            migrationTable.AddOrUpdate(new MigrationEntry
+            {
+                ObjectType = "IntuneBrandingProfile",
+                OriginalId = profile.Id,
+                Name = profile.ProfileName ?? "Unknown"
+            });
+        }
+    }
+
+    public async Task ExportIntuneBrandingProfilesAsync(
+        IEnumerable<IntuneBrandingProfile> profiles,
+        string outputPath,
+        CancellationToken cancellationToken = default)
+    {
+        var migrationTable = new MigrationTable();
+
+        foreach (var profile in profiles)
+        {
+            await ExportIntuneBrandingProfileAsync(profile, outputPath, migrationTable, cancellationToken);
+        }
+
+        await SaveMigrationTableAsync(migrationTable, outputPath, cancellationToken);
+    }
+
+    public async Task ExportAzureBrandingLocalizationAsync(
+        OrganizationalBrandingLocalization localization,
+        string outputPath,
+        MigrationTable migrationTable,
+        CancellationToken cancellationToken = default)
+    {
+        var folderPath = Path.Combine(outputPath, "AzureBrandingLocalizations");
+        Directory.CreateDirectory(folderPath);
+
+        var sanitizedName = SanitizeFileName(localization.Id ?? "unknown");
+        var filePath = Path.Combine(folderPath, $"{sanitizedName}.json");
+
+        var json = JsonSerializer.Serialize(localization, localization.GetType(), JsonOptions);
+        await File.WriteAllTextAsync(filePath, json, cancellationToken);
+
+        if (localization.Id != null)
+        {
+            migrationTable.AddOrUpdate(new MigrationEntry
+            {
+                ObjectType = "AzureBrandingLocalization",
+                OriginalId = localization.Id,
+                Name = localization.Id ?? "Unknown"
+            });
+        }
+    }
+
+    public async Task ExportAzureBrandingLocalizationsAsync(
+        IEnumerable<OrganizationalBrandingLocalization> localizations,
+        string outputPath,
+        CancellationToken cancellationToken = default)
+    {
+        var migrationTable = new MigrationTable();
+
+        foreach (var localization in localizations)
+        {
+            await ExportAzureBrandingLocalizationAsync(localization, outputPath, migrationTable, cancellationToken);
+        }
+
+        await SaveMigrationTableAsync(migrationTable, outputPath, cancellationToken);
+    }
 }
