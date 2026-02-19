@@ -1,10 +1,14 @@
 name: CI — Integration Tests (Graph API)
 
 # Runs integration tests against a live Entra ID / Intune tenant.
-# Requires repository secrets:
-#   AZURE_TENANT_ID   — Entra ID tenant for the test app registration
-#   AZURE_CLIENT_ID   — App registration client ID
+# Requires a GitHub Environment named "integration-test" with these secrets:
+#   AZURE_TENANT_ID     — Entra ID tenant for the test app registration
+#   AZURE_CLIENT_ID     — App registration client ID
 #   AZURE_CLIENT_SECRET — App registration client secret
+#
+# Setup: GitHub -> Settings -> Environments -> New environment -> "integration-test"
+#   Then add the three secrets above under that environment.
+#   Optionally add required reviewers or branch restrictions.
 #
 # Required Graph API permissions (Application):
 #   DeviceManagementConfiguration.ReadWrite.All
@@ -27,7 +31,8 @@ on:
 jobs:
   integration:
     runs-on: ubuntu-latest
-    # Only run if secrets are configured (fork PRs won't have them)
+    environment: integration-test
+    # Only run if not a fork PR (forks won't have access to the environment)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     permissions:
       contents: read
@@ -41,16 +46,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check for secrets
+      - name: Validate secrets
         id: check-secrets
         shell: bash
         run: |
           if [ -z "$AZURE_TENANT_ID" ] || [ -z "$AZURE_CLIENT_ID" ] || [ -z "$AZURE_CLIENT_SECRET" ]; then
             echo "has_secrets=false" >> "$GITHUB_OUTPUT"
-            echo "⚠ Azure credentials not configured — skipping integration tests"
+            echo "WARNING: Azure credentials not configured in the 'integration-test' environment -- skipping"
           else
             echo "has_secrets=true" >> "$GITHUB_OUTPUT"
-            echo "✓ Azure credentials found"
+            echo "Azure credentials found in 'integration-test' environment"
           fi
 
       - name: Setup .NET 10
@@ -90,4 +95,4 @@ jobs:
         if: failure() && steps.check-secrets.outputs.has_secrets == 'true'
         shell: bash
         run: |
-          echo "⚠ Integration tests failed — check for orphaned resources with prefix 'IntTest_AutoCleanup_' in your Intune tenant"
+          echo "WARNING: Integration tests failed -- check for orphaned resources with prefix 'IntTest_AutoCleanup_' in your Intune tenant"
