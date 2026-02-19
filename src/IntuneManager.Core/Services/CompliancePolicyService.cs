@@ -64,7 +64,9 @@ public class CompliancePolicyService : ICompliancePolicyService
         var result = await _graphClient.DeviceManagement.DeviceCompliancePolicies[id]
             .PatchAsync(policy, cancellationToken: cancellationToken);
 
-        return result ?? throw new InvalidOperationException("Failed to update compliance policy");
+        // Some Graph endpoints return 204 No Content on PATCH — fall back to GET
+        return result ?? await GetCompliancePolicyAsync(id, cancellationToken)
+            ?? throw new InvalidOperationException("Failed to update compliance policy");
     }
 
     public async Task DeleteCompliancePolicyAsync(string id, CancellationToken cancellationToken = default)

@@ -64,7 +64,9 @@ public class AutopilotService : IAutopilotService
         var result = await _graphClient.DeviceManagement.WindowsAutopilotDeploymentProfiles[id]
             .PatchAsync(profile, cancellationToken: cancellationToken);
 
-        return result ?? throw new InvalidOperationException("Failed to update Autopilot profile");
+        // Some Graph endpoints return 204 No Content on PATCH — fall back to GET
+        return result ?? await GetAutopilotProfileAsync(id, cancellationToken)
+            ?? throw new InvalidOperationException("Failed to update Autopilot profile");
     }
 
     public async Task DeleteAutopilotProfileAsync(string id, CancellationToken cancellationToken = default)

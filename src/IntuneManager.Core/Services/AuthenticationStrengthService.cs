@@ -61,7 +61,9 @@ public class AuthenticationStrengthService : IAuthenticationStrengthService
         var result = await _graphClient.Identity.ConditionalAccess.AuthenticationStrength.Policies[id]
             .PatchAsync(policy, cancellationToken: cancellationToken);
 
-        return result ?? throw new InvalidOperationException("Failed to update authentication strength policy");
+        // Some Graph endpoints return 204 No Content on PATCH — fall back to GET
+        return result ?? await GetAuthenticationStrengthPolicyAsync(id, cancellationToken)
+            ?? throw new InvalidOperationException("Failed to update authentication strength policy");
     }
 
     public async Task DeleteAuthenticationStrengthPolicyAsync(string id, CancellationToken cancellationToken = default)

@@ -64,7 +64,9 @@ public class ScopeTagService : IScopeTagService
         var result = await _graphClient.DeviceManagement.RoleScopeTags[id]
             .PatchAsync(scopeTag, cancellationToken: cancellationToken);
 
-        return result ?? throw new InvalidOperationException("Failed to update scope tag");
+        // Some Graph endpoints return 204 No Content on PATCH — fall back to GET
+        return result ?? await GetScopeTagAsync(id, cancellationToken)
+            ?? throw new InvalidOperationException("Failed to update scope tag");
     }
 
     public async Task DeleteScopeTagAsync(string id, CancellationToken cancellationToken = default)

@@ -64,7 +64,9 @@ public class MacCustomAttributeService : IMacCustomAttributeService
         var result = await _graphClient.DeviceManagement.DeviceCustomAttributeShellScripts[id]
             .PatchAsync(script, cancellationToken: cancellationToken);
 
-        return result ?? throw new InvalidOperationException("Failed to update mac custom attribute script");
+        // Some Graph endpoints return 204 No Content on PATCH — fall back to GET
+        return result ?? await GetMacCustomAttributeAsync(id, cancellationToken)
+            ?? throw new InvalidOperationException("Failed to update mac custom attribute script");
     }
 
     public async Task DeleteMacCustomAttributeAsync(string id, CancellationToken cancellationToken = default)

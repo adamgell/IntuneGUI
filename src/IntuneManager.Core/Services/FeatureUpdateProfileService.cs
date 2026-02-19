@@ -64,7 +64,9 @@ public class FeatureUpdateProfileService : IFeatureUpdateProfileService
         var result = await _graphClient.DeviceManagement.WindowsFeatureUpdateProfiles[id]
             .PatchAsync(profile, cancellationToken: cancellationToken);
 
-        return result ?? throw new InvalidOperationException("Failed to update feature update profile");
+        // Some Graph endpoints return 204 No Content on PATCH — fall back to GET
+        return result ?? await GetFeatureUpdateProfileAsync(id, cancellationToken)
+            ?? throw new InvalidOperationException("Failed to update feature update profile");
     }
 
     public async Task DeleteFeatureUpdateProfileAsync(string id, CancellationToken cancellationToken = default)

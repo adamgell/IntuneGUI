@@ -64,7 +64,9 @@ public class RoleDefinitionService : IRoleDefinitionService
         var result = await _graphClient.DeviceManagement.RoleDefinitions[id]
             .PatchAsync(roleDefinition, cancellationToken: cancellationToken);
 
-        return result ?? throw new InvalidOperationException("Failed to update role definition");
+        // Some Graph endpoints return 204 No Content on PATCH — fall back to GET
+        return result ?? await GetRoleDefinitionAsync(id, cancellationToken)
+            ?? throw new InvalidOperationException("Failed to update role definition");
     }
 
     public async Task DeleteRoleDefinitionAsync(string id, CancellationToken cancellationToken = default)

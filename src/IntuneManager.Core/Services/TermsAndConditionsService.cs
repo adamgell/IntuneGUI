@@ -64,7 +64,9 @@ public class TermsAndConditionsService : ITermsAndConditionsService
         var result = await _graphClient.DeviceManagement.TermsAndConditions[id]
             .PatchAsync(termsAndConditions, cancellationToken: cancellationToken);
 
-        return result ?? throw new InvalidOperationException("Failed to update terms and conditions");
+        // Some Graph endpoints return 204 No Content on PATCH — fall back to GET
+        return result ?? await GetTermsAndConditionsAsync(id, cancellationToken)
+            ?? throw new InvalidOperationException("Failed to update terms and conditions");
     }
 
     public async Task DeleteTermsAndConditionsAsync(string id, CancellationToken cancellationToken = default)

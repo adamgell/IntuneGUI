@@ -64,7 +64,9 @@ public class AppProtectionPolicyService : IAppProtectionPolicyService
         var result = await _graphClient.DeviceAppManagement.ManagedAppPolicies[id]
             .PatchAsync(policy, cancellationToken: cancellationToken);
 
-        return result ?? throw new InvalidOperationException("Failed to update app protection policy");
+        // Some Graph endpoints return 204 No Content on PATCH — fall back to GET
+        return result ?? await GetAppProtectionPolicyAsync(id, cancellationToken)
+            ?? throw new InvalidOperationException("Failed to update app protection policy");
     }
 
     public async Task DeleteAppProtectionPolicyAsync(string id, CancellationToken cancellationToken = default)

@@ -61,7 +61,9 @@ public class AuthenticationContextService : IAuthenticationContextService
         var result = await _graphClient.Identity.ConditionalAccess.AuthenticationContextClassReferences[id]
             .PatchAsync(contextClassReference, cancellationToken: cancellationToken);
 
-        return result ?? throw new InvalidOperationException("Failed to update authentication context");
+        // Some Graph endpoints return 204 No Content on PATCH — fall back to GET
+        return result ?? await GetAuthenticationContextAsync(id, cancellationToken)
+            ?? throw new InvalidOperationException("Failed to update authentication context");
     }
 
     public async Task DeleteAuthenticationContextAsync(string id, CancellationToken cancellationToken = default)
