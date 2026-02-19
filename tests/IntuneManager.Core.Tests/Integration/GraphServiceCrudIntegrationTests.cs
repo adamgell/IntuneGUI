@@ -79,8 +79,13 @@ public class GraphServiceCrudIntegrationTests : GraphIntegrationTestBase
 
     #region NamedLocationService CRUD
 
+    /// <summary>
+    /// Reliable Create/Get/Delete test for named locations.
+    /// Update is tested separately because Entra ID named locations have
+    /// extreme replication lag that makes PATCH unreliable in CI.
+    /// </summary>
     [Fact]
-    public async Task NamedLocation_Create_Get_Update_Delete()
+    public async Task NamedLocation_Create_Get_Delete()
     {
         if (ShouldSkip()) return;
         var svc = CreateService<NamedLocationService>()!;
@@ -121,15 +126,75 @@ public class GraphServiceCrudIntegrationTests : GraphIntegrationTestBase
             Assert.NotNull(fetched);
             Assert.Equal(created.Id, fetched!.Id);
 
-            // Brief delay before update
+            // Delete
             await Task.Delay(2000);
+            await svc.DeleteNamedLocationAsync(created.Id!);
+            created = null;
+        }
+        finally
+        {
+            if (created?.Id != null)
+            {
+                try { await svc.DeleteNamedLocationAsync(created.Id); } catch { }
+            }
+        }
+    }
 
-            // Update — retry with backoff for Entra ID replication lag
-            // Only update DisplayName to minimize payload issues
+    /// <summary>
+    /// Tests UpdateNamedLocationAsync with a follow-up GET to verify the change.
+    /// Entra ID named locations have extreme replication lag (30+ seconds) that
+    /// causes PATCH to return 400/404 intermittently. This test retries with
+    /// extended backoff (up to ~75 s total) and fails explicitly if the update
+    /// cannot be verified — it never silently skips verification.
+    /// </summary>
+    [Trait("Flaky", "EntraReplication")]
+    [Fact]
+    public async Task NamedLocation_Update()
+    {
+        if (ShouldSkip()) return;
+        var svc = CreateService<NamedLocationService>()!;
+        NamedLocation? created = null;
+
+        try
+        {
+            // Create
+            var location = new IpNamedLocation
+            {
+                DisplayName = $"{TestPrefix}NamedLoc_{Guid.NewGuid():N}",
+                IsTrusted = false,
+                IpRanges =
+                [
+                    new IPv4CidrRange { CidrAddress = "203.0.113.0/24" }
+                ]
+            };
+            created = await svc.CreateNamedLocationAsync(location);
+            Assert.NotNull(created);
+            Assert.NotNull(created.Id);
+
+            // Wait for replication before attempting update
+            NamedLocation? fetched = null;
+            for (int attempt = 0; attempt < 5; attempt++)
+            {
+                await Task.Delay(3000 * (attempt + 1));
+                try
+                {
+                    fetched = await svc.GetNamedLocationAsync(created.Id!);
+                    if (fetched != null) break;
+                }
+                catch (Microsoft.Graph.Beta.Models.ODataErrors.ODataError ex)
+                    when (ex.ResponseStatusCode == 404)
+                {
+                    // Not replicated yet — retry
+                }
+            }
+            Assert.NotNull(fetched);
+
+            // Update — retry with extended backoff (up to ~75 s total wait)
+            var updatedName = $"{TestPrefix}NamedLoc_Updated_{Guid.NewGuid():N}";
             var toUpdate = new IpNamedLocation
             {
                 Id = created.Id,
-                DisplayName = $"{TestPrefix}NamedLoc_Updated_{Guid.NewGuid():N}",
+                DisplayName = updatedName,
             };
             NamedLocation? updated = null;
             Microsoft.Graph.Beta.Models.ODataErrors.ODataError? lastError = null;
@@ -141,22 +206,27 @@ public class GraphServiceCrudIntegrationTests : GraphIntegrationTestBase
                     break;
                 }
                 catch (Microsoft.Graph.Beta.Models.ODataErrors.ODataError ex)
+                    when (ex.ResponseStatusCode is 400 or 404)
                 {
                     lastError = ex;
-                    // Entra ID may return 400 or 404 during replication — retry
                     await Task.Delay(5000 * (updateAttempt + 1));
                 }
             }
-            if (updated == null && lastError != null)
+
+            if (updated == null)
             {
-                // If update is persistently failing, skip it — Entra ID named location
-                // PATCH is known to be unreliable. Still verify Create/Get/Delete work.
-                // Throw only if the error is not a known replication issue.
-                if (lastError.ResponseStatusCode is not (400 or 404))
-                    throw lastError;
+                throw new InvalidOperationException(
+                    $"NamedLocation PATCH failed after 5 retries due to Entra ID replication lag. " +
+                    $"Last error: {lastError?.ResponseStatusCode} — {lastError?.Message}");
             }
 
-            // Delete — also retry for replication lag
+            // Verify via follow-up GET — do not trust the PATCH response alone
+            await Task.Delay(3000);
+            var verified = await svc.GetNamedLocationAsync(created.Id!);
+            Assert.NotNull(verified);
+            Assert.Equal(updatedName, verified!.DisplayName);
+
+            // Delete
             await Task.Delay(2000);
             await svc.DeleteNamedLocationAsync(created.Id!);
             created = null;
