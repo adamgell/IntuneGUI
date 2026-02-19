@@ -17,7 +17,7 @@
     <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="8.0.12" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
     <PackageReference Include="Microsoft.Graph.Beta" Version="5.130.0-preview" />
-    <PackageReference Include="Syncfusion.Presentation.Net.Core" Version="28.1.33" />
+    <PackageReference Include="Syncfusion.Presentation.Net.Core" Version="32.2.5" />
   </ItemGroup>
 
 </Project>
