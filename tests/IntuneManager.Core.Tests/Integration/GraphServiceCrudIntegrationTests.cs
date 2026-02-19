@@ -148,15 +148,15 @@ public class GraphServiceCrudIntegrationTests : GraphIntegrationTestBase
                     if (fetched != null) break;
                 }
                 catch (Microsoft.Graph.Beta.Models.ODataErrors.ODataError ex)
-                    when (ex.ResponseStatusCode == 404)
+                    when (ex.ResponseStatusCode is 404 or 500)
                 {
-                    // Not replicated yet — retry
+                    // Not replicated yet or transient server error — retry
                 }
             }
             Assert.NotNull(fetched);
             Assert.Equal(created.Id, fetched!.Id);
 
-            // Delete — retry with backoff for replication lag
+            // Delete — retry with backoff for replication lag (400/404/500 are all transient for Entra)
             for (int delAttempt = 0; delAttempt < 5; delAttempt++)
             {
                 try
@@ -167,9 +167,9 @@ public class GraphServiceCrudIntegrationTests : GraphIntegrationTestBase
                     break;
                 }
                 catch (Microsoft.Graph.Beta.Models.ODataErrors.ODataError ex)
-                    when (ex.ResponseStatusCode is 404 && delAttempt < 4)
+                    when (ex.ResponseStatusCode is 400 or 404 or 500 && delAttempt < 4)
                 {
-                    // Not replicated yet — retry
+                    // Not replicated yet or transient server error — retry
                 }
             }
         }
@@ -224,9 +224,9 @@ public class GraphServiceCrudIntegrationTests : GraphIntegrationTestBase
                     if (fetched != null) break;
                 }
                 catch (Microsoft.Graph.Beta.Models.ODataErrors.ODataError ex)
-                    when (ex.ResponseStatusCode == 404)
+                    when (ex.ResponseStatusCode is 404 or 500)
                 {
-                    // Not replicated yet — retry
+                    // Not replicated yet or transient server error — retry
                 }
             }
             Assert.NotNull(fetched);
@@ -263,12 +263,9 @@ public class GraphServiceCrudIntegrationTests : GraphIntegrationTestBase
 
             if (updated == null)
             {
-                // Entra ID named location PATCH is notoriously unreliable under
-                // eventual consistency — treat persistent 400/404/500 as a known
-                // platform limitation rather than a test failure.  The separate
-                // NamedLocation_Create_Get_Delete test proves the core CRUD path.
-                // Delete the resource we created and bail out.
-                return;
+                throw new InvalidOperationException(
+                    $"PATCH failed after 6 retries ({lastError?.ResponseStatusCode}). " +
+                    $"Last error: {lastError?.Message}");
             }
 
             // Verify via follow-up GET with polling — do not trust the PATCH
@@ -279,7 +276,7 @@ public class GraphServiceCrudIntegrationTests : GraphIntegrationTestBase
             Assert.NotNull(verified);
             Assert.Equal(updatedName, verified!.DisplayName);
 
-            // Delete — retry with backoff for replication lag
+            // Delete — retry with backoff for replication lag (400/404/500 are all transient for Entra)
             for (int delAttempt = 0; delAttempt < 5; delAttempt++)
             {
                 try
@@ -290,9 +287,9 @@ public class GraphServiceCrudIntegrationTests : GraphIntegrationTestBase
                     break;
                 }
                 catch (Microsoft.Graph.Beta.Models.ODataErrors.ODataError ex)
-                    when (ex.ResponseStatusCode is 404 && delAttempt < 4)
+                    when (ex.ResponseStatusCode is 400 or 404 or 500 && delAttempt < 4)
                 {
-                    // Not replicated yet — retry
+                    // Not replicated yet or transient server error — retry
                 }
             }
         }
