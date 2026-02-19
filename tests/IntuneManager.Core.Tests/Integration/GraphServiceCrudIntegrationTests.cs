@@ -16,6 +16,29 @@ public class GraphServiceCrudIntegrationTests : GraphIntegrationTestBase
 {
     private const string TestPrefix = "IntTest_AutoCleanup_";
 
+    /// <summary>
+    /// Polls a GET function until <paramref name="predicate"/> returns true or
+    /// <paramref name="maxAttempts"/> is exhausted. Returns the last fetched value.
+    /// This guards against eventual-consistency staleness when PATCH returns 204
+    /// and the service falls back to an immediate GET.
+    /// </summary>
+    private static async Task<T?> PollUntilAsync<T>(
+        Func<Task<T?>> getAsync,
+        Func<T, bool> predicate,
+        int maxAttempts = 5,
+        int baseDelayMs = 2000) where T : class
+    {
+        T? result = null;
+        for (int i = 0; i < maxAttempts; i++)
+        {
+            await Task.Delay(baseDelayMs * (i + 1));
+            result = await getAsync();
+            if (result != null && predicate(result))
+                return result;
+        }
+        return result;
+    }
+
     #region ScopeTagService CRUD
 
     [Fact]
@@ -48,7 +71,14 @@ public class GraphServiceCrudIntegrationTests : GraphIntegrationTestBase
             created.Description = "Updated by integration test";
             var updated = await svc.UpdateScopeTagAsync(created);
             Assert.NotNull(updated);
-            Assert.Equal("Updated by integration test", updated.Description);
+
+            // Verify update via follow-up GET — PATCH may return 204 and the
+            // immediate GET fallback can be stale under eventual consistency
+            var verified = await PollUntilAsync(
+                () => svc.GetScopeTagAsync(created.Id!),
+                t => t.Description == "Updated by integration test");
+            Assert.NotNull(verified);
+            Assert.Equal("Updated by integration test", verified!.Description);
 
             // Delete
             await svc.DeleteScopeTagAsync(created.Id!);
@@ -283,7 +313,14 @@ public class GraphServiceCrudIntegrationTests : GraphIntegrationTestBase
             };
             var updated = await svc.UpdateTermsAndConditionsAsync(patchTac);
             Assert.NotNull(updated);
-            Assert.Equal("Updated by integration test", updated.Description);
+
+            // Verify update via follow-up GET — PATCH may return 204 and the
+            // immediate GET fallback can be stale under eventual consistency
+            var verified = await PollUntilAsync(
+                () => svc.GetTermsAndConditionsAsync(created.Id!),
+                t => t.Description == "Updated by integration test");
+            Assert.NotNull(verified);
+            Assert.Equal("Updated by integration test", verified!.Description);
 
             // Delete
             await svc.DeleteTermsAndConditionsAsync(created.Id!);
@@ -332,6 +369,14 @@ public class GraphServiceCrudIntegrationTests : GraphIntegrationTestBase
             created.Description = "Updated by integration test";
             var updated = await svc.UpdateDeviceHealthScriptAsync(created);
             Assert.NotNull(updated);
+
+            // Verify update via follow-up GET — PATCH may return 204 and the
+            // immediate GET fallback can be stale under eventual consistency
+            var verified = await PollUntilAsync(
+                () => svc.GetDeviceHealthScriptAsync(created.Id!),
+                s => s.Description == "Updated by integration test");
+            Assert.NotNull(verified);
+            Assert.Equal("Updated by integration test", verified!.Description);
 
             // Delete
             await svc.DeleteDeviceHealthScriptAsync(created.Id!);
@@ -384,6 +429,14 @@ public class GraphServiceCrudIntegrationTests : GraphIntegrationTestBase
             };
             var updated = await svc.UpdateFeatureUpdateProfileAsync(patchProfile);
             Assert.NotNull(updated);
+
+            // Verify update via follow-up GET — PATCH may return 204 and the
+            // immediate GET fallback can be stale under eventual consistency
+            var verified = await PollUntilAsync(
+                () => svc.GetFeatureUpdateProfileAsync(created.Id!),
+                p => p.Description == "Updated by integration test");
+            Assert.NotNull(verified);
+            Assert.Equal("Updated by integration test", verified!.Description);
 
             // Delete
             await svc.DeleteFeatureUpdateProfileAsync(created.Id!);
@@ -442,6 +495,14 @@ public class GraphServiceCrudIntegrationTests : GraphIntegrationTestBase
             created.Description = "Updated by integration test";
             var updated = await svc.UpdateRoleDefinitionAsync(created);
             Assert.NotNull(updated);
+
+            // Verify update via follow-up GET — PATCH may return 204 and the
+            // immediate GET fallback can be stale under eventual consistency
+            var verified = await PollUntilAsync(
+                () => svc.GetRoleDefinitionAsync(created.Id!),
+                r => r.Description == "Updated by integration test");
+            Assert.NotNull(verified);
+            Assert.Equal("Updated by integration test", verified!.Description);
 
             // Delete
             await svc.DeleteRoleDefinitionAsync(created.Id!);
