@@ -1,14 +1,16 @@
+using System;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
-using System.Linq;
 using Avalonia.Markup.Xaml;
 using IntuneManager.Core.Extensions;
 using IntuneManager.Core.Services;
 using IntuneManager.Desktop.ViewModels;
 using IntuneManager.Desktop.Views;
 using Microsoft.Extensions.DependencyInjection;
+using Syncfusion.Licensing;
 
 namespace IntuneManager.Desktop;
 
@@ -18,6 +20,14 @@ public partial class App : Application
 
     public override void Initialize()
     {
+        // Register Syncfusion license (Community Edition - free for projects with <5 developers and <$1M revenue)
+        // For production: Replace with your license key or use environment variable
+        var syncfusionLicense = Environment.GetEnvironmentVariable("SYNCFUSION_LICENSE_KEY");
+        if (!string.IsNullOrEmpty(syncfusionLicense))
+        {
+            SyncfusionLicenseProvider.RegisterLicense(syncfusionLicense);
+        }
+        
         AvaloniaXamlLoader.Load(this);
     }
 
