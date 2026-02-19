@@ -29,7 +29,7 @@ All take `GraphServiceClient` in constructor, use manual `@odata.nextLink` pagin
 var response = await _graphClient.DeviceAppManagement.MobileApps
     .GetAsync(req =>
     {
-        req.QueryParameters.Top = 999;
+        req.QueryParameters.Top = 200;
         // other query params...
     }, cancellationToken);
 

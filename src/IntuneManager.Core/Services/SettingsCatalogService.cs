@@ -20,7 +20,7 @@ public class SettingsCatalogService : ISettingsCatalogService
         var response = await _graphClient.DeviceManagement.ConfigurationPolicies
             .GetAsync(req =>
             {
-                req.QueryParameters.Top = 999;
+                req.QueryParameters.Top = 200;
                 req.QueryParameters.Select = new[]
                 {
                     "id", "name", "description", "platforms", "technologies",

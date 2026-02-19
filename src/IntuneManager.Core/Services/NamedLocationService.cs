@@ -20,7 +20,7 @@ public class NamedLocationService : INamedLocationService
         var response = await _graphClient.Identity.ConditionalAccess.NamedLocations
             .GetAsync(req =>
             {
-                req.QueryParameters.Top = 999;
+                req.QueryParameters.Top = 200;
             }, cancellationToken);
 
         while (response != null)

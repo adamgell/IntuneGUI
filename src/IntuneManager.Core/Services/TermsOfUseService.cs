@@ -20,7 +20,7 @@ public class TermsOfUseService : ITermsOfUseService
         var response = await _graphClient.IdentityGovernance.TermsOfUse.Agreements
             .GetAsync(req =>
             {
-                req.QueryParameters.Top = 999;
+                req.QueryParameters.Top = 200;
             }, cancellationToken);
 
         while (response != null)

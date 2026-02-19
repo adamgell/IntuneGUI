@@ -20,7 +20,7 @@ public class MacCustomAttributeService : IMacCustomAttributeService
         var response = await _graphClient.DeviceManagement.DeviceCustomAttributeShellScripts
             .GetAsync(req =>
             {
-                req.QueryParameters.Top = 999;
+                req.QueryParameters.Top = 200;
             }, cancellationToken);
 
         while (response != null)

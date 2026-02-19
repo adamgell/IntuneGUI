@@ -20,7 +20,7 @@ public class IntuneBrandingService : IIntuneBrandingService
         var response = await _graphClient.DeviceManagement.IntuneBrandingProfiles
             .GetAsync(req =>
             {
-                req.QueryParameters.Top = 999;
+                req.QueryParameters.Top = 200;
             }, cancellationToken);
 
         while (response != null)

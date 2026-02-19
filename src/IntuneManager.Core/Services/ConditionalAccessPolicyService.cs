@@ -20,7 +20,7 @@ public class ConditionalAccessPolicyService : IConditionalAccessPolicyService
         var response = await _graphClient.Identity.ConditionalAccess.Policies
             .GetAsync(req =>
             {
-                req.QueryParameters.Top = 999;
+                req.QueryParameters.Top = 200;
             }, cancellationToken);
 
         while (response != null)
