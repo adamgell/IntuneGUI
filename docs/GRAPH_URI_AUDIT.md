@@ -95,7 +95,7 @@ For each new service:
 
 - Define `I{Type}Service` in `src/IntuneManager.Core/Services/`.
 - Implement `{Type}Service` with `GraphServiceClient` constructor injection.
-- Use manual `@odata.nextLink` pagination (`$top = 999` on initial request).
+- Use manual `@odata.nextLink` pagination (`$top = 200` on initial request).
 - Accept `CancellationToken` in all async methods.
 - Return Graph SDK models directly (`Microsoft.Graph.Beta.Models`).
 - Add export/import support only when required by migration scenarios.

@@ -18,10 +18,7 @@ public class AuthenticationStrengthService : IAuthenticationStrengthService
         var result = new List<AuthenticationStrengthPolicy>();
 
         var response = await _graphClient.Identity.ConditionalAccess.AuthenticationStrength.Policies
-            .GetAsync(req =>
-            {
-                req.QueryParameters.Top = 999;
-            }, cancellationToken);
+            .GetAsync(cancellationToken: cancellationToken);
 
         while (response != null)
         {

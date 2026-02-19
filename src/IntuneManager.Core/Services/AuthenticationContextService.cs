@@ -18,10 +18,7 @@ public class AuthenticationContextService : IAuthenticationContextService
         var result = new List<AuthenticationContextClassReference>();
 
         var response = await _graphClient.Identity.ConditionalAccess.AuthenticationContextClassReferences
-            .GetAsync(req =>
-            {
-                req.QueryParameters.Top = 999;
-            }, cancellationToken);
+            .GetAsync(cancellationToken: cancellationToken);
 
         while (response != null)
         {

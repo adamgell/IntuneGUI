@@ -28,7 +28,7 @@ public class GroupService : IGroupService
                 "securityEnabled", "mailEnabled", "createdDateTime",
                 "mail"
             };
-            req.QueryParameters.Top = 999;
+            req.QueryParameters.Top = 200;
             req.Headers.Add("ConsistencyLevel", "eventual");
             req.QueryParameters.Count = true;
         }, cancellationToken);
@@ -66,7 +66,7 @@ public class GroupService : IGroupService
                 "securityEnabled", "mailEnabled", "createdDateTime",
                 "mail"
             };
-            req.QueryParameters.Top = 999;
+            req.QueryParameters.Top = 200;
             req.Headers.Add("ConsistencyLevel", "eventual");
             req.QueryParameters.Count = true;
         }, cancellationToken);
@@ -108,7 +108,7 @@ public class GroupService : IGroupService
             .GetAsync(req =>
             {
                 req.QueryParameters.Select = new[] { "id" };
-                req.QueryParameters.Top = 999;
+                req.QueryParameters.Top = 200;
             }, cancellationToken);
 
         while (response?.Value != null)
@@ -158,7 +158,7 @@ public class GroupService : IGroupService
                     "operatingSystem", "operatingSystemVersion",
                     "isManaged", "isCompliant", "manufacturer", "model"
                 };
-                req.QueryParameters.Top = 999;
+                req.QueryParameters.Top = 200;
             }, cancellationToken);
 
         while (response?.Value != null)

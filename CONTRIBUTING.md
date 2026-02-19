@@ -104,7 +104,7 @@ If any breaking changes exist:
 **Manual Pagination (Required)**
 ```csharp
 var response = await _graphClient.SomeEndpoint
-    .GetAsync(req => req.QueryParameters.Top = 999, cancellationToken);
+    .GetAsync(req => req.QueryParameters.Top = 200, cancellationToken);
 
 var result = new List<SomeType>();
 while (response != null)

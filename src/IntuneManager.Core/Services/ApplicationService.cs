@@ -21,7 +21,7 @@ public class ApplicationService : IApplicationService
         var response = await _graphClient.DeviceAppManagement.MobileApps
             .GetAsync(req =>
             {
-                req.QueryParameters.Top = 999;
+                req.QueryParameters.Top = 200;
             }, cancellationToken);
 
         while (response != null)

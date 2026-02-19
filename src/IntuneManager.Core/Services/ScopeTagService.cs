@@ -20,7 +20,7 @@ public class ScopeTagService : IScopeTagService
         var response = await _graphClient.DeviceManagement.RoleScopeTags
             .GetAsync(req =>
             {
-                req.QueryParameters.Top = 999;
+                req.QueryParameters.Top = 200;
             }, cancellationToken);
 
         while (response != null)

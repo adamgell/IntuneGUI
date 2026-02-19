@@ -20,7 +20,7 @@ public class EnrollmentConfigurationService : IEnrollmentConfigurationService
         var response = await _graphClient.DeviceManagement.DeviceEnrollmentConfigurations
             .GetAsync(req =>
             {
-                req.QueryParameters.Top = 999;
+                req.QueryParameters.Top = 200;
             }, cancellationToken);
 
         while (response != null)
