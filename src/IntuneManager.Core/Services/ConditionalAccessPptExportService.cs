@@ -1,5 +1,3 @@
-using System.Globalization;
-using Microsoft.Graph.Beta;
 using Microsoft.Graph.Beta.Models;
 using SyncPresentation = Syncfusion.Presentation;
 
@@ -11,30 +9,24 @@ namespace IntuneManager.Core.Services;
 /// </summary>
 public class ConditionalAccessPptExportService : IConditionalAccessPptExportService
 {
-    private readonly GraphServiceClient _graphClient;
     private readonly IConditionalAccessPolicyService _caPolicyService;
     private readonly INamedLocationService _namedLocationService;
     private readonly IAuthenticationStrengthService _authStrengthService;
     private readonly IAuthenticationContextService _authContextService;
     private readonly IApplicationService _applicationService;
-    private readonly IGroupService _groupService;
 
     public ConditionalAccessPptExportService(
-        GraphServiceClient graphClient,
         IConditionalAccessPolicyService caPolicyService,
         INamedLocationService namedLocationService,
         IAuthenticationStrengthService authStrengthService,
         IAuthenticationContextService authContextService,
-        IApplicationService applicationService,
-        IGroupService groupService)
+        IApplicationService applicationService)
     {
-        _graphClient = graphClient;
         _caPolicyService = caPolicyService;
         _namedLocationService = namedLocationService;
         _authStrengthService = authStrengthService;
         _authContextService = authContextService;
         _applicationService = applicationService;
-        _groupService = groupService;
     }
 
     public async Task ExportAsync(
@@ -42,6 +34,16 @@ public class ConditionalAccessPptExportService : IConditionalAccessPptExportServ
         string tenantName,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(outputPath))
+        {
+            throw new ArgumentException("Output path must not be null, empty, or whitespace.", nameof(outputPath));
+        }
+
+        if (string.IsNullOrWhiteSpace(tenantName))
+        {
+            throw new ArgumentException("Tenant name must not be null, empty, or whitespace.", nameof(tenantName));
+        }
+
         // Load all required data
         var policies = await _caPolicyService.ListPoliciesAsync(cancellationToken);
         var namedLocations = await _namedLocationService.ListNamedLocationsAsync(cancellationToken);
@@ -61,7 +63,14 @@ public class ConditionalAccessPptExportService : IConditionalAccessPptExportServ
         foreach (var policy in policies.OrderBy(p => p.DisplayName))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            await AddPolicyDetailSlideAsync(presentation, policy, namedLocations, authStrengths, authContexts, applications, cancellationToken);
+            AddPolicyDetailSlide(presentation, policy);
+        }
+
+        // Ensure output directory exists
+        var directory = Path.GetDirectoryName(outputPath);
+        if (!string.IsNullOrEmpty(directory))
+        {
+            Directory.CreateDirectory(directory);
         }
 
         // Save presentation
@@ -148,8 +157,8 @@ public class ConditionalAccessPptExportService : IConditionalAccessPptExportServ
             table.Rows[0].Cells[i].TextBody.Paragraphs[0].Font.Bold = true;
         }
 
-        // Add policy rows (first 10 for now, will paginate in real implementation)
-        var displayPolicies = policies.OrderBy(p => p.DisplayName).Take(10).ToList();
+        // Add policy rows for all policies
+        var displayPolicies = policies.OrderBy(p => p.DisplayName).ToList();
         for (int i = 0; i < displayPolicies.Count; i++)
         {
             if (i + 1 >= table.Rows.Count)
@@ -162,14 +171,9 @@ public class ConditionalAccessPptExportService : IConditionalAccessPptExportServ
         }
     }
 
-    private async Task AddPolicyDetailSlideAsync(
+    private void AddPolicyDetailSlide(
         SyncPresentation.IPresentation presentation,
-        ConditionalAccessPolicy policy,
-        List<NamedLocation> namedLocations,
-        List<AuthenticationStrengthPolicy> authStrengths,
-        List<AuthenticationContextClassReference> authContexts,
-        List<MobileApp> applications,
-        CancellationToken cancellationToken)
+        ConditionalAccessPolicy policy)
     {
         var slide = presentation.Slides.Add(SyncPresentation.SlideLayoutType.Blank);
         
@@ -203,8 +207,6 @@ public class ConditionalAccessPptExportService : IConditionalAccessPptExportServ
         grantsTitle.Font.Bold = true;
         
         AddGrantControlsSummary(grantsShape, policy);
-
-        await Task.CompletedTask; // For future async lookups
     }
 
     private void AddConditionsSummary(SyncPresentation.IShape shape, ConditionalAccessPolicy policy)
