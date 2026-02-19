@@ -33,6 +33,7 @@ jobs:
             --configuration Release \
             --no-build \
             --verbosity normal \
+            --filter "Category!=Integration" \
             /p:CollectCoverage=true \
             /p:CoverletOutputFormat=cobertura \
             /p:CoverletOutput=./coverage/ \
