@@ -15,7 +15,19 @@ This document inventories Graph API URI usage from the `IntuneManagement` submod
 - Extracted URI rows: **132**
 - Unique URI patterns: **104**
 - Stable/non-templated URI patterns: **63**
-- **Implemented in Intune Commander: 26 Graph services** (as of last update)
+- **Implemented in Intune Commander: 26 direct Graph API services** (Waves 1–5 complete)
+- **Additional completed feature:** `IConditionalAccessPptExportService` (Wave 6) — orchestrates CA policy data from existing services into a PowerPoint export; not a direct Graph API service
+
+## Completed Implementation Waves
+
+| Wave | Focus | Services | Status |
+|------|-------|----------|--------|
+| Wave 1 | Endpoint Security, Admin Templates, Enrollment | `IEndpointSecurityService`, `IAdministrativeTemplateService`, `IEnrollmentConfigurationService` | ✅ Complete |
+| Wave 2 | App Protection and App Configurations | `IAppProtectionPolicyService`, `IManagedAppConfigurationService`, `ITermsAndConditionsService` | ✅ Complete |
+| Wave 3 | Tenant Administration | `IScopeTagService`, `IRoleDefinitionService`, `IIntuneBrandingService`, `IAzureBrandingService` | ✅ Complete |
+| Wave 4 | Device Management Extensions | `IAutopilotService`, `IDeviceHealthScriptService`, `IMacCustomAttributeService`, `IFeatureUpdateProfileService` | ✅ Complete |
+| Wave 5 | Conditional Access and Identity Governance | `INamedLocationService`, `IAuthenticationStrengthService`, `IAuthenticationContextService`, `ITermsOfUseService` | ✅ Complete |
+| Wave 6 | CA PowerPoint Export | `IConditionalAccessPptExportService` (orchestrator, not a direct Graph service) | ✅ Complete |
 
 ## Current Coverage
 
@@ -129,3 +141,4 @@ For each new service:
 - All endpoints use the **Beta** Graph API (`https://graph.microsoft.com/beta/`).
 - The current architecture is service-per-type; new services must follow the same pattern.
 - `$top=999` is the correct pagination default (not `$top=200` as the CSV audit originally noted).
+- `IConditionalAccessPptExportService` is **not** counted in the 26 direct Graph API services — it is an export orchestrator that reads data already loaded into the ViewModel rather than making its own Graph calls.

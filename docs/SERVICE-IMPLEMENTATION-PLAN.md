@@ -7,16 +7,17 @@
 
 ## Completed Since Initial Plan (Now Done)
 
-The original Wave 1–5 backlog has been implemented and integrated:
+The original Wave 1–6 backlog has been implemented and integrated:
 
 - Endpoint Security, Administrative Templates, Enrollment Configurations
 - App Protection, Managed Device App Configurations, Targeted Managed App Configurations, Terms and Conditions
 - Scope Tags, Role Definitions, Intune Branding, Azure Branding
 - Autopilot, Device Health Scripts, Mac Custom Attributes, Feature Updates
 - Named Locations, Authentication Strength, Authentication Context, Terms of Use
+- **CA PowerPoint Export** — `IConditionalAccessPptExportService` / `ConditionalAccessPptExportService` using Syncfusion; post-export open-file prompt
 - Desktop wiring in `MainWindowViewModel` and detail panes
 - Export/Import coverage in `ExportService` / `ImportService`
-- Core test expansion for Wave 4–5 contracts and import/export flows
+- Core test expansion for Wave 4–6 contracts and import/export flows
 
 ## Remaining Gaps vs `EndpointManager.psm1`
 
@@ -52,16 +53,6 @@ The original Wave 1–5 backlog has been implemented and integrated:
 - Legacy split-view depth (especially Conditional Access and Autopilot workflows) is only partially reproduced.
 
 ## Prioritized Delivery Plan
-
-### Wave 6 — CA PowerPoint Export Integration (in progress)
-Integrate Conditional Access PowerPoint generation with native in-app export flow:
-1. Add Syncfusion PowerPoint library dependencies
-2. Create `IConditionalAccessPptExportService` / `ConditionalAccessPptExportService`
-3. Implement data aggregation and slide generation pipeline
-4. Add desktop command and UX wiring
-5. Commercial cloud support only for v1 (GCC/GCC-High/DoD deferred)
-
-See: `docs/CA-POWERPOINT-INT-PLAN.MD` for full implementation plan.
 
 ### Wave 7 — Scripts and Policy Dependencies (highest impact)
 1. Add Core services + interfaces

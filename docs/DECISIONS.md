@@ -1,6 +1,6 @@
 # Decision Log
 
-This document records key architectural and technical decisions made during the IntuneManager project planning phase.
+This document records key architectural and technical decisions made during the Intune Commander project planning phase.
 
 ---
 

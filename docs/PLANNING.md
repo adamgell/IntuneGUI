@@ -21,6 +21,7 @@ All core functionality is implemented and building cleanly. The original 6-phase
 | Group lookup and assignment resolution | ✅ Done |
 | Overview dashboard with charts | ✅ Done |
 | Debug log window | ✅ Done |
+| CA PowerPoint export (Syncfusion, open-after-export prompt) | ✅ Done |
 | CI/CD (unit tests, integration tests, build release) | ✅ Done |
 | Integration tests against live tenant | ✅ Done |
 
