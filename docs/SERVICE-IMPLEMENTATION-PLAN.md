@@ -97,7 +97,7 @@ See: `docs/CA-POWERPOINT-INT-PLAN.MD` for full implementation plan.
 3. Extend CSV/document exports for additional high-value categories.
 
 ## Implementation Checklist (apply to each new service)
-- [ ] Add `I<Type>Service` and `<Type>Service` in `src/IntuneManager.Core/Services/`
+- [ ] Add `I<Type>Service` and `<Type>Service` in `src/Intune.Commander.Core/Services/`
 - [ ] Constructor receives `GraphServiceClient`
 - [ ] Async APIs accept `CancellationToken`
 - [ ] List methods use manual pagination (`$top=999` + `OdataNextLink`)

@@ -68,7 +68,7 @@ This directory contains detailed tracking documents for implementing Intune Comm
 
 Each service follows these conventions:
 
-1. **Interface + Implementation** in `src/IntuneManager.Core/Services/`
+1. **Interface + Implementation** in `src/Intune.Commander.Core/Services/`
 2. **Constructor** accepts `GraphServiceClient`
 3. **Async methods** with `CancellationToken cancellationToken = default`
 4. **List methods** use manual `@odata.nextLink` pagination with `$top=999`
