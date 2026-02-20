@@ -7,7 +7,7 @@ This note estimates the effort to fully rename the product from the current `Int
 Based on the current codebase:
 
 - **~189 tracked file paths** include `IntuneManager` (project folders, file names, solution references).
-- **~169 C# files** declare `namespace IntuneManager...`.
+- **~169 C# files** declare `namespace Intune.Commander...`.
 - **~124 docs/workflow/readme mentions** reference `IntuneManager` or `Intune Commander`.
 
 In addition to source files, there are product identity values that affect persisted user data:
@@ -56,11 +56,11 @@ Per PR feedback, proceed with **Option B (full technical rename)**.
 
 ### Option B delivery checklist
 
-- [ ] Rename solution/projects/folders from `IntuneManager*` to `Intune.Commander*`.
-- [ ] Rename namespaces (`IntuneManager.*` → `Intune.Commander.*`) and fix all compile references.
-- [ ] Update CI/workflows/scripts/docs for renamed paths and project names.
-- [ ] Implement runtime migration to preserve existing local profile/cache readability.
-- [ ] Validate with `dotnet build` and `dotnet test --filter "Category!=Integration"`.
+- [x] Rename solution/projects/folders from `IntuneManager*` to `Intune.Commander*`. *(Phase 1 — PR #46)*
+- [x] Rename namespaces (`IntuneManager.*` → `Intune.Commander.*`) and fix all compile references. *(Phase 1 — PR #46)*
+- [x] Update CI/workflows/scripts/docs for renamed paths and project names. *(Phase 2 — this PR)*
+- [ ] Implement runtime migration to preserve existing local profile/cache readability. *(Phase 3)*
+- [ ] Validate with `dotnet build` and `dotnet test --filter "Category!=Integration"`. *(Phase 4)*
 
 ### Acceptance criteria for Option B
 
@@ -72,7 +72,7 @@ Per PR feedback, proceed with **Option B (full technical rename)**.
 ## Option B split into issues and pull requests
 
 ### Issue 1: Rename solution/projects and namespaces
-- **Scope:** rename `IntuneManager.sln`, project names/folders, namespaces/usings, and test project references.
+- **Scope:** rename solution file from `IntuneManager.sln` to `Intune.Commander.sln`, and update project names/folders, namespaces/usings, and test project references.
 - **PR:** `rename/option-b-01-solution-project-namespace`
 - **Exit criteria:** `dotnet build` and `dotnet test --filter "Category!=Integration"` pass.
 

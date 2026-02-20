@@ -49,7 +49,7 @@ dotnet test
 dotnet test --filter "FullyQualifiedName~ProfileServiceTests"
 
 # Run the desktop application
-dotnet run --project src/IntuneManager.Desktop
+dotnet run --project src/Intune.Commander.Desktop
 ```
 
 ### Profile Management
@@ -108,18 +108,18 @@ For **Government clouds** (GCC-High, DoD), register separate apps in the respect
 
 ```
 src/
-  IntuneManager.Core/        # Business logic (.NET 10 class library)
+  Intune.Commander.Core/        # Business logic (.NET 10 class library)
     Auth/                    # Azure.Identity credential providers
     Models/                  # Enums, TenantProfile, ProfileStore, DTOs, CacheEntry
     Services/                # 30+ Graph API services + ProfileService, CacheService, ExportService
     Extensions/              # DI registration (AddIntuneManagerCore)
-  IntuneManager.Desktop/     # Avalonia UI application
+  Intune.Commander.Desktop/     # Avalonia UI application
     Views/                   # MainWindow, LoginView, OverviewView, DebugLogWindow, RawJsonWindow
     ViewModels/              # MainWindowViewModel, LoginViewModel, OverviewViewModel
     Services/                # DebugLogService (in-memory log, UI-thread-safe)
     Converters/              # ComputedColumnConverters
 tests/
-  IntuneManager.Core.Tests/  # xUnit tests (200+ cases)
+  Intune.Commander.Core.Tests/  # xUnit tests (200+ cases)
 ```
 
 Graph API services are created **after** authentication (`new XxxService(graphClient)`) — they are not registered in DI at startup.
