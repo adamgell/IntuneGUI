@@ -64,6 +64,11 @@ Key rules:
 - **Multi-cloud**: `CloudEndpoints.GetEndpoints(cloud)` returns `(graphBaseUrl, authorityHost)` tuple. Separate app registrations per cloud.
 - **Computed columns**: DataGrid uses `DataGridColumnConfig` with `"Computed:"` prefix in `BindingPath` for values derived in code-behind (e.g., platform inferred from OData type).
 
+## Git Workflow
+- **Never commit directly to `main`.** All changes must go through a feature branch and pull request.
+- Branch naming: `feature/`, `fix/`, `docs/` prefixes (e.g. `feature/wave7-scripts`, `fix/lazy-load-guard`).
+- PRs should be created with `gh pr create` and submitted for Copilot / human review before merging.
+
 ## Build & Test
 ```bash
 dotnet build                                    # Build all projects
@@ -71,6 +76,8 @@ dotnet test                                     # Run xUnit tests
 dotnet run --project src/Intune.Commander.Desktop  # Launch the app
 ```
 Tests live in `tests/Intune.Commander.Core.Tests/` — xUnit with `[Fact]`/`[Theory]`, temp directories for file I/O tests, `IDisposable` cleanup. Tests cover models and services in Core only (no UI tests).
+
+**Unit tests are required for all new or changed code.** Every new service, model, or behavioral change in `Intune.Commander.Core` must include corresponding tests. PRs without adequate test coverage will not be merged.
 
 ## Adding a New Intune Object Type
 1. Create `I{Type}Service` interface in `Core/Services/` following the CRUD + `GetAssignmentsAsync` pattern.

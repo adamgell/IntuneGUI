@@ -111,6 +111,12 @@ Cloud endpoints in `CloudEndpoints.cs`:
 
 Each object type exports to its own subfolder under the chosen output directory (e.g., `DeviceConfigurations/`, `CompliancePolicies/`, etc.). Files are named `{DisplayName}.json` containing the serialized Graph Beta model. A `migration-table.json` at the root maps original IDs to new IDs after import.
 
+## Git Workflow
+
+- **Never commit directly to `main`.** All changes must go through a feature branch and pull request.
+- Branch naming: `feature/`, `fix/`, `docs/` prefixes (e.g. `feature/wave7-scripts`, `fix/lazy-load-guard`).
+- PRs should be created with `gh pr create` and submitted for Copilot / human review before merging.
+
 ## Coding Conventions
 
 - **C# 12:** primary constructors, collection expressions (`[]`), required members, file-scoped namespaces
@@ -143,6 +149,8 @@ Each object type exports to its own subfolder under the chosen output directory 
 - Coverage threshold is enforced via `/p:Threshold=40` — failing builds if line coverage drops below 40%
 
 ## Testing Conventions
+
+**Unit tests are required for all new or changed code.** Every new service, model, or behavioral change in `Intune.Commander.Core` must include corresponding tests. PRs without adequate test coverage will not be merged.
 
 ### Unit tests (`tests/Intune.Commander.Core.Tests/`)
 - xUnit with `[Fact]`/`[Theory]`, no mocking framework
