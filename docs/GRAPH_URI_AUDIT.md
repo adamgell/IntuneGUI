@@ -93,7 +93,7 @@ This document inventories Graph API URI usage from the `IntuneManagement` submod
 
 For each new service:
 
-- Define `I{Type}Service` in `src/IntuneManager.Core/Services/`.
+- Define `I{Type}Service` in `src/Intune.Commander.Core/Services/`.
 - Implement `{Type}Service` with `GraphServiceClient` constructor injection.
 - Use manual `@odata.nextLink` pagination (`$top = 200` on initial request).
 - Accept `CancellationToken` in all async methods.

@@ -68,7 +68,7 @@ This directory contains detailed tracking documents for implementing Intune Comm
 
 Each service follows these conventions:
 
-1. **Interface + Implementation** in `src/IntuneManager.Core/Services/`
+1. **Interface + Implementation** in `src/Intune.Commander.Core/Services/`
 2. **Constructor** accepts `GraphServiceClient`
 3. **Async methods** with `CancellationToken cancellationToken = default`
 4. **List methods** use manual `@odata.nextLink` pagination with `$top=999`
@@ -83,7 +83,7 @@ Each service follows these conventions:
 - **Phase B — Functional Completion:** Implement special helpers, normalization
 - **Phase C — Desktop Integration:** Add to `MainWindowViewModel`, UI wiring
 - **Phase D — Export/Import:** Extend `ExportService`/`ImportService`
-- **Phase E — Tests:** Add unit tests in `IntuneManager.Core.Tests`
+- **Phase E — Tests:** Add unit tests in `Intune.Commander.Core.Tests`
 
 ### Definition of Done (per service)
 

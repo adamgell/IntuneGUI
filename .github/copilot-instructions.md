@@ -10,9 +10,9 @@ Intune Commander is a .NET 10 / Avalonia UI desktop app for managing Microsoft I
 - All `[RelayCommand]` methods returning `Task` get automatic `CancellationToken` support from CommunityToolkit.Mvvm.
 
 ## Architecture
-- **Two-project solution**: `IntuneManager.Core` (class library: auth, services, models) and `IntuneManager.Desktop` (Avalonia UI app).
+- **Two-project solution**: `Intune.Commander.Core` (class library: auth, services, models) and `Intune.Commander.Desktop` (Avalonia UI app).
 - **MVVM with CommunityToolkit.Mvvm**: Use `[ObservableProperty]`, `[RelayCommand]`, and `partial` classes. ViewModels extend `ViewModelBase` which provides `IsBusy`/`ErrorMessage`.
-- **DI setup**: Services registered in `ServiceCollectionExtensions.AddIntuneManagerCore()`. Desktop-layer ViewModels registered in `App.axaml.cs`. Graph-dependent services (e.g., `ConfigurationProfileService`) are created manually after auth, not via DI.
+- **DI setup**: Services registered in `ServiceCollectionExtensions.AddIntuneCommanderCore()`. Desktop-layer ViewModels registered in `App.axaml.cs`. Graph-dependent services (e.g., `ConfigurationProfileService`) are created manually after auth, not via DI.
 - **ViewLocator pattern**: Avalonia resolves Views from ViewModels by naming convention (`FooViewModel` → `FooView`).
 
 ## Service-per-Type Pattern
@@ -60,7 +60,7 @@ Key rules:
 - **Graph SDK models used directly** — no wrapper DTOs. Types like `DeviceConfiguration`, `MobileApp` come from `Microsoft.Graph.Models`.
 - **Export format**: Subfolder-per-type (`DeviceConfigurations/`, `CompliancePolicies/`, `Applications/`) with `migration-table.json` for ID mappings. Must maintain read compatibility with the original PowerShell tool's JSON format.
 - **Export wrappers** for types with assignments: `CompliancePolicyExport`, `ApplicationExport` bundle the object + its assignments list.
-- **Profile storage**: Encrypted JSON at `%LOCALAPPDATA%\IntuneManager\profiles.json` using `Microsoft.AspNetCore.DataProtection`. Marker prefix `INTUNEMANAGER_ENC:` distinguishes encrypted from plain files.
+- **Profile storage**: Encrypted JSON at `%LOCALAPPDATA%\Intune.Commander\profiles.json` using `Microsoft.AspNetCore.DataProtection`. Marker prefix `INTUNEMANAGER_ENC:` distinguishes encrypted from plain files (marker preserved as compatibility constant).
 - **Multi-cloud**: `CloudEndpoints.GetEndpoints(cloud)` returns `(graphBaseUrl, authorityHost)` tuple. Separate app registrations per cloud.
 - **Computed columns**: DataGrid uses `DataGridColumnConfig` with `"Computed:"` prefix in `BindingPath` for values derived in code-behind (e.g., platform inferred from OData type).
 
@@ -68,9 +68,9 @@ Key rules:
 ```bash
 dotnet build                                    # Build all projects
 dotnet test                                     # Run xUnit tests
-dotnet run --project src/IntuneManager.Desktop  # Launch the app
+dotnet run --project src/Intune.Commander.Desktop  # Launch the app
 ```
-Tests live in `tests/IntuneManager.Core.Tests/` — xUnit with `[Fact]`/`[Theory]`, temp directories for file I/O tests, `IDisposable` cleanup. Tests cover models and services in Core only (no UI tests).
+Tests live in `tests/Intune.Commander.Core.Tests/` — xUnit with `[Fact]`/`[Theory]`, temp directories for file I/O tests, `IDisposable` cleanup. Tests cover models and services in Core only (no UI tests).
 
 ## Adding a New Intune Object Type
 1. Create `I{Type}Service` interface in `Core/Services/` following the CRUD + `GetAssignmentsAsync` pattern.
@@ -78,4 +78,4 @@ Tests live in `tests/IntuneManager.Core.Tests/` — xUnit with `[Fact]`/`[Theory
 3. If assignments are needed, create `{Type}Export` model in `Core/Models/` bundling object + assignments.
 4. Add export/import methods to `ExportService`/`ImportService`.
 5. Wire into `MainWindowViewModel`: add collection, selection property, column configs, nav category, and load logic.
-6. Add tests in `tests/IntuneManager.Core.Tests/`.
+6. Add tests in `tests/Intune.Commander.Core.Tests/`.
