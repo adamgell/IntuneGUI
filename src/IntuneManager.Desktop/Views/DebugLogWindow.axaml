@@ -55,7 +55,7 @@
                      x:Name="LogListBox"
                      Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
                      Padding="4"
-                     SelectionMode="Extended"
+                     SelectionMode="Multiple"
                      ScrollViewer.HorizontalScrollBarVisibility="Auto">
                 <ListBox.ItemTemplate>
                     <DataTemplate>

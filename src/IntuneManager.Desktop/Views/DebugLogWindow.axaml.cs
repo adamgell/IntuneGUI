@@ -32,12 +32,11 @@ public partial class DebugLogWindow : Window
         _listBox = this.FindControl<ListBox>("LogListBox");
         if (_listBox != null)
         {
-            var vm = (DebugLogViewModel)DataContext;
-            vm.LogEntries.CollectionChanged += (_, e) =>
+            _viewModel.FilteredEntries.CollectionChanged += (_, e) =>
             {
-                if (_viewModel.AutoScroll && e.Action == NotifyCollectionChangedAction.Add && vm.LogEntries.Count > 0)
+                if (_viewModel.AutoScroll && e.Action == NotifyCollectionChangedAction.Add && _viewModel.FilteredEntries.Count > 0)
                 {
-                    _listBox.ScrollIntoView(vm.LogEntries[^1]);
+                    _listBox.ScrollIntoView(_viewModel.FilteredEntries[^1]);
                 }
             };
         }
@@ -53,7 +52,7 @@ public partial class DebugLogWindow : Window
 
     private async void OnCopySelected(object? sender, RoutedEventArgs e)
     {
-        if (_listBox == null || _viewModel.LogEntries.Count == 0)
+        if (_listBox == null || _viewModel.FilteredEntries.Count == 0)
             return;
 
         var selected = _listBox.SelectedItems?.OfType<DebugLogEntry>().ToList();
@@ -65,9 +64,9 @@ public partial class DebugLogWindow : Window
         await CopyToClipboardAsync(selected.Select(s => s.Formatted));
     }
 
-    private Task OnCopyAll(object? sender, RoutedEventArgs e)
+    private async void OnCopyAll(object? sender, RoutedEventArgs e)
     {
-        return CopyToClipboardAsync(_viewModel.FilteredEntries.Select(x => x.Formatted));
+        await CopyToClipboardAsync(_viewModel.FilteredEntries.Select(x => x.Formatted));
     }
 
     private async void OnSaveLog(object? sender, RoutedEventArgs e)
