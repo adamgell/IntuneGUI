@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
@@ -93,6 +94,7 @@ public partial class MainWindow : Window
             _vm.CopyDetailsRequested -= OnCopyDetailsRequested;
             _vm.ViewRawJsonRequested -= OnViewRawJsonRequested;
             _vm.SaveFileRequested -= OnSaveFileRequested;
+            _vm.OpenAfterExportRequested -= OnOpenAfterExportRequested;
             _vm.PropertyChanged -= OnViewModelPropertyChanged;
             _vm = null;
         }
@@ -104,6 +106,7 @@ public partial class MainWindow : Window
             vm.CopyDetailsRequested += OnCopyDetailsRequested;
             vm.ViewRawJsonRequested += OnViewRawJsonRequested;
             vm.SaveFileRequested += OnSaveFileRequested;
+            vm.OpenAfterExportRequested += OnOpenAfterExportRequested;
             vm.PropertyChanged += OnViewModelPropertyChanged;
         }
     }
@@ -687,6 +690,18 @@ public partial class MainWindow : Window
                 Process.Start("xdg-open", url);
         }
         catch { /* best effort */ }
+    }
+
+    private async Task<bool> OnOpenAfterExportRequested(string filePath)
+    {
+        var box = MessageBoxManager.GetMessageBoxStandard(
+            "Export Complete",
+            $"PowerPoint exported successfully.\n\nWould you like to open {Path.GetFileName(filePath)}?",
+            ButtonEnum.YesNo,
+            MsBox.Avalonia.Enums.Icon.Success);
+
+        var result = await box.ShowWindowDialogAsync(this);
+        return result == ButtonResult.Yes;
     }
 
     private async Task<string?> OnSaveFileRequested(string defaultFileName, string filter)

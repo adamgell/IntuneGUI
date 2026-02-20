@@ -1,6 +1,8 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
@@ -12,6 +14,9 @@ public partial class MainWindowViewModel : ViewModelBase
 {
     // Event to request save file dialog from code-behind
     public event Func<string, string, Task<string?>>? SaveFileRequested;
+
+    // Event to ask the user if they want to open the exported file
+    public event Func<string, Task<bool>>? OpenAfterExportRequested;
 
     [RelayCommand(CanExecute = nameof(CanExportConditionalAccessPowerPoint))]
     private async Task ExportConditionalAccessPowerPointAsync(CancellationToken cancellationToken)
@@ -49,6 +54,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
             StatusText = $"Successfully exported Conditional Access policies to: {Path.GetFileName(outputPath)}";
             DebugLog.Log("Export", $"CA PowerPoint export completed: {outputPath}");
+
+            if (OpenAfterExportRequested != null && await OpenAfterExportRequested.Invoke(outputPath))
+                OpenFile(outputPath);
         }
         catch (OperationCanceledException)
         {
@@ -71,6 +79,20 @@ public partial class MainWindowViewModel : ViewModelBase
         return IsConnected && 
                _conditionalAccessPptExportService != null && 
                ConditionalAccessPolicies.Count > 0;
+    }
+
+    private static void OpenFile(string path)
+    {
+        try
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                System.Diagnostics.Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                System.Diagnostics.Process.Start("open", path);
+            else
+                System.Diagnostics.Process.Start("xdg-open", path);
+        }
+        catch { /* best effort */ }
     }
 
     private async Task<string?> RequestSaveFileAsync(string defaultFileName, string filter)
