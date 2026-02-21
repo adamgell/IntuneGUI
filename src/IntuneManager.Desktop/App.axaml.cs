@@ -5,8 +5,12 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using Avalonia.Markup.Xaml.Styling;
+using Avalonia.Themes.Fluent;
+using Classic.Avalonia.Theme;
 using IntuneManager.Core.Extensions;
-using IntuneManager.Core.Services;
+using IntuneManager.Desktop.Models;
+using IntuneManager.Desktop.Services;
 using IntuneManager.Desktop.ViewModels;
 using IntuneManager.Desktop.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +21,32 @@ namespace IntuneManager.Desktop;
 public partial class App : Application
 {
     public static ServiceProvider? Services { get; private set; }
+    public static AppTheme CurrentTheme { get; private set; } = AppTheme.Fluent;
+
+    public static void ApplyTheme(AppTheme theme)
+    {
+        CurrentTheme = theme;
+        var app = Application.Current!;
+
+        if (theme == AppTheme.Classic)
+        {
+            app.Styles[0] = new ClassicTheme();
+            app.Styles[1] = new StyleInclude(new Uri("avares://IntuneManager.Desktop"))
+            {
+                Source = new Uri("avares://Classic.Avalonia.Theme.DataGrid/Classic.axaml")
+            };
+        }
+        else
+        {
+            app.Styles[0] = new FluentTheme();
+            app.Styles[1] = new StyleInclude(new Uri("avares://IntuneManager.Desktop"))
+            {
+                Source = new Uri("avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml")
+            };
+        }
+
+        AppSettingsService.Save(new AppSettings { Theme = theme });
+    }
 
     public override void Initialize()
     {
@@ -35,6 +65,13 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             DisableAvaloniaDataAnnotationValidation();
+
+            // Apply saved theme (replaces default FluentTheme from AXAML if Classic was saved)
+            var savedSettings = AppSettingsService.Load();
+            if (savedSettings.Theme != AppTheme.Fluent)
+                ApplyTheme(savedSettings.Theme);
+            else
+                CurrentTheme = AppTheme.Fluent;
 
             var services = new ServiceCollection();
             services.AddIntuneManagerCore();

@@ -53,6 +53,7 @@ public partial class MainWindow : Window
             columnChooserButton.Click += OnColumnChooserClick;
 
         AttachViewModelIfAvailable("Loaded");
+        UpdateThemeCheckmarks();
     }
 
     private void OnDataContextChanged(object? sender, EventArgs e)
@@ -604,6 +605,27 @@ public partial class MainWindow : Window
         {
             _debugLogWindow.Activate();
         }
+    }
+
+    private void OnThemeFluentClick(object? sender, RoutedEventArgs e)
+    {
+        App.ApplyTheme(IntuneManager.Desktop.Models.AppTheme.Fluent);
+        UpdateThemeCheckmarks();
+    }
+
+    private void OnThemeClassicClick(object? sender, RoutedEventArgs e)
+    {
+        App.ApplyTheme(IntuneManager.Desktop.Models.AppTheme.Classic);
+        UpdateThemeCheckmarks();
+    }
+
+    private void UpdateThemeCheckmarks()
+    {
+        var isFluent = App.CurrentTheme == IntuneManager.Desktop.Models.AppTheme.Fluent;
+        if (this.FindControl<MenuItem>("MenuThemeFluent") is { } fluent)
+            fluent.Icon = isFluent ? new TextBlock { Text = "✓" } : null;
+        if (this.FindControl<MenuItem>("MenuThemeClassic") is { } classic)
+            classic.Icon = !isFluent ? new TextBlock { Text = "✓" } : null;
     }
 
     private void OnCheckForUpdatesClick(object? sender, RoutedEventArgs e)
