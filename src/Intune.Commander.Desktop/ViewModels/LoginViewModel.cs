@@ -56,6 +56,18 @@ public partial class LoginViewModel : ViewModelBase
     [ObservableProperty]
     private string _deviceCodeMessage = string.Empty;
 
+    /// <summary>
+    /// The user code extracted from the Device Code flow (e.g. "ABCD1234").
+    /// </summary>
+    [ObservableProperty]
+    private string _deviceUserCode = string.Empty;
+
+    /// <summary>
+    /// The verification URL from the Device Code flow.
+    /// </summary>
+    [ObservableProperty]
+    private string _deviceVerificationUrl = string.Empty;
+
     public static CloudEnvironment[] AvailableClouds { get; } =
         Enum.GetValues<CloudEnvironment>();
 
@@ -209,6 +221,8 @@ public partial class LoginViewModel : ViewModelBase
         ClientIdError = null;
         StatusMessage = string.Empty;
         DeviceCodeMessage = string.Empty;
+        DeviceUserCode = string.Empty;
+        DeviceVerificationUrl = string.Empty;
         ClearError();
     }
 
@@ -251,6 +265,8 @@ public partial class LoginViewModel : ViewModelBase
         ClearError();
         IsBusy = true;
         DeviceCodeMessage = string.Empty;
+        DeviceUserCode = string.Empty;
+        DeviceVerificationUrl = string.Empty;
         StatusMessage = SelectedAuthMethod switch
         {
             AuthMethod.DeviceCode => "Waiting for device code...",
@@ -272,6 +288,8 @@ public partial class LoginViewModel : ViewModelBase
                 deviceCodeCallback = (info, _) =>
                 {
                     DeviceCodeMessage = info.Message;
+                    DeviceUserCode = info.UserCode;
+                    DeviceVerificationUrl = info.VerificationUri.ToString();
                     StatusMessage = "Complete sign-in in your browser, then return here.";
                     return Task.CompletedTask;
                 };
@@ -282,6 +300,8 @@ public partial class LoginViewModel : ViewModelBase
             await client.DeviceManagement.GetAsync(cancellationToken: cancellationToken);
 
             DeviceCodeMessage = string.Empty;
+            DeviceUserCode = string.Empty;
+            DeviceVerificationUrl = string.Empty;
             StatusMessage = "Connected successfully!";
             profile.LastUsed = DateTime.UtcNow;
             _profileService.SetActiveProfile(profile.Id);
@@ -292,6 +312,8 @@ public partial class LoginViewModel : ViewModelBase
         catch (Exception ex)
         {
             DeviceCodeMessage = string.Empty;
+            DeviceUserCode = string.Empty;
+            DeviceVerificationUrl = string.Empty;
             SetError($"Authentication failed: {ex.Message}");
             StatusMessage = string.Empty;
         }
