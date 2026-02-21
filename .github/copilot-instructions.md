@@ -21,6 +21,10 @@ dotnet run --project src/IntuneManager.Desktop                  # Launch the app
 - Cache: LiteDB 5.0.x (AES-encrypted), Charts: LiveChartsCore.SkiaSharpView.Avalonia
 
 ## Architecture
+- **Two-project solution**: `Intune.Commander.Core` (class library: auth, services, models) and `Intune.Commander.Desktop` (Avalonia UI app).
+- **MVVM with CommunityToolkit.Mvvm**: Use `[ObservableProperty]`, `[RelayCommand]`, and `partial` classes. ViewModels extend `ViewModelBase` which provides `IsBusy`/`ErrorMessage`.
+- **DI setup**: Services registered in `ServiceCollectionExtensions.AddIntuneCommanderCore()`. Desktop-layer ViewModels registered in `App.axaml.cs`. Graph-dependent services (e.g., `ConfigurationProfileService`) are created manually after auth, not via DI.
+- **ViewLocator pattern**: Avalonia resolves Views from ViewModels by naming convention (`FooViewModel` → `FooView`).
 
 **Two projects:** `IntuneManager.Core` (class library) and `IntuneManager.Desktop` (Avalonia app).
 
@@ -67,43 +71,33 @@ while (response != null)
 - `.WithUrl(...)` requires `using Microsoft.Kiota.Abstractions;`.
 - Apply to **every** service method that lists Graph objects, including `GroupService`.
 
-## Service-per-Type Pattern
-Each Intune type gets `I{Type}Service` + `{Type}Service` in `Core/Services/`. All take `GraphServiceClient` in constructor, accept `CancellationToken`, return `List<T>`. Currently ~25 types including: ConfigurationProfile, CompliancePolicy, Application, AppProtectionPolicy, ConditionalAccessPolicy, EndpointSecurity, EnrollmentConfiguration, FeatureUpdateProfile, DeviceHealthScript, AdministrativeTemplate, SettingsCatalog, AutopilotDevice, ScopeTag, AssignmentFilter, GroupService, TermsAndConditions, RoleDefinition, NamedLocation, and more.
+## Key Conventions
+- **Graph SDK models used directly** — no wrapper DTOs. Types like `DeviceConfiguration`, `MobileApp` come from `Microsoft.Graph.Models`.
+- **Export format**: Subfolder-per-type (`DeviceConfigurations/`, `CompliancePolicies/`, `Applications/`) with `migration-table.json` for ID mappings. Must maintain read compatibility with the original PowerShell tool's JSON format.
+- **Export wrappers** for types with assignments: `CompliancePolicyExport`, `ApplicationExport` bundle the object + its assignments list.
+- **Profile storage**: Encrypted JSON at `%LOCALAPPDATA%\Intune.Commander\profiles.json` using `Microsoft.AspNetCore.DataProtection`. Marker prefix `INTUNEMANAGER_ENC:` distinguishes encrypted from plain files (marker preserved as compatibility constant).
+- **Multi-cloud**: `CloudEndpoints.GetEndpoints(cloud)` returns `(graphBaseUrl, authorityHost)` tuple. Separate app registrations per cloud.
+- **Computed columns**: DataGrid uses `DataGridColumnConfig` with `"Computed:"` prefix in `BindingPath` for values derived in code-behind (e.g., platform inferred from OData type).
 
-## Coding Conventions
-- **C# 12:** primary constructors, collection expressions (`[]`), required members, file-scoped namespaces
-- **Nullable reference types enabled** everywhere; no `#nullable disable`
-- **Private fields:** `_camelCase`; public: `PascalCase`
-- **Namespaces:** `IntuneManager.Core.*` and `IntuneManager.Desktop.*`
-- **XAML:** always set `x:DataType` — `AvaloniaUseCompiledBindingsByDefault` is on
-- **Factory class name:** `IntuneGraphClientFactory` (not `GraphClientFactory`) to avoid collision with `Microsoft.Graph.GraphClientFactory`
-- **Graph SDK models used directly** — no wrapper DTOs except `*Export` classes (e.g., `CompliancePolicyExport`) that bundle an object + its assignments list for export
-- **Computed columns:** `DataGridColumnConfig` uses `"Computed:"` prefix in `BindingPath` for values derived in code-behind (e.g., platform from OData type)
+## Git Workflow
+- **Never commit directly to `main`.** All changes must go through a feature branch and pull request.
+- Branch naming: `feature/`, `fix/`, `docs/` prefixes (e.g. `feature/wave7-scripts`, `fix/lazy-load-guard`).
+- PRs should be created with `gh pr create` and submitted for Copilot / human review before merging.
 
-## Testing Conventions
+## Build & Test
+```bash
+dotnet build                                    # Build all projects
+dotnet test                                     # Run xUnit tests
+dotnet run --project src/Intune.Commander.Desktop  # Launch the app
+```
+Tests live in `tests/Intune.Commander.Core.Tests/` — xUnit with `[Fact]`/`[Theory]`, temp directories for file I/O tests, `IDisposable` cleanup. Tests cover models and services in Core only (no UI tests).
 
-### Unit tests (`tests/IntuneManager.Core.Tests/`)
-- xUnit `[Fact]`/`[Theory]`, no mocking framework
-- Service contract tests verify interface conformance via reflection (method signatures, return types, `CancellationToken` params)
-- File I/O tests use temp directories with `IDisposable` cleanup
-- Test factory methods use `Make*` naming (e.g., `MakeProfile`); test doubles use `Spy*` prefix
-
-### Integration tests (`tests/IntuneManager.Core.Tests/Integration/`)
-- **Always** tag with `[Trait("Category", "Integration")]`
-- Base class `GraphIntegrationTestBase` provides `GraphServiceClient` from env vars and `ShouldSkip()` for graceful no-op
-- CRUD tests prefix created objects with `IntTest_AutoCleanup_` and clean up in `finally` blocks
-- Use `RetryOnTransientFailureAsync()` helper (3 attempts, exponential backoff) to handle Graph API transient 500 errors
-
-## Export/Import Format
-Each type exports to its own subfolder (e.g., `DeviceConfigurations/`, `CompliancePolicies/`). Files named `{DisplayName}.json` with serialized Graph Beta model. `migration-table.json` at root maps original IDs to new IDs. Must maintain read compatibility with the original PowerShell tool's JSON format.
-
-## PowerShell Scripts
-- **ASCII-only characters** — no Unicode decorations (`━─→✓✗○—`) — they break PowerShell 5.1 parsing
-- Save `.ps1` files with ASCII encoding; target PowerShell 5.1+ compatibility
+**Unit tests are required for all new or changed code.** Every new service, model, or behavioral change in `Intune.Commander.Core` must include corresponding tests. PRs without adequate test coverage will not be merged.
 
 ## Adding a New Intune Object Type
-1. Create `I{Type}Service` + `{Type}Service` in `Core/Services/` (manual pagination, `CancellationToken`, `List<T>` return)
-2. If assignments needed, create `{Type}Export` in `Core/Models/`
-3. Add export/import to `ExportService`/`ImportService`
-4. Wire into `MainWindowViewModel`: collection, selection property, column configs, nav category, lazy-load logic with `_*Loaded` flag
-5. Add tests in `tests/IntuneManager.Core.Tests/`
+1. Create `I{Type}Service` interface in `Core/Services/` following the CRUD + `GetAssignmentsAsync` pattern.
+2. Create `{Type}Service` implementation taking `GraphServiceClient`, using manual `@odata.nextLink` pagination for listing (see pagination section above).
+3. If assignments are needed, create `{Type}Export` model in `Core/Models/` bundling object + assignments.
+4. Add export/import methods to `ExportService`/`ImportService`.
+5. Wire into `MainWindowViewModel`: add collection, selection property, column configs, nav category, and load logic.
+6. Add tests in `tests/Intune.Commander.Core.Tests/`.
