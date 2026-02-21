@@ -70,3 +70,7 @@ example/
 .claude/
 .cursor/
 set-syncfusion-key.cmd
+
+publish/osx-arm64/
+
+publish/osx-x64/
