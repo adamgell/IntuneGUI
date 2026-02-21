@@ -28,20 +28,12 @@ public partial class App : Application
     public static ServiceProvider? Services { get; private set; }
     public static AppTheme CurrentTheme { get; private set; } = AppTheme.Fluent;
 
-    // Injected directly onto app.Resources (flat, not in ThemeDictionaries) when Classic is active.
-    // These cover Fluent-only SystemControl* keys that Classic theme does not define at all.
-    private static readonly Dictionary<string, object> _classicFlatResources = new()
-    {
-        ["SystemControlBackgroundChromeMediumBrush"]    = new SolidColorBrush(Color.Parse("#C0C0C0")),
-        ["SystemControlBackgroundChromeMediumLowBrush"] = new SolidColorBrush(Color.Parse("#D4D0C8")),
-        ["SystemControlBackgroundAltHighBrush"]         = new SolidColorBrush(Colors.White),
-        ["SystemControlForegroundBaseMediumLowBrush"]   = new SolidColorBrush(Color.Parse("#808080")),
-        ["SystemControlForegroundBaseHighBrush"]        = new SolidColorBrush(Colors.Black),
-        ["SystemControlHighlightListLowBrush"]          = new SolidColorBrush(Color.FromArgb(30, 0, 0, 128)),
-        ["SystemAccentColor"]                           = Color.Parse("#000080"),
-    };
+    // URI of the Styles file that defines ALL Fluent SystemControl* keys for Classic theme.
+    // Must be a <Styles> (not <ResourceDictionary>) so it sits in the style tree and
+    // StaticResource lookups from Classic control templates can resolve it at load time.
+    private const string ClassicBaseResourcesUri = "avares://Intune.Commander.Desktop/Themes/ClassicBaseResources.axaml";
 
-    // Injected INTO ThemeDictionaries[Light] and [Dark] when Classic is active.
+    // Values injected INTO ThemeDictionaries[Light/Dark] when Classic is active.
     // MUST be here because Avalonia resolves ThemeDictionaries entries BEFORE flat
     // MergedDictionaries, so AppNavTextBrush etc. can only be overridden this way.
     private static readonly Dictionary<string, object> _classicThemeResources = new()
@@ -52,7 +44,7 @@ public partial class App : Application
         ["AppErrorBackgroundBrush"] = new SolidColorBrush(Color.FromArgb(26, 255, 0, 0)),
     };
 
-    // Saved originals from ThemeDictionaries so we can restore on switching back to Fluent.
+    // Saved originals from ThemeDictionaries so we can restore on switch back to Fluent.
     private static readonly Dictionary<ThemeVariant, Dictionary<string, object?>> _savedThemeValues = new()
     {
         [ThemeVariant.Light] = [],
@@ -103,9 +95,33 @@ public partial class App : Application
         else
             app.Styles.Insert(themeIndex + 1, newDataGrid);
 
-        // ── 3. Patch / restore ThemeDictionaries entries ──────────────────────────
-        // Avalonia resolves ThemeDictionaries[Light/Dark] BEFORE flat MergedDictionaries,
-        // so App-specific brushes (AppNavTextBrush etc.) MUST be set inside the theme dicts.
+        // ── 3. Add / remove the Classic base resources style ──────────────────────
+        // This <Styles> file defines ALL Fluent SystemControl* resource keys with
+        // Classic-appropriate colors. Adding it to app.Styles puts the resources in
+        // the style tree where both DynamicResource and StaticResource can resolve them.
+        // (StaticResource lookups walk the style tree, not just MergedDictionaries.)
+        var baseResUri = new Uri(ClassicBaseResourcesUri);
+        var existingBaseRes = app.Styles
+            .OfType<StyleInclude>()
+            .FirstOrDefault(s => s.Source == baseResUri);
+
+        if (theme == AppTheme.Classic && existingBaseRes == null)
+        {
+            // Insert AFTER the ClassicTheme style so it can override defaults
+            var insertAt = Math.Min(themeIndex + 1, app.Styles.Count);
+            app.Styles.Insert(insertAt, new StyleInclude(new Uri("avares://Intune.Commander.Desktop"))
+            {
+                Source = baseResUri
+            });
+        }
+        else if (theme != AppTheme.Classic && existingBaseRes != null)
+        {
+            app.Styles.Remove(existingBaseRes);
+        }
+
+        // ── 4. Patch / restore ThemeDictionaries entries ──────────────────────────
+        // Avalonia resolves ThemeDictionaries[Light/Dark] BEFORE flat resources, so
+        // App-specific brushes (AppNavTextBrush etc.) MUST be set inside the theme dicts.
         var appResources = (ResourceDictionary)app.Resources;
         foreach (var variant in new[] { ThemeVariant.Light, ThemeVariant.Dark })
         {
@@ -133,19 +149,6 @@ public partial class App : Application
                 }
                 _savedThemeValues[variant].Clear();
             }
-        }
-
-        // ── 4. Inject / remove flat SystemControl* resources ──────────────────────
-        // These Fluent-only keys don't exist in Classic at all; any location wins for them.
-        if (theme == AppTheme.Classic)
-        {
-            foreach (var kv in _classicFlatResources)
-                appResources[kv.Key] = kv.Value;
-        }
-        else
-        {
-            foreach (var key in _classicFlatResources.Keys)
-                appResources.Remove(key);
         }
 
         AppSettingsService.Save(new AppSettings { Theme = theme });
