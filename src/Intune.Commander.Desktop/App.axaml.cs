@@ -25,7 +25,7 @@ public partial class App : Application
     public static ServiceProvider? Services { get; private set; }
     public static AppTheme CurrentTheme { get; private set; } = AppTheme.Fluent;
 
-    private const string ClassicOverridesUri = "avares://Intune.Commander.Desktop/Assets/ClassicThemeOverrides.axaml";
+    private const string ClassicOverridesUri = "avares://Intune.Commander.Desktop/Themes/ClassicThemeOverrides.axaml";
 
     public static void ApplyTheme(AppTheme theme)
     {
