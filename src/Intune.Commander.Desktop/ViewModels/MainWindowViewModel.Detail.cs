@@ -50,6 +50,32 @@ public partial class MainWindowViewModel : ViewModelBase
 
 
 
+    /// <summary>
+
+    /// Creates an <see cref="AssignmentReportViewModel"/> wired to the current Graph services.
+
+    /// Returns null if not connected.
+
+    /// </summary>
+
+    public AssignmentReportViewModel? CreateAssignmentReportViewModel()
+
+    {
+
+        if (_graphClient == null || _groupService == null) return null;
+
+
+
+        return new AssignmentReportViewModel(
+
+            new Intune.Commander.Core.Services.AssignmentCheckerService(_graphClient),
+
+            _groupService);
+
+    }
+
+
+
     [RelayCommand]
 
     private void CopyDetailsToClipboard()
