@@ -75,20 +75,18 @@ public class UserService(GraphServiceClient graphClient) : IUserService
 
     public async Task<List<User>> ListUsersAsync(CancellationToken cancellationToken = default)
     {
-        var users = new List<User>();
+        var result = new List<User>();
 
-        var response = await _graphClient.Users.GetAsync(requestConfiguration =>
+        var response = await _graphClient.Users.GetAsync(req =>
         {
-            requestConfiguration.QueryParameters.Top = 200;
-            requestConfiguration.QueryParameters.Select = ["id", "displayName", "userPrincipalName", "mail", "jobTitle", "department"];
+            req.QueryParameters.Top = 999;
+            req.QueryParameters.Select = UserSelect;
         }, cancellationToken);
 
         while (response != null)
         {
             if (response.Value != null)
-            {
-                users.AddRange(response.Value);
-            }
+                result.AddRange(response.Value);
 
             if (!string.IsNullOrEmpty(response.OdataNextLink))
             {
@@ -102,6 +100,6 @@ public class UserService(GraphServiceClient graphClient) : IUserService
             }
         }
 
-        return users;
+        return result;
     }
 }
