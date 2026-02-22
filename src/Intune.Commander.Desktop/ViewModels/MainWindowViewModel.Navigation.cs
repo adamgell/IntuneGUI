@@ -56,6 +56,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
                 new() { Name = "Enrollment Configurations", Icon = "🪪" },
 
+                new() { Name = "Device Categories", Icon = "🗂" },
+
             }
 
         },
@@ -159,6 +161,22 @@ public partial class MainWindowViewModel : ViewModelBase
                 new() { Name = "Device Shell Scripts", Icon = "🐚" },
 
                 new() { Name = "Compliance Scripts", Icon = "✅" },
+
+            }
+
+        },
+
+        new NavCategoryGroup
+
+        {
+
+            Name = "Apple", Icon = "🍎",
+
+            Children = new ObservableCollection<NavCategory>
+
+            {
+
+                new() { Name = "Apple DEP", Icon = "📱" },
 
             }
 
@@ -336,6 +354,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
         "Compliance Scripts" => ComplianceScriptColumns,
 
+        "Apple DEP" => AppleDepColumns,
+
+        "Device Categories" => DeviceCategoryColumns,
+
         "Dynamic Groups" => DynamicGroupColumns,
 
         "Assigned Groups" => AssignedGroupColumns,
@@ -442,6 +464,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public bool IsComplianceScriptsCategory => SelectedCategory?.Name == "Compliance Scripts";
 
+    public bool IsAppleDepCategory => SelectedCategory?.Name == "Apple DEP";
+
+    public bool IsDeviceCategoriesCategory => SelectedCategory?.Name == "Device Categories";
+
     public bool IsDynamicGroupsCategory => SelectedCategory?.Name == "Dynamic Groups";
 
     public bool IsAssignedGroupsCategory => SelectedCategory?.Name == "Assigned Groups";
@@ -486,6 +512,8 @@ public partial class MainWindowViewModel : ViewModelBase
         "Device Management Scripts" => FilteredDeviceManagementScripts.Count,
         "Device Shell Scripts" => FilteredDeviceShellScripts.Count,
         "Compliance Scripts" => FilteredComplianceScripts.Count,
+        "Apple DEP" => FilteredAppleDepSettings.Count,
+        "Device Categories" => FilteredDeviceCategories.Count,
         _ => -1
     };
 
@@ -564,6 +592,10 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedDeviceShellScript = null;
 
         SelectedComplianceScript = null;
+
+        SelectedAppleDepSetting = null;
+
+        SelectedDeviceCategory = null;
 
         SelectedDynamicGroupRow = null;
 
@@ -648,6 +680,10 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsDeviceShellScriptsCategory));
 
         OnPropertyChanged(nameof(IsComplianceScriptsCategory));
+
+        OnPropertyChanged(nameof(IsAppleDepCategory));
+
+        OnPropertyChanged(nameof(IsDeviceCategoriesCategory));
 
         OnPropertyChanged(nameof(IsDynamicGroupsCategory));
 
@@ -1517,6 +1553,36 @@ public partial class MainWindowViewModel : ViewModelBase
 
             }
 
+        }
+
+        if (value?.Name == "Apple DEP" && !_appleDepSettingsLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<DepOnboardingSetting>(CacheKeyAppleDepSettings, rows =>
+            {
+                AppleDepSettings = new ObservableCollection<DepOnboardingSetting>(rows);
+                _appleDepSettingsLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} Apple DEP onboarding setting(s) from cache";
+            }))
+            {
+                _appleDepSettingsLoaded = true;
+                _ = LoadAppleDepSettingsAsync();
+            }
+        }
+
+        if (value?.Name == "Device Categories" && !_deviceCategoriesLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<DeviceCategory>(CacheKeyDeviceCategories, rows =>
+            {
+                DeviceCategories = new ObservableCollection<DeviceCategory>(rows);
+                _deviceCategoriesLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} device category(ies) from cache";
+            }))
+            {
+                _deviceCategoriesLoaded = true;
+                _ = LoadDeviceCategoriesAsync();
+            }
         }
 
     }

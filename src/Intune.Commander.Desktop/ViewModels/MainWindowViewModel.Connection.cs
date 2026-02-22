@@ -168,6 +168,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
             _userService = new UserService(_graphClient);
 
+            _appleDepService = new AppleDepService(_graphClient);
+
+            _deviceCategoryService = new DeviceCategoryService(_graphClient);
+
             _conditionalAccessPptExportService = new ConditionalAccessPptExportService(
                 _conditionalAccessPolicyService,
                 _namedLocationService,
@@ -253,7 +257,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
             var cachedCount = TryLoadFromCache(profile.TenantId ?? "");
 
-            if (cachedCount >= 26)
+            if (cachedCount >= 28)
 
             {
 
@@ -269,7 +273,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
                 if (cachedCount > 0)
 
-                    DebugLog.Log("Cache", $"Partial cache hit ({cachedCount}/26) — refreshing from Graph");
+                    DebugLog.Log("Cache", $"Partial cache hit ({cachedCount}/28) — refreshing from Graph");
 
                 await RefreshAsync(CancellationToken.None);
 
@@ -485,6 +489,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
         _complianceScriptsLoaded = false;
 
+        _appleDepSettingsLoaded = false;
+
+        _deviceCategoriesLoaded = false;
+
         SettingsCatalogPolicies.Clear();
 
         SelectedSettingsCatalogPolicy = null;
@@ -589,6 +597,14 @@ public partial class MainWindowViewModel : ViewModelBase
 
         SelectedComplianceScript = null;
 
+        AppleDepSettings.Clear();
+
+        SelectedAppleDepSetting = null;
+
+        DeviceCategories.Clear();
+
+        SelectedDeviceCategory = null;
+
         DynamicGroupRows.Clear();
 
         SelectedDynamicGroupRow = null;
@@ -666,6 +682,10 @@ public partial class MainWindowViewModel : ViewModelBase
         _complianceScriptService = null;
 
         _userService = null;
+
+        _appleDepService = null;
+
+        _deviceCategoryService = null;
 
         _importService = null;
 
