@@ -17,6 +17,12 @@ public class AssignmentCheckerService : IAssignmentCheckerService
     private readonly string? _tenantId;
     private readonly ConcurrentDictionary<string, string> _groupNameCache = new(StringComparer.OrdinalIgnoreCase);
     private const int MaxConcurrency = 10;
+    // Set to true during PrefetchAllToCacheAsync(forceRefresh:true) so every Fetch*Async
+    // bypasses TryGetFromCache and always downloads fresh data from Graph.
+    private bool _forceRefresh;
+    // LiteDB is not thread-safe for concurrent writes; this lock serialises
+    // TrySetCache calls that may fire in parallel during PrefetchAllToCacheAsync.
+    private readonly object _cacheLock = new();
 
     public AssignmentCheckerService(GraphServiceClient graphClient,
         ICacheService? cacheService = null, string? tenantId = null)
@@ -27,14 +33,15 @@ public class AssignmentCheckerService : IAssignmentCheckerService
     }
 
     private List<T>? TryGetFromCache<T>(string cacheKey) =>
-        (_cacheService != null && _tenantId != null)
+        (!_forceRefresh && _cacheService != null && _tenantId != null)
             ? _cacheService.Get<T>(_tenantId, cacheKey)
             : null;
 
     private void TrySetCache<T>(string cacheKey, List<T> items)
     {
         if (_cacheService != null && _tenantId != null)
-            _cacheService.Set(_tenantId, cacheKey, items);
+            lock (_cacheLock)
+                _cacheService.Set(_tenantId, cacheKey, items);
     }
 
     // ──────────────────────────────────────────────────────────────────────────────
@@ -1175,102 +1182,109 @@ public class AssignmentCheckerService : IAssignmentCheckerService
 
     public async Task PrefetchAllToCacheAsync(
         Action<string>? progress = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool forceRefresh = false)
     {
-        progress?.Invoke("Downloading device configurations...");
-        await FetchDeviceConfigurationsAsync(cancellationToken);
+        _forceRefresh = forceRefresh;
+        try
+        {
+            // Build the complete ordered list of fetch tasks.
+            // Each Fetch*Async checks the cache first internally, so if all entries are warm
+            // they all return instantly.  When hitting Graph we use RunBatchedAsync to cap
+            // concurrent Graph calls at 5 at a time, avoiding throttling.
+            var fetchers = new List<(string Label, Func<Task> Fetch)>
+            {
+                ("device configurations",             () => FetchDeviceConfigurationsAsync(cancellationToken)),
+                ("settings catalog policies",         () => FetchSettingsCatalogAsync(cancellationToken)),
+                ("administrative templates",          () => FetchAdminTemplatesAsync(cancellationToken)),
+                ("compliance policies",               () => FetchCompliancePoliciesAsync(cancellationToken)),
+                ("app protection policies",           () => FetchAppProtectionPoliciesAsync(cancellationToken)),
+                ("app configuration policies",        () => FetchMobileAppConfigurationsAsync(cancellationToken)),
+                ("applications",                      () => FetchApplicationsAsync(cancellationToken)),
+                ("platform scripts",                  () => FetchPlatformScriptsAsync(cancellationToken)),
+                ("health scripts",                    () => FetchHealthScriptsAsync(cancellationToken)),
+                ("endpoint security intents",         () => FetchEndpointSecurityIntentsAsync(cancellationToken)),
+                ("enrollment configurations",         () => FetchEnrollmentConfigurationsAsync(cancellationToken)),
+                ("conditional access policies",       () => FetchConditionalAccessPoliciesAsync(cancellationToken)),
+                ("assignment filters",                () => FetchAssignmentFiltersAsync(cancellationToken)),
+                ("policy sets",                       () => FetchPolicySetsAsync(cancellationToken)),
+                ("terms and conditions",              () => FetchTermsAndConditionsAsync(cancellationToken)),
+                ("scope tags",                        () => FetchScopeTagsAsync(cancellationToken)),
+                ("role definitions",                  () => FetchRoleDefinitionsAsync(cancellationToken)),
+                ("Intune branding profiles",          () => FetchIntuneBrandingProfilesAsync(cancellationToken)),
+                ("Azure branding localizations",      () => FetchAzureBrandingLocalizationsAsync(cancellationToken)),
+                ("Autopilot profiles",                () => FetchAutopilotProfilesAsync(cancellationToken)),
+                ("Mac custom attributes",             () => FetchMacCustomAttributesAsync(cancellationToken)),
+                ("feature update profiles",           () => FetchFeatureUpdateProfilesAsync(cancellationToken)),
+                ("device shell scripts",              () => FetchDeviceShellScriptsAsync(cancellationToken)),
+                ("compliance scripts",                () => FetchComplianceScriptsAsync(cancellationToken)),
+                ("named locations",                   () => FetchNamedLocationsAsync(cancellationToken)),
+                ("authentication strength policies",  () => FetchAuthenticationStrengthPoliciesAsync(cancellationToken)),
+                ("authentication context references", () => FetchAuthenticationContextClassReferencesAsync(cancellationToken)),
+                ("terms of use agreements",           () => FetchTermsOfUseAgreementsAsync(cancellationToken)),
+                ("targeted managed app configs",      () => FetchTargetedManagedAppConfigurationsAsync(cancellationToken)),
+                ("dynamic groups",                    () => FetchDynamicGroupsAsync(cancellationToken)),
+                ("assigned groups",                   () => FetchAssignedGroupsAsync(cancellationToken)),
+                // Note: DeviceShellScripts key reused by FetchPlatformScriptsAsync; separate entry kept for DeviceManagementScripts
+                ("device management scripts",         () => FetchPlatformScriptsAsync(cancellationToken)),
+            };
 
-        progress?.Invoke("Downloading settings catalog policies...");
-        await FetchSettingsCatalogAsync(cancellationToken);
+            // Determine whether every fetcher would hit cache (i.e. all entries are warm).
+            // We do this by first trying all TryGetFromCache calls — zero I/O cost.
+            // If everything is cached, run all 32 in parallel (instant returns).
+            // If anything needs Graph, use batches of 5 to cap concurrent Graph calls.
+            bool allCached = !forceRefresh && AllFetchersAreCached();
 
-        progress?.Invoke("Downloading administrative templates...");
-        await FetchAdminTemplatesAsync(cancellationToken);
+            if (allCached)
+            {
+                progress?.Invoke("Loading all policy data from cache...");
+                await Task.WhenAll(fetchers.Select(f => f.Fetch()));
+            }
+            else
+            {
+                const int batchSize = 5;
+                int completed = 0;
+                for (int i = 0; i < fetchers.Count; i += batchSize)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var batch = fetchers.Skip(i).Take(batchSize).ToList();
+                    var labels = string.Join(", ", batch.Select(f => f.Label));
+                    progress?.Invoke($"Downloading {labels}...");
+                    await Task.WhenAll(batch.Select(f => f.Fetch()));
+                    completed += batch.Count;
+                    progress?.Invoke($"Downloaded {completed} of {fetchers.Count} types...");
+                }
+            }
 
-        progress?.Invoke("Downloading compliance policies...");
-        await FetchCompliancePoliciesAsync(cancellationToken);
+            progress?.Invoke("All policy data downloaded and cached.");
+        }
+        finally
+        {
+            _forceRefresh = false;
+        }
+    }
 
-        progress?.Invoke("Downloading app protection policies...");
-        await FetchAppProtectionPoliciesAsync(cancellationToken);
-
-        progress?.Invoke("Downloading app configuration policies...");
-        await FetchMobileAppConfigurationsAsync(cancellationToken);
-
-        progress?.Invoke("Downloading applications...");
-        await FetchApplicationsAsync(cancellationToken);
-
-        progress?.Invoke("Downloading platform scripts...");
-        await FetchPlatformScriptsAsync(cancellationToken);
-
-        progress?.Invoke("Downloading health scripts...");
-        await FetchHealthScriptsAsync(cancellationToken);
-
-        progress?.Invoke("Downloading endpoint security intents...");
-        await FetchEndpointSecurityIntentsAsync(cancellationToken);
-
-        progress?.Invoke("Downloading enrollment configurations...");
-        await FetchEnrollmentConfigurationsAsync(cancellationToken);
-
-        progress?.Invoke("Downloading conditional access policies...");
-        await FetchConditionalAccessPoliciesAsync(cancellationToken);
-
-        progress?.Invoke("Downloading assignment filters...");
-        await FetchAssignmentFiltersAsync(cancellationToken);
-
-        progress?.Invoke("Downloading policy sets...");
-        await FetchPolicySetsAsync(cancellationToken);
-
-        progress?.Invoke("Downloading terms and conditions...");
-        await FetchTermsAndConditionsAsync(cancellationToken);
-
-        progress?.Invoke("Downloading scope tags...");
-        await FetchScopeTagsAsync(cancellationToken);
-
-        progress?.Invoke("Downloading role definitions...");
-        await FetchRoleDefinitionsAsync(cancellationToken);
-
-        progress?.Invoke("Downloading Intune branding profiles...");
-        await FetchIntuneBrandingProfilesAsync(cancellationToken);
-
-        progress?.Invoke("Downloading Azure branding localizations...");
-        await FetchAzureBrandingLocalizationsAsync(cancellationToken);
-
-        progress?.Invoke("Downloading Autopilot profiles...");
-        await FetchAutopilotProfilesAsync(cancellationToken);
-
-        progress?.Invoke("Downloading Mac custom attributes...");
-        await FetchMacCustomAttributesAsync(cancellationToken);
-
-        progress?.Invoke("Downloading feature update profiles...");
-        await FetchFeatureUpdateProfilesAsync(cancellationToken);
-
-        progress?.Invoke("Downloading device shell scripts...");
-        await FetchDeviceShellScriptsAsync(cancellationToken);
-
-        progress?.Invoke("Downloading compliance scripts...");
-        await FetchComplianceScriptsAsync(cancellationToken);
-
-        progress?.Invoke("Downloading named locations...");
-        await FetchNamedLocationsAsync(cancellationToken);
-
-        progress?.Invoke("Downloading authentication strength policies...");
-        await FetchAuthenticationStrengthPoliciesAsync(cancellationToken);
-
-        progress?.Invoke("Downloading authentication context class references...");
-        await FetchAuthenticationContextClassReferencesAsync(cancellationToken);
-
-        progress?.Invoke("Downloading terms of use agreements...");
-        await FetchTermsOfUseAgreementsAsync(cancellationToken);
-
-        progress?.Invoke("Downloading targeted managed app configurations...");
-        await FetchTargetedManagedAppConfigurationsAsync(cancellationToken);
-
-        progress?.Invoke("Downloading dynamic groups...");
-        await FetchDynamicGroupsAsync(cancellationToken);
-
-        progress?.Invoke("Downloading assigned groups...");
-        await FetchAssignedGroupsAsync(cancellationToken);
-
-        progress?.Invoke("All policy data downloaded and cached.");
+    /// <summary>
+    /// Returns true only when every well-known cache key already has a live (non-expired) entry.
+    /// Uses GetMetadata (no JSON deserialization) for an efficient existence check.
+    /// </summary>
+    private bool AllFetchersAreCached()
+    {
+        if (_cacheService == null || _tenantId == null) return false;
+        string[] keys =
+        [
+            "DeviceConfigurations", "SettingsCatalog", "AdministrativeTemplates",
+            "CompliancePolicies", "AppProtectionPolicies", "ManagedDeviceAppConfigurations",
+            "Applications", "DeviceManagementScripts", "DeviceHealthScripts",
+            "EndpointSecurityIntents", "EnrollmentConfigurations", "ConditionalAccessPolicies",
+            "AssignmentFilters", "PolicySets", "TermsAndConditions", "ScopeTags",
+            "RoleDefinitions", "IntuneBrandingProfiles", "AzureBrandingLocalizations",
+            "AutopilotProfiles", "MacCustomAttributes", "FeatureUpdateProfiles",
+            "DeviceShellScripts", "ComplianceScripts", "NamedLocations",
+            "AuthenticationStrengths", "AuthenticationContexts", "TermsOfUseAgreements",
+            "TargetedManagedAppConfigurations", CacheKeyCheckerDynamic, CacheKeyCheckerAssigned,
+        ];
+        return keys.All(k => _cacheService.GetMetadata(_tenantId, k) != null);
     }
 
     // ──────────────────────────────────────────────────────────────────────────────
@@ -1916,9 +1930,14 @@ public class AssignmentCheckerService : IAssignmentCheckerService
         return result;
     }
 
+    // Separate cache key from the ViewModel's "DynamicGroups" (which stores List<GroupRow>)
+    // to avoid type collision in LiteDB.
+    private const string CacheKeyCheckerDynamic = "checker_DynamicGroups";
+    private const string CacheKeyCheckerAssigned = "checker_AssignedGroups";
+
     private async Task<List<Group>> FetchDynamicGroupsAsync(CancellationToken ct)
     {
-        if (TryGetFromCache<Group>("DynamicGroups") is { } cached) return cached;
+        if (TryGetFromCache<Group>(CacheKeyCheckerDynamic) is { } cached) return cached;
         var result = new List<Group>();
         var resp = await _graphClient.Groups.GetAsync(
             req =>
@@ -1939,17 +1958,19 @@ public class AssignmentCheckerService : IAssignmentCheckerService
                     .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
             else break;
         }
-        TrySetCache("DynamicGroups", result);
+        TrySetCache(CacheKeyCheckerDynamic, result);
         return result;
     }
 
     private async Task<List<Group>> FetchAssignedGroupsAsync(CancellationToken ct)
     {
-        if (TryGetFromCache<Group>("AssignedGroups") is { } cached) return cached;
+        if (TryGetFromCache<Group>(CacheKeyCheckerAssigned) is { } cached) return cached;
         var result = new List<Group>();
+        // Server-side filter: exclude dynamic-membership groups to avoid downloading all groups
         var resp = await _graphClient.Groups.GetAsync(
             req =>
             {
+                req.QueryParameters.Filter = "not groupTypes/any(g:g eq 'DynamicMembership')";
                 req.QueryParameters.Select = ["id", "displayName", "description", "groupTypes",
                     "membershipRule", "membershipRuleProcessingState",
                     "securityEnabled", "mailEnabled", "createdDateTime", "mail"];
@@ -1959,21 +1980,13 @@ public class AssignmentCheckerService : IAssignmentCheckerService
             }, ct);
         while (resp != null)
         {
-            if (resp.Value != null)
-            {
-                foreach (var item in resp.Value)
-                {
-                    if (item.GroupTypes == null ||
-                        !item.GroupTypes.Contains("DynamicMembership", StringComparer.OrdinalIgnoreCase))
-                        result.Add(item);
-                }
-            }
+            if (resp.Value != null) result.AddRange(resp.Value);
             if (!string.IsNullOrEmpty(resp.OdataNextLink))
                 resp = await _graphClient.Groups
                     .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
             else break;
         }
-        TrySetCache("AssignedGroups", result);
+        TrySetCache(CacheKeyCheckerAssigned, result);
         return result;
     }
 

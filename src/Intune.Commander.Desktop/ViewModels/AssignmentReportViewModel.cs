@@ -405,7 +405,7 @@ public partial class AssignmentReportViewModel : ViewModelBase
         DebugLog.Log("Cache", "Starting full policy prefetch...");
         try
         {
-            await _checkerService.PrefetchAllToCacheAsync(ReportProgress, ct);
+            await _checkerService.PrefetchAllToCacheAsync(ReportProgress, ct, forceRefresh: true);
             StatusText = "All policy data downloaded and cached. Reports will now run faster.";
             DebugLog.Log("Cache", "Prefetch complete.");
         }

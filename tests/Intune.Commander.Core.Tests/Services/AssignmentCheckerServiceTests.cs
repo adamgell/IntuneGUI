@@ -134,12 +134,14 @@ public class AssignmentCheckerServiceTests
         Assert.NotNull(method);
         Assert.Equal(typeof(Task), method!.ReturnType);
         var parameters = method.GetParameters();
-        // Action<string>? progress, CancellationToken cancellationToken
-        Assert.Equal(2, parameters.Length);
+        // Action<string>? progress, CancellationToken cancellationToken, bool forceRefresh
+        Assert.Equal(3, parameters.Length);
         Assert.Equal(typeof(Action<string>), parameters[0].ParameterType);
         Assert.True(parameters[0].HasDefaultValue);
         Assert.Equal(typeof(CancellationToken), parameters[1].ParameterType);
         Assert.True(parameters[1].HasDefaultValue);
+        Assert.Equal(typeof(bool), parameters[2].ParameterType);
+        Assert.True(parameters[2].HasDefaultValue);
     }
 
     [Fact]

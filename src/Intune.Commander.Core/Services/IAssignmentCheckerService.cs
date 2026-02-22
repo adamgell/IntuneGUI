@@ -107,7 +107,13 @@ public interface IAssignmentCheckerService
     /// Pre-fetches all policy lists from Graph and stores them in the cache.
     /// Subsequent report runs will use cached data instead of hitting Graph.
     /// </summary>
+    /// <param name="forceRefresh">
+    /// When <c>true</c>, bypasses any existing cached data and always downloads
+    /// fresh data from Graph. Use this when the user explicitly clicks the
+    /// "Download All to Cache" button.
+    /// </param>
     Task PrefetchAllToCacheAsync(
         Action<string>? progress = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        bool forceRefresh = false);
 }
