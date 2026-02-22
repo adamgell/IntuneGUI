@@ -501,6 +501,7 @@ public partial class MainWindow : Window
                 new Binding(nameof(_vm.FilteredDeviceCategories)) { Source = _vm });
             _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
                 new Binding(nameof(_vm.SelectedDeviceCategory)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
         else if (_vm.IsQualityUpdatesCategory)
         {
             _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
