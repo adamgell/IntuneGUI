@@ -238,7 +238,19 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
 
+    private ObservableCollection<WindowsQualityUpdateProfile> _filteredQualityUpdateProfiles = [];
+
+
+
+    [ObservableProperty]
+
     private ObservableCollection<GroupPolicyUploadedDefinitionFile> _filteredAdmxFiles = [];
+
+
+
+    [ObservableProperty]
+
+    private ObservableCollection<WindowsDriverUpdateProfile> _filteredDriverUpdateProfiles = [];
 
 
 
@@ -330,6 +342,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
             FilteredComplianceScripts = new ObservableCollection<DeviceComplianceScript>(ComplianceScripts);
 
+            FilteredQualityUpdateProfiles = new ObservableCollection<WindowsQualityUpdateProfile>(QualityUpdateProfiles);
+
+            FilteredDriverUpdateProfiles = new ObservableCollection<WindowsDriverUpdateProfile>(DriverUpdateProfiles);
             FilteredAdmxFiles = new ObservableCollection<GroupPolicyUploadedDefinitionFile>(AdmxFiles);
 
             FilteredReusablePolicySettings = new ObservableCollection<DeviceManagementReusablePolicySetting>(ReusablePolicySettings);
@@ -746,6 +761,25 @@ public partial class MainWindowViewModel : ViewModelBase
 
                 Contains(s.Id, q)));
 
+        FilteredQualityUpdateProfiles = new ObservableCollection<WindowsQualityUpdateProfile>(
+
+            QualityUpdateProfiles.Where(p =>
+
+                Contains(p.DisplayName, q) ||
+
+                Contains(p.Description, q) ||
+
+                Contains(p.Id, q)));
+
+        FilteredDriverUpdateProfiles = new ObservableCollection<WindowsDriverUpdateProfile>(
+
+            DriverUpdateProfiles.Where(p =>
+
+                Contains(p.DisplayName, q) ||
+
+                Contains(p.Description, q) ||
+
+                Contains(p.Id, q)));
         FilteredAdmxFiles = new ObservableCollection<GroupPolicyUploadedDefinitionFile>(
 
             AdmxFiles.Where(f =>
