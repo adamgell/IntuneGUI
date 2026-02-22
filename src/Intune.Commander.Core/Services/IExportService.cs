@@ -80,5 +80,11 @@ public interface IExportService
     Task ExportComplianceScriptAsync(DeviceComplianceScript script, string outputPath, MigrationTable migrationTable, CancellationToken cancellationToken = default);
     Task ExportComplianceScriptsAsync(IEnumerable<DeviceComplianceScript> scripts, string outputPath, CancellationToken cancellationToken = default);
 
+    Task ExportQualityUpdateProfileAsync(WindowsQualityUpdateProfile profile, string outputPath, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+    Task ExportQualityUpdateProfilesAsync(IEnumerable<WindowsQualityUpdateProfile> profiles, string outputPath, CancellationToken cancellationToken = default);
+
+    Task ExportDriverUpdateProfileAsync(WindowsDriverUpdateProfile profile, string outputPath, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+    Task ExportDriverUpdateProfilesAsync(IEnumerable<WindowsDriverUpdateProfile> profiles, string outputPath, CancellationToken cancellationToken = default);
+
     Task SaveMigrationTableAsync(MigrationTable table, string outputPath, CancellationToken cancellationToken = default);
 }

@@ -166,6 +166,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
             _complianceScriptService = new ComplianceScriptService(_graphClient);
 
+            _qualityUpdateProfileService = new QualityUpdateProfileService(_graphClient);
+
+            _driverUpdateProfileService = new DriverUpdateProfileService(_graphClient);
+
             _userService = new UserService(_graphClient);
 
             _conditionalAccessPptExportService = new ConditionalAccessPptExportService(
@@ -223,7 +227,11 @@ public partial class MainWindowViewModel : ViewModelBase
 
                 _deviceShellScriptService,
 
-                _complianceScriptService);
+                _complianceScriptService,
+
+                _qualityUpdateProfileService,
+
+                _driverUpdateProfileService);
 
 
 
@@ -589,6 +597,14 @@ public partial class MainWindowViewModel : ViewModelBase
 
         SelectedComplianceScript = null;
 
+        QualityUpdateProfiles.Clear();
+
+        SelectedQualityUpdateProfile = null;
+
+        DriverUpdateProfiles.Clear();
+
+        SelectedDriverUpdateProfile = null;
+
         DynamicGroupRows.Clear();
 
         SelectedDynamicGroupRow = null;
@@ -664,6 +680,10 @@ public partial class MainWindowViewModel : ViewModelBase
         _deviceShellScriptService = null;
 
         _complianceScriptService = null;
+
+        _qualityUpdateProfileService = null;
+
+        _driverUpdateProfileService = null;
 
         _userService = null;
 

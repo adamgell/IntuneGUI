@@ -101,4 +101,12 @@ public interface IImportService
     Task<DeviceComplianceScript?> ReadComplianceScriptAsync(string filePath, CancellationToken cancellationToken = default);
     Task<List<DeviceComplianceScript>> ReadComplianceScriptsFromFolderAsync(string folderPath, CancellationToken cancellationToken = default);
     Task<DeviceComplianceScript> ImportComplianceScriptAsync(DeviceComplianceScript script, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+
+    Task<WindowsQualityUpdateProfile?> ReadQualityUpdateProfileAsync(string filePath, CancellationToken cancellationToken = default);
+    Task<List<WindowsQualityUpdateProfile>> ReadQualityUpdateProfilesFromFolderAsync(string folderPath, CancellationToken cancellationToken = default);
+    Task<WindowsQualityUpdateProfile> ImportQualityUpdateProfileAsync(WindowsQualityUpdateProfile profile, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+
+    Task<WindowsDriverUpdateProfile?> ReadDriverUpdateProfileAsync(string filePath, CancellationToken cancellationToken = default);
+    Task<List<WindowsDriverUpdateProfile>> ReadDriverUpdateProfilesFromFolderAsync(string folderPath, CancellationToken cancellationToken = default);
+    Task<WindowsDriverUpdateProfile> ImportDriverUpdateProfileAsync(WindowsDriverUpdateProfile profile, MigrationTable migrationTable, CancellationToken cancellationToken = default);
 }
