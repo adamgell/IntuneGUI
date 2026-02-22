@@ -126,6 +126,31 @@ public class AssignmentCheckerServiceTests
         Assert.Equal(typeof(Task<List<AssignmentReportRow>>), method.ReturnType);
     }
 
+    [Fact]
+    public void Interface_DefinesPrefetchAllToCacheAsync()
+    {
+        var method = typeof(IAssignmentCheckerService)
+            .GetMethod("PrefetchAllToCacheAsync");
+        Assert.NotNull(method);
+        Assert.Equal(typeof(Task), method!.ReturnType);
+        var parameters = method.GetParameters();
+        // Action<string>? progress, CancellationToken cancellationToken
+        Assert.Equal(2, parameters.Length);
+        Assert.Equal(typeof(Action<string>), parameters[0].ParameterType);
+        Assert.True(parameters[0].HasDefaultValue);
+        Assert.Equal(typeof(CancellationToken), parameters[1].ParameterType);
+        Assert.True(parameters[1].HasDefaultValue);
+    }
+
+    [Fact]
+    public void PrefetchAllToCacheAsync_ImplementedOnConcreteClass()
+    {
+        var method = typeof(AssignmentCheckerService)
+            .GetMethod("PrefetchAllToCacheAsync");
+        Assert.NotNull(method);
+        Assert.Equal(typeof(Task), method!.ReturnType);
+    }
+
     // ── CancellationToken default parameter tests ────────────────────────────────
 
     [Theory]
@@ -139,6 +164,7 @@ public class AssignmentCheckerServiceTests
     [InlineData("GetEmptyGroupAssignmentsAsync")]
     [InlineData("GetCompareGroupAssignmentsAsync")]
     [InlineData("GetFailedAssignmentsAsync")]
+    [InlineData("PrefetchAllToCacheAsync")]
     public void InterfaceMethod_HasCancellationTokenWithDefault(string methodName)
     {
         // Map "GetCompareGroupAssignmentsAsync" → actual name
