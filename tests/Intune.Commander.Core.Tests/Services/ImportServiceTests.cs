@@ -1965,6 +1965,9 @@ public class ImportServiceTests : IDisposable
 
         public Task DeleteRoleDefinitionAsync(string id, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
+
+        public Task<List<DeviceAndAppManagementRoleAssignment>> GetRoleAssignmentsAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(new List<DeviceAndAppManagementRoleAssignment>());
     }
 
     private sealed class StubIntuneBrandingService : IIntuneBrandingService

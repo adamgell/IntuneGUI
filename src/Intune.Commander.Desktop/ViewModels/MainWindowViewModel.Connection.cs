@@ -177,6 +177,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
             ExportConditionalAccessPowerPointCommand.NotifyCanExecuteChanged();
 
+            _cloudPcProvisioningService = new CloudPcProvisioningService(_graphClient);
+            _cloudPcUserSettingsService = new CloudPcUserSettingsService(_graphClient);
+            _vppTokenService = new VppTokenService(_graphClient);
+
             _importService = new ImportService(
 
                 _configProfileService,
@@ -485,6 +489,14 @@ public partial class MainWindowViewModel : ViewModelBase
 
         _complianceScriptsLoaded = false;
 
+        _cloudPcProvisioningPoliciesLoaded = false;
+
+        _cloudPcUserSettingsLoaded = false;
+
+        _vppTokensLoaded = false;
+
+        _roleAssignmentsLoaded = false;
+
         SettingsCatalogPolicies.Clear();
 
         SelectedSettingsCatalogPolicy = null;
@@ -589,6 +601,22 @@ public partial class MainWindowViewModel : ViewModelBase
 
         SelectedComplianceScript = null;
 
+        CloudPcProvisioningPolicies.Clear();
+
+        SelectedCloudPcProvisioningPolicy = null;
+
+        CloudPcUserSettings.Clear();
+
+        SelectedCloudPcUserSetting = null;
+
+        VppTokens.Clear();
+
+        SelectedVppToken = null;
+
+        RoleAssignments.Clear();
+
+        SelectedRoleAssignment = null;
+
         DynamicGroupRows.Clear();
 
         SelectedDynamicGroupRow = null;
@@ -666,6 +694,12 @@ public partial class MainWindowViewModel : ViewModelBase
         _complianceScriptService = null;
 
         _userService = null;
+
+        _cloudPcProvisioningService = null;
+
+        _cloudPcUserSettingsService = null;
+
+        _vppTokenService = null;
 
         _importService = null;
 

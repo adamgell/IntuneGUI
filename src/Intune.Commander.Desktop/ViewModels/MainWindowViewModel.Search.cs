@@ -236,6 +236,20 @@ public partial class MainWindowViewModel : ViewModelBase
 
 
 
+    [ObservableProperty]
+    private ObservableCollection<CloudPcProvisioningPolicy> _filteredCloudPcProvisioningPolicies = [];
+
+    [ObservableProperty]
+    private ObservableCollection<CloudPcUserSetting> _filteredCloudPcUserSettings = [];
+
+    [ObservableProperty]
+    private ObservableCollection<VppToken> _filteredVppTokens = [];
+
+    [ObservableProperty]
+    private ObservableCollection<DeviceAndAppManagementRoleAssignment> _filteredRoleAssignments = [];
+
+
+
     private void ApplyFilter()
 
     {
@@ -311,6 +325,14 @@ public partial class MainWindowViewModel : ViewModelBase
             FilteredDeviceShellScripts = new ObservableCollection<DeviceShellScript>(DeviceShellScripts);
 
             FilteredComplianceScripts = new ObservableCollection<DeviceComplianceScript>(ComplianceScripts);
+
+            FilteredCloudPcProvisioningPolicies = new ObservableCollection<CloudPcProvisioningPolicy>(CloudPcProvisioningPolicies);
+
+            FilteredCloudPcUserSettings = new ObservableCollection<CloudPcUserSetting>(CloudPcUserSettings);
+
+            FilteredVppTokens = new ObservableCollection<VppToken>(VppTokens);
+
+            FilteredRoleAssignments = new ObservableCollection<DeviceAndAppManagementRoleAssignment>(RoleAssignments);
 
             return;
 
@@ -721,6 +743,30 @@ public partial class MainWindowViewModel : ViewModelBase
                 Contains(TryReadStringProperty(s, "Publisher"), q) ||
 
                 Contains(s.Id, q)));
+
+        FilteredCloudPcProvisioningPolicies = new ObservableCollection<CloudPcProvisioningPolicy>(
+            CloudPcProvisioningPolicies.Where(p =>
+                Contains(p.DisplayName, q) ||
+                Contains(p.Description, q) ||
+                Contains(p.Id, q)));
+
+        FilteredCloudPcUserSettings = new ObservableCollection<CloudPcUserSetting>(
+            CloudPcUserSettings.Where(s =>
+                Contains(s.DisplayName, q) ||
+                Contains(s.Id, q)));
+
+        FilteredVppTokens = new ObservableCollection<VppToken>(
+            VppTokens.Where(t =>
+                Contains(t.DisplayName, q) ||
+                Contains(t.AppleId, q) ||
+                Contains(t.OrganizationName, q) ||
+                Contains(t.Id, q)));
+
+        FilteredRoleAssignments = new ObservableCollection<DeviceAndAppManagementRoleAssignment>(
+            RoleAssignments.Where(r =>
+                Contains(r.DisplayName, q) ||
+                Contains(r.Description, q) ||
+                Contains(r.Id, q)));
 
         OnPropertyChanged(nameof(IsCurrentCategoryEmpty));
 

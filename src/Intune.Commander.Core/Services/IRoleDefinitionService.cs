@@ -9,4 +9,5 @@ public interface IRoleDefinitionService
     Task<RoleDefinition> CreateRoleDefinitionAsync(RoleDefinition roleDefinition, CancellationToken cancellationToken = default);
     Task<RoleDefinition> UpdateRoleDefinitionAsync(RoleDefinition roleDefinition, CancellationToken cancellationToken = default);
     Task DeleteRoleDefinitionAsync(string id, CancellationToken cancellationToken = default);
+    Task<List<DeviceAndAppManagementRoleAssignment>> GetRoleAssignmentsAsync(CancellationToken cancellationToken = default);
 }
