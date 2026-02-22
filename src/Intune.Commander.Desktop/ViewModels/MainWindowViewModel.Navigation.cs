@@ -160,6 +160,12 @@ public partial class MainWindowViewModel : ViewModelBase
 
                 new() { Name = "Compliance Scripts", Icon = "✅" },
 
+                new() { Name = "ADMX Files", Icon = "📁" },
+
+                new() { Name = "Reusable Policy Settings", Icon = "🔗" },
+
+                new() { Name = "Notification Templates", Icon = "🔔" },
+
             }
 
         },
@@ -336,6 +342,12 @@ public partial class MainWindowViewModel : ViewModelBase
 
         "Compliance Scripts" => ComplianceScriptColumns,
 
+        "ADMX Files" => AdmxFileColumns,
+
+        "Reusable Policy Settings" => ReusablePolicySettingColumns,
+
+        "Notification Templates" => NotificationTemplateColumns,
+
         "Dynamic Groups" => DynamicGroupColumns,
 
         "Assigned Groups" => AssignedGroupColumns,
@@ -442,6 +454,12 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public bool IsComplianceScriptsCategory => SelectedCategory?.Name == "Compliance Scripts";
 
+    public bool IsAdmxFilesCategory => SelectedCategory?.Name == "ADMX Files";
+
+    public bool IsReusablePolicySettingsCategory => SelectedCategory?.Name == "Reusable Policy Settings";
+
+    public bool IsNotificationTemplatesCategory => SelectedCategory?.Name == "Notification Templates";
+
     public bool IsDynamicGroupsCategory => SelectedCategory?.Name == "Dynamic Groups";
 
     public bool IsAssignedGroupsCategory => SelectedCategory?.Name == "Assigned Groups";
@@ -486,6 +504,9 @@ public partial class MainWindowViewModel : ViewModelBase
         "Device Management Scripts" => FilteredDeviceManagementScripts.Count,
         "Device Shell Scripts" => FilteredDeviceShellScripts.Count,
         "Compliance Scripts" => FilteredComplianceScripts.Count,
+        "ADMX Files" => FilteredAdmxFiles.Count,
+        "Reusable Policy Settings" => FilteredReusablePolicySettings.Count,
+        "Notification Templates" => FilteredNotificationTemplates.Count,
         _ => -1
     };
 
@@ -564,6 +585,12 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedDeviceShellScript = null;
 
         SelectedComplianceScript = null;
+
+        SelectedAdmxFile = null;
+
+        SelectedReusablePolicySetting = null;
+
+        SelectedNotificationTemplate = null;
 
         SelectedDynamicGroupRow = null;
 
@@ -648,6 +675,12 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsDeviceShellScriptsCategory));
 
         OnPropertyChanged(nameof(IsComplianceScriptsCategory));
+
+        OnPropertyChanged(nameof(IsAdmxFilesCategory));
+
+        OnPropertyChanged(nameof(IsReusablePolicySettingsCategory));
+
+        OnPropertyChanged(nameof(IsNotificationTemplatesCategory));
 
         OnPropertyChanged(nameof(IsDynamicGroupsCategory));
 
@@ -1514,6 +1547,90 @@ public partial class MainWindowViewModel : ViewModelBase
                 _complianceScriptsLoaded = true;
 
                 _ = LoadComplianceScriptsAsync();
+
+            }
+
+        }
+
+        if (value?.Name == "ADMX Files" && !_admxFilesLoaded)
+
+        {
+
+            if (!TryLoadLazyCacheEntry<GroupPolicyUploadedDefinitionFile>(CacheKeyAdmxFiles, rows =>
+
+            {
+
+                AdmxFiles = new ObservableCollection<GroupPolicyUploadedDefinitionFile>(rows);
+
+                _admxFilesLoaded = true;
+
+                ApplyFilter();
+
+                StatusText = $"Loaded {rows.Count} ADMX file(s) from cache";
+
+            }))
+
+            {
+
+                _admxFilesLoaded = true;
+
+                _ = LoadAdmxFilesAsync();
+
+            }
+
+        }
+
+        if (value?.Name == "Reusable Policy Settings" && !_reusablePolicySettingsLoaded)
+
+        {
+
+            if (!TryLoadLazyCacheEntry<DeviceManagementReusablePolicySetting>(CacheKeyReusablePolicySettings, rows =>
+
+            {
+
+                ReusablePolicySettings = new ObservableCollection<DeviceManagementReusablePolicySetting>(rows);
+
+                _reusablePolicySettingsLoaded = true;
+
+                ApplyFilter();
+
+                StatusText = $"Loaded {rows.Count} reusable policy setting(s) from cache";
+
+            }))
+
+            {
+
+                _reusablePolicySettingsLoaded = true;
+
+                _ = LoadReusablePolicySettingsAsync();
+
+            }
+
+        }
+
+        if (value?.Name == "Notification Templates" && !_notificationTemplatesLoaded)
+
+        {
+
+            if (!TryLoadLazyCacheEntry<NotificationMessageTemplate>(CacheKeyNotificationTemplates, rows =>
+
+            {
+
+                NotificationTemplates = new ObservableCollection<NotificationMessageTemplate>(rows);
+
+                _notificationTemplatesLoaded = true;
+
+                ApplyFilter();
+
+                StatusText = $"Loaded {rows.Count} notification template(s) from cache";
+
+            }))
+
+            {
+
+                _notificationTemplatesLoaded = true;
+
+                _ = LoadNotificationTemplatesAsync();
 
             }
 

@@ -166,6 +166,12 @@ public partial class MainWindowViewModel : ViewModelBase
 
             _complianceScriptService = new ComplianceScriptService(_graphClient);
 
+            _admxFileService = new AdmxFileService(_graphClient);
+
+            _reusablePolicySettingService = new ReusablePolicySettingService(_graphClient);
+
+            _notificationTemplateService = new NotificationTemplateService(_graphClient);
+
             _userService = new UserService(_graphClient);
 
             _conditionalAccessPptExportService = new ConditionalAccessPptExportService(
@@ -589,6 +595,18 @@ public partial class MainWindowViewModel : ViewModelBase
 
         SelectedComplianceScript = null;
 
+        AdmxFiles.Clear();
+
+        SelectedAdmxFile = null;
+
+        ReusablePolicySettings.Clear();
+
+        SelectedReusablePolicySetting = null;
+
+        NotificationTemplates.Clear();
+
+        SelectedNotificationTemplate = null;
+
         DynamicGroupRows.Clear();
 
         SelectedDynamicGroupRow = null;
@@ -600,6 +618,12 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedAssignedGroupRow = null;
 
         _assignedGroupsLoaded = false;
+
+        _admxFilesLoaded = false;
+
+        _reusablePolicySettingsLoaded = false;
+
+        _notificationTemplatesLoaded = false;
 
         SelectedItemAssignments.Clear();
 
@@ -664,6 +688,12 @@ public partial class MainWindowViewModel : ViewModelBase
         _deviceShellScriptService = null;
 
         _complianceScriptService = null;
+
+        _admxFileService = null;
+
+        _reusablePolicySettingService = null;
+
+        _notificationTemplateService = null;
 
         _userService = null;
 
