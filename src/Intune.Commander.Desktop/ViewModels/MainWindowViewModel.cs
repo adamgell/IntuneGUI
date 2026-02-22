@@ -122,6 +122,12 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private const string CacheKeyComplianceScripts = "ComplianceScripts";
 
+    private const string CacheKeyAdmxFiles = "AdmxFiles";
+
+    private const string CacheKeyReusablePolicySettings = "ReusablePolicySettings";
+
+    private const string CacheKeyNotificationTemplates = "NotificationTemplates";
+
     private const string CacheKeyUsers = "Users";
 
     private const string CacheKeyCloudPcProvisioningPolicies = "CloudPcProvisioningPolicies";
@@ -191,6 +197,9 @@ public partial class MainWindowViewModel : ViewModelBase
     private IDeviceManagementScriptService? _deviceManagementScriptService;
     private IDeviceShellScriptService? _deviceShellScriptService;
     private IComplianceScriptService? _complianceScriptService;
+    private IAdmxFileService? _admxFileService;
+    private IReusablePolicySettingService? _reusablePolicySettingService;
+    private INotificationTemplateService? _notificationTemplateService;
     private IConditionalAccessPptExportService? _conditionalAccessPptExportService;
     private IUserService? _userService;
     private ICloudPcProvisioningService? _cloudPcProvisioningService;
@@ -662,6 +671,33 @@ public partial class MainWindowViewModel : ViewModelBase
     private DeviceAndAppManagementRoleAssignment? _selectedRoleAssignment;
 
     private bool _roleAssignmentsLoaded;
+
+    // --- ADMX Files ---
+    [ObservableProperty]
+    private ObservableCollection<GroupPolicyUploadedDefinitionFile> _admxFiles = [];
+
+    [ObservableProperty]
+    private GroupPolicyUploadedDefinitionFile? _selectedAdmxFile;
+
+    private bool _admxFilesLoaded;
+
+    // --- Reusable Policy Settings ---
+    [ObservableProperty]
+    private ObservableCollection<DeviceManagementReusablePolicySetting> _reusablePolicySettings = [];
+
+    [ObservableProperty]
+    private DeviceManagementReusablePolicySetting? _selectedReusablePolicySetting;
+
+    private bool _reusablePolicySettingsLoaded;
+
+    // --- Notification Templates ---
+    [ObservableProperty]
+    private ObservableCollection<NotificationMessageTemplate> _notificationTemplates = [];
+
+    [ObservableProperty]
+    private NotificationMessageTemplate? _selectedNotificationTemplate;
+
+    private bool _notificationTemplatesLoaded;
 
     // --- Named Locations ---
 
@@ -1362,6 +1398,64 @@ public partial class MainWindowViewModel : ViewModelBase
         new() { Header = "Publisher", BindingPath = "Publisher", Width = 150, IsVisible = true },
 
         new() { Header = "Created", BindingPath = "CreatedDateTime", Width = 150, IsVisible = false },
+
+        new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = true },
+
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+
+    ];
+
+
+
+    public ObservableCollection<DataGridColumnConfig> AdmxFileColumns { get; } =
+
+    [
+
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+
+        new() { Header = "File Name", BindingPath = "FileName", Width = 220, IsVisible = true },
+
+        new() { Header = "Status", BindingPath = "Status", Width = 120, IsVisible = true },
+
+        new() { Header = "Upload Date", BindingPath = "UploadDateTime", Width = 150, IsVisible = true },
+
+        new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = false },
+
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+
+    ];
+
+
+
+    public ObservableCollection<DataGridColumnConfig> ReusablePolicySettingColumns { get; } =
+
+    [
+
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+
+        new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
+
+        new() { Header = "Setting Definition", BindingPath = "SettingDefinitionId", Width = 220, IsVisible = true },
+
+        new() { Header = "References", BindingPath = "ReferencingConfigurationPolicyCount", Width = 90, IsVisible = true },
+
+        new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = true },
+
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+
+    ];
+
+
+
+    public ObservableCollection<DataGridColumnConfig> NotificationTemplateColumns { get; } =
+
+    [
+
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+
+        new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
+
+        new() { Header = "Default Locale", BindingPath = "DefaultLocale", Width = 120, IsVisible = true },
 
         new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = true },
 

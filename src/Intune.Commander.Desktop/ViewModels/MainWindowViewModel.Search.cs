@@ -248,6 +248,22 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private ObservableCollection<DeviceAndAppManagementRoleAssignment> _filteredRoleAssignments = [];
 
+    [ObservableProperty]
+
+    private ObservableCollection<GroupPolicyUploadedDefinitionFile> _filteredAdmxFiles = [];
+
+
+
+    [ObservableProperty]
+
+    private ObservableCollection<DeviceManagementReusablePolicySetting> _filteredReusablePolicySettings = [];
+
+
+
+    [ObservableProperty]
+
+    private ObservableCollection<NotificationMessageTemplate> _filteredNotificationTemplates = [];
+
 
 
     private void ApplyFilter()
@@ -333,6 +349,12 @@ public partial class MainWindowViewModel : ViewModelBase
             FilteredVppTokens = new ObservableCollection<VppToken>(VppTokens);
 
             FilteredRoleAssignments = new ObservableCollection<DeviceAndAppManagementRoleAssignment>(RoleAssignments);
+
+            FilteredAdmxFiles = new ObservableCollection<GroupPolicyUploadedDefinitionFile>(AdmxFiles);
+
+            FilteredReusablePolicySettings = new ObservableCollection<DeviceManagementReusablePolicySetting>(ReusablePolicySettings);
+
+            FilteredNotificationTemplates = new ObservableCollection<NotificationMessageTemplate>(NotificationTemplates);
 
             return;
 
@@ -768,6 +790,41 @@ public partial class MainWindowViewModel : ViewModelBase
                 Contains(r.Description, q) ||
                 Contains(r.Id, q)));
 
+        FilteredAdmxFiles = new ObservableCollection<GroupPolicyUploadedDefinitionFile>(
+
+            AdmxFiles.Where(f =>
+
+                Contains(f.DisplayName, q) ||
+
+                Contains(f.FileName, q) ||
+
+                Contains(f.Description, q) ||
+
+                Contains(f.Id, q)));
+
+        FilteredReusablePolicySettings = new ObservableCollection<DeviceManagementReusablePolicySetting>(
+
+            ReusablePolicySettings.Where(s =>
+
+                Contains(s.DisplayName, q) ||
+
+                Contains(s.Description, q) ||
+
+                Contains(s.SettingDefinitionId, q) ||
+
+                Contains(s.Id, q)));
+
+        FilteredNotificationTemplates = new ObservableCollection<NotificationMessageTemplate>(
+
+            NotificationTemplates.Where(t =>
+
+                Contains(t.DisplayName, q) ||
+
+                Contains(t.Description, q) ||
+
+                Contains(t.DefaultLocale, q) ||
+
+                Contains(t.Id, q)));
         OnPropertyChanged(nameof(IsCurrentCategoryEmpty));
 
     }

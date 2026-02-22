@@ -248,6 +248,155 @@
         }
       }
     },
+    "/home/runner/work/IntuneCommander/IntuneCommander/src/Intune.Commander.Core/Services/AdmxFileService.cs": {
+      "Intune.Commander.Core.Services.AdmxFileService": {
+        "System.Void Intune.Commander.Core.Services.AdmxFileService::.ctor(Microsoft.Graph.Beta.GraphServiceClient)": {
+          "Lines": {
+            "11": 0,
+            "12": 0,
+            "13": 0,
+            "14": 0
+          },
+          "Branches": []
+        }
+      },
+      "Intune.Commander.Core.Services.AdmxFileService/<>c": {
+        "System.Void Intune.Commander.Core.Services.AdmxFileService/<>c::<ListAdmxFilesAsync>b__2_0(Microsoft.Kiota.Abstractions.RequestConfiguration`1<Microsoft.Graph.Beta.DeviceManagement.GroupPolicyUploadedDefinitionFiles.GroupPolicyUploadedDefinitionFilesRequestBuilder/GroupPolicyUploadedDefinitionFilesRequestBuilderGetQueryParameters>)": {
+          "Lines": {
+            "22": 0,
+            "23": 0,
+            "24": 0
+          },
+          "Branches": []
+        }
+      },
+      "Intune.Commander.Core.Services.AdmxFileService/<CreateAdmxFileAsync>d__4": {
+        "System.Void Intune.Commander.Core.Services.AdmxFileService/<CreateAdmxFileAsync>d__4::MoveNext()": {
+          "Lines": {
+            "53": 0,
+            "54": 0,
+            "55": 0,
+            "57": 0,
+            "58": 0
+          },
+          "Branches": [
+            {
+              "Line": 57,
+              "Offset": 175,
+              "EndOffset": 177,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 0
+            },
+            {
+              "Line": 57,
+              "Offset": 175,
+              "EndOffset": 189,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 0
+            }
+          ]
+        }
+      },
+      "Intune.Commander.Core.Services.AdmxFileService/<DeleteAdmxFileAsync>d__5": {
+        "System.Void Intune.Commander.Core.Services.AdmxFileService/<DeleteAdmxFileAsync>d__5::MoveNext()": {
+          "Lines": {
+            "61": 0,
+            "62": 0,
+            "63": 0,
+            "64": 0
+          },
+          "Branches": []
+        }
+      },
+      "Intune.Commander.Core.Services.AdmxFileService/<GetAdmxFileAsync>d__3": {
+        "System.Void Intune.Commander.Core.Services.AdmxFileService/<GetAdmxFileAsync>d__3::MoveNext()": {
+          "Lines": {
+            "47": 0,
+            "48": 0,
+            "49": 0,
+            "50": 0
+          },
+          "Branches": []
+        }
+      },
+      "Intune.Commander.Core.Services.AdmxFileService/<ListAdmxFilesAsync>d__2": {
+        "System.Void Intune.Commander.Core.Services.AdmxFileService/<ListAdmxFilesAsync>d__2::MoveNext()": {
+          "Lines": {
+            "17": 0,
+            "18": 0,
+            "20": 0,
+            "21": 0,
+            "26": 0,
+            "27": 0,
+            "28": 0,
+            "29": 0,
+            "31": 0,
+            "32": 0,
+            "33": 0,
+            "34": 0,
+            "35": 0,
+            "36": 0,
+            "38": 0,
+            "39": 0,
+            "41": 0,
+            "43": 0,
+            "44": 0
+          },
+          "Branches": [
+            {
+              "Line": 26,
+              "Offset": 481,
+              "EndOffset": 222,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 0
+            },
+            {
+              "Line": 28,
+              "Offset": 241,
+              "EndOffset": 243,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 0
+            },
+            {
+              "Line": 28,
+              "Offset": 241,
+              "EndOffset": 266,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 0
+            },
+            {
+              "Line": 31,
+              "Offset": 289,
+              "EndOffset": 294,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 0
+            },
+            {
+              "Line": 31,
+              "Offset": 289,
+              "EndOffset": 464,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 0
+            },
+            {
+              "Line": 26,
+              "Offset": 481,
+              "EndOffset": 486,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 0
+            }
+          ]
+        }
+      }
+    },
     "/home/runner/work/IntuneCommander/IntuneCommander/src/Intune.Commander.Core/Services/ApplicationService.cs": {
       "Intune.Commander.Core.Services.ApplicationService": {
         "System.Void Intune.Commander.Core.Services.ApplicationService::EnsureOdataType(Microsoft.Graph.Beta.Models.MobileApp)": {
@@ -9880,224 +10029,6 @@
         }
       }
     },
-    "/home/runner/work/IntuneCommander/IntuneCommander/src/Intune.Commander.Core/Services/CloudPcProvisioningService.cs": {
-      "Intune.Commander.Core.Services.CloudPcProvisioningService": {
-        "System.Void Intune.Commander.Core.Services.CloudPcProvisioningService::.ctor(Microsoft.Graph.Beta.GraphServiceClient)": {
-          "Lines": {
-            "11": 0,
-            "12": 0,
-            "13": 0,
-            "14": 0
-          },
-          "Branches": []
-        }
-      },
-      "Intune.Commander.Core.Services.CloudPcProvisioningService/<>c": {
-        "System.Void Intune.Commander.Core.Services.CloudPcProvisioningService/<>c::<ListProvisioningPoliciesAsync>b__2_0(Microsoft.Kiota.Abstractions.RequestConfiguration`1<Microsoft.Graph.Beta.DeviceManagement.VirtualEndpoint.ProvisioningPolicies.ProvisioningPoliciesRequestBuilder/ProvisioningPoliciesRequestBuilderGetQueryParameters>)": {
-          "Lines": {
-            "22": 0,
-            "23": 0,
-            "24": 0
-          },
-          "Branches": []
-        }
-      },
-      "Intune.Commander.Core.Services.CloudPcProvisioningService/<GetProvisioningPolicyAsync>d__3": {
-        "System.Void Intune.Commander.Core.Services.CloudPcProvisioningService/<GetProvisioningPolicyAsync>d__3::MoveNext()": {
-          "Lines": {
-            "47": 0,
-            "48": 0,
-            "49": 0,
-            "50": 0
-          },
-          "Branches": []
-        }
-      },
-      "Intune.Commander.Core.Services.CloudPcProvisioningService/<ListProvisioningPoliciesAsync>d__2": {
-        "System.Void Intune.Commander.Core.Services.CloudPcProvisioningService/<ListProvisioningPoliciesAsync>d__2::MoveNext()": {
-          "Lines": {
-            "17": 0,
-            "18": 0,
-            "20": 0,
-            "21": 0,
-            "26": 0,
-            "27": 0,
-            "28": 0,
-            "29": 0,
-            "31": 0,
-            "32": 0,
-            "33": 0,
-            "34": 0,
-            "35": 0,
-            "36": 0,
-            "38": 0,
-            "39": 0,
-            "41": 0,
-            "43": 0,
-            "44": 0
-          },
-          "Branches": [
-            {
-              "Line": 26,
-              "Offset": 491,
-              "EndOffset": 227,
-              "Path": 1,
-              "Ordinal": 5,
-              "Hits": 0
-            },
-            {
-              "Line": 28,
-              "Offset": 246,
-              "EndOffset": 248,
-              "Path": 0,
-              "Ordinal": 0,
-              "Hits": 0
-            },
-            {
-              "Line": 28,
-              "Offset": 246,
-              "EndOffset": 271,
-              "Path": 1,
-              "Ordinal": 1,
-              "Hits": 0
-            },
-            {
-              "Line": 31,
-              "Offset": 294,
-              "EndOffset": 299,
-              "Path": 0,
-              "Ordinal": 2,
-              "Hits": 0
-            },
-            {
-              "Line": 31,
-              "Offset": 294,
-              "EndOffset": 474,
-              "Path": 1,
-              "Ordinal": 3,
-              "Hits": 0
-            },
-            {
-              "Line": 26,
-              "Offset": 491,
-              "EndOffset": 496,
-              "Path": 0,
-              "Ordinal": 4,
-              "Hits": 0
-            }
-          ]
-        }
-      }
-    },
-    "/home/runner/work/IntuneCommander/IntuneCommander/src/Intune.Commander.Core/Services/CloudPcUserSettingsService.cs": {
-      "Intune.Commander.Core.Services.CloudPcUserSettingsService": {
-        "System.Void Intune.Commander.Core.Services.CloudPcUserSettingsService::.ctor(Microsoft.Graph.Beta.GraphServiceClient)": {
-          "Lines": {
-            "11": 0,
-            "12": 0,
-            "13": 0,
-            "14": 0
-          },
-          "Branches": []
-        }
-      },
-      "Intune.Commander.Core.Services.CloudPcUserSettingsService/<>c": {
-        "System.Void Intune.Commander.Core.Services.CloudPcUserSettingsService/<>c::<ListUserSettingsAsync>b__2_0(Microsoft.Kiota.Abstractions.RequestConfiguration`1<Microsoft.Graph.Beta.DeviceManagement.VirtualEndpoint.UserSettings.UserSettingsRequestBuilder/UserSettingsRequestBuilderGetQueryParameters>)": {
-          "Lines": {
-            "22": 0,
-            "23": 0,
-            "24": 0
-          },
-          "Branches": []
-        }
-      },
-      "Intune.Commander.Core.Services.CloudPcUserSettingsService/<GetUserSettingAsync>d__3": {
-        "System.Void Intune.Commander.Core.Services.CloudPcUserSettingsService/<GetUserSettingAsync>d__3::MoveNext()": {
-          "Lines": {
-            "47": 0,
-            "48": 0,
-            "49": 0,
-            "50": 0
-          },
-          "Branches": []
-        }
-      },
-      "Intune.Commander.Core.Services.CloudPcUserSettingsService/<ListUserSettingsAsync>d__2": {
-        "System.Void Intune.Commander.Core.Services.CloudPcUserSettingsService/<ListUserSettingsAsync>d__2::MoveNext()": {
-          "Lines": {
-            "17": 0,
-            "18": 0,
-            "20": 0,
-            "21": 0,
-            "26": 0,
-            "27": 0,
-            "28": 0,
-            "29": 0,
-            "31": 0,
-            "32": 0,
-            "33": 0,
-            "34": 0,
-            "35": 0,
-            "36": 0,
-            "38": 0,
-            "39": 0,
-            "41": 0,
-            "43": 0,
-            "44": 0
-          },
-          "Branches": [
-            {
-              "Line": 26,
-              "Offset": 491,
-              "EndOffset": 227,
-              "Path": 1,
-              "Ordinal": 5,
-              "Hits": 0
-            },
-            {
-              "Line": 28,
-              "Offset": 246,
-              "EndOffset": 248,
-              "Path": 0,
-              "Ordinal": 0,
-              "Hits": 0
-            },
-            {
-              "Line": 28,
-              "Offset": 246,
-              "EndOffset": 271,
-              "Path": 1,
-              "Ordinal": 1,
-              "Hits": 0
-            },
-            {
-              "Line": 31,
-              "Offset": 294,
-              "EndOffset": 299,
-              "Path": 0,
-              "Ordinal": 2,
-              "Hits": 0
-            },
-            {
-              "Line": 31,
-              "Offset": 294,
-              "EndOffset": 474,
-              "Path": 1,
-              "Ordinal": 3,
-              "Hits": 0
-            },
-            {
-              "Line": 26,
-              "Offset": 491,
-              "EndOffset": 496,
-              "Path": 0,
-              "Ordinal": 4,
-              "Hits": 0
-            }
-          ]
-        }
-      }
-    },
     "/home/runner/work/IntuneCommander/IntuneCommander/src/Intune.Commander.Core/Services/CompliancePolicyService.cs": {
       "Intune.Commander.Core.Services.CompliancePolicyService": {
         "System.Void Intune.Commander.Core.Services.CompliancePolicyService::.ctor(Microsoft.Graph.Beta.GraphServiceClient)": {
@@ -12691,10 +12622,10 @@
       "Intune.Commander.Core.Services.ExportService": {
         "System.String Intune.Commander.Core.Services.ExportService::SanitizeFileName(System.String)": {
           "Lines": {
-            "66": 88,
-            "67": 88,
-            "68": 88,
-            "69": 88
+            "66": 98,
+            "67": 98,
+            "68": 98,
+            "69": 98
           },
           "Branches": []
         },
@@ -12828,6 +12759,159 @@
               "Line": 255,
               "Offset": 265,
               "EndOffset": 270,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 1
+            }
+          ]
+        }
+      },
+      "Intune.Commander.Core.Services.ExportService/<ExportAdmxFileAsync>d__53": {
+        "System.Void Intune.Commander.Core.Services.ExportService/<ExportAdmxFileAsync>d__53::MoveNext()": {
+          "Lines": {
+            "1093": 4,
+            "1094": 4,
+            "1095": 4,
+            "1097": 4,
+            "1098": 4,
+            "1100": 4,
+            "1101": 4,
+            "1103": 4,
+            "1104": 4,
+            "1105": 4,
+            "1106": 4,
+            "1107": 4,
+            "1108": 4,
+            "1109": 4,
+            "1110": 4,
+            "1111": 4,
+            "1112": 4
+          },
+          "Branches": [
+            {
+              "Line": 1097,
+              "Offset": 65,
+              "EndOffset": 67,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 1
+            },
+            {
+              "Line": 1097,
+              "Offset": 80,
+              "EndOffset": 82,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 0
+            },
+            {
+              "Line": 1097,
+              "Offset": 95,
+              "EndOffset": 97,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 0
+            },
+            {
+              "Line": 1097,
+              "Offset": 65,
+              "EndOffset": 103,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 4
+            },
+            {
+              "Line": 1097,
+              "Offset": 80,
+              "EndOffset": 103,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 4
+            },
+            {
+              "Line": 1097,
+              "Offset": 95,
+              "EndOffset": 103,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 4
+            },
+            {
+              "Line": 1103,
+              "Offset": 308,
+              "EndOffset": 310,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 4
+            },
+            {
+              "Line": 1105,
+              "Offset": 365,
+              "EndOffset": 367,
+              "Path": 0,
+              "Ordinal": 8,
+              "Hits": 1
+            },
+            {
+              "Line": 1105,
+              "Offset": 380,
+              "EndOffset": 382,
+              "Path": 0,
+              "Ordinal": 10,
+              "Hits": 0
+            },
+            {
+              "Line": 1105,
+              "Offset": 365,
+              "EndOffset": 388,
+              "Path": 1,
+              "Ordinal": 9,
+              "Hits": 4
+            },
+            {
+              "Line": 1105,
+              "Offset": 380,
+              "EndOffset": 388,
+              "Path": 1,
+              "Ordinal": 11,
+              "Hits": 4
+            },
+            {
+              "Line": 1103,
+              "Offset": 308,
+              "EndOffset": 401,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 4
+            }
+          ]
+        }
+      },
+      "Intune.Commander.Core.Services.ExportService/<ExportAdmxFilesAsync>d__54": {
+        "System.Void Intune.Commander.Core.Services.ExportService/<ExportAdmxFilesAsync>d__54::MoveNext()": {
+          "Lines": {
+            "1118": 1,
+            "1119": 1,
+            "1121": 7,
+            "1122": 2,
+            "1123": 2,
+            "1124": 2,
+            "1126": 1,
+            "1127": 1
+          },
+          "Branches": [
+            {
+              "Line": 1121,
+              "Offset": 230,
+              "EndOffset": 68,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 2
+            },
+            {
+              "Line": 1121,
+              "Offset": 230,
+              "EndOffset": 235,
               "Path": 0,
               "Ordinal": 0,
               "Hits": 1
@@ -15185,6 +15269,248 @@
           ]
         }
       },
+      "Intune.Commander.Core.Services.ExportService/<ExportNotificationTemplateAsync>d__57": {
+        "System.Void Intune.Commander.Core.Services.ExportService/<ExportNotificationTemplateAsync>d__57::MoveNext()": {
+          "Lines": {
+            "1175": 3,
+            "1176": 3,
+            "1177": 3,
+            "1179": 3,
+            "1180": 3,
+            "1182": 3,
+            "1183": 3,
+            "1185": 3,
+            "1186": 3,
+            "1187": 3,
+            "1188": 3,
+            "1189": 3,
+            "1190": 3,
+            "1191": 3,
+            "1192": 3,
+            "1193": 3,
+            "1194": 3
+          },
+          "Branches": [
+            {
+              "Line": 1179,
+              "Offset": 65,
+              "EndOffset": 67,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 0
+            },
+            {
+              "Line": 1179,
+              "Offset": 80,
+              "EndOffset": 82,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 0
+            },
+            {
+              "Line": 1179,
+              "Offset": 65,
+              "EndOffset": 88,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 3
+            },
+            {
+              "Line": 1179,
+              "Offset": 80,
+              "EndOffset": 88,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 3
+            },
+            {
+              "Line": 1185,
+              "Offset": 293,
+              "EndOffset": 295,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 3
+            },
+            {
+              "Line": 1187,
+              "Offset": 350,
+              "EndOffset": 352,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 0
+            },
+            {
+              "Line": 1187,
+              "Offset": 350,
+              "EndOffset": 358,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 3
+            },
+            {
+              "Line": 1185,
+              "Offset": 293,
+              "EndOffset": 371,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 3
+            }
+          ]
+        }
+      },
+      "Intune.Commander.Core.Services.ExportService/<ExportNotificationTemplatesAsync>d__58": {
+        "System.Void Intune.Commander.Core.Services.ExportService/<ExportNotificationTemplatesAsync>d__58::MoveNext()": {
+          "Lines": {
+            "1200": 1,
+            "1201": 1,
+            "1203": 7,
+            "1204": 2,
+            "1205": 2,
+            "1206": 2,
+            "1208": 1,
+            "1209": 1
+          },
+          "Branches": [
+            {
+              "Line": 1203,
+              "Offset": 230,
+              "EndOffset": 68,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 2
+            },
+            {
+              "Line": 1203,
+              "Offset": 230,
+              "EndOffset": 235,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 1
+            }
+          ]
+        }
+      },
+      "Intune.Commander.Core.Services.ExportService/<ExportReusablePolicySettingAsync>d__55": {
+        "System.Void Intune.Commander.Core.Services.ExportService/<ExportReusablePolicySettingAsync>d__55::MoveNext()": {
+          "Lines": {
+            "1134": 3,
+            "1135": 3,
+            "1136": 3,
+            "1138": 3,
+            "1139": 3,
+            "1141": 3,
+            "1142": 3,
+            "1144": 3,
+            "1145": 3,
+            "1146": 3,
+            "1147": 3,
+            "1148": 3,
+            "1149": 3,
+            "1150": 3,
+            "1151": 3,
+            "1152": 3,
+            "1153": 3
+          },
+          "Branches": [
+            {
+              "Line": 1138,
+              "Offset": 65,
+              "EndOffset": 67,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 0
+            },
+            {
+              "Line": 1138,
+              "Offset": 80,
+              "EndOffset": 82,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 0
+            },
+            {
+              "Line": 1138,
+              "Offset": 65,
+              "EndOffset": 88,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 3
+            },
+            {
+              "Line": 1138,
+              "Offset": 80,
+              "EndOffset": 88,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 3
+            },
+            {
+              "Line": 1144,
+              "Offset": 293,
+              "EndOffset": 295,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 3
+            },
+            {
+              "Line": 1146,
+              "Offset": 350,
+              "EndOffset": 352,
+              "Path": 0,
+              "Ordinal": 6,
+              "Hits": 0
+            },
+            {
+              "Line": 1146,
+              "Offset": 350,
+              "EndOffset": 358,
+              "Path": 1,
+              "Ordinal": 7,
+              "Hits": 3
+            },
+            {
+              "Line": 1144,
+              "Offset": 293,
+              "EndOffset": 371,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 3
+            }
+          ]
+        }
+      },
+      "Intune.Commander.Core.Services.ExportService/<ExportReusablePolicySettingsAsync>d__56": {
+        "System.Void Intune.Commander.Core.Services.ExportService/<ExportReusablePolicySettingsAsync>d__56::MoveNext()": {
+          "Lines": {
+            "1159": 1,
+            "1160": 1,
+            "1162": 7,
+            "1163": 2,
+            "1164": 2,
+            "1165": 2,
+            "1167": 1,
+            "1168": 1
+          },
+          "Branches": [
+            {
+              "Line": 1162,
+              "Offset": 230,
+              "EndOffset": 68,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 2
+            },
+            {
+              "Line": 1162,
+              "Offset": 230,
+              "EndOffset": 235,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 1
+            }
+          ]
+        }
+      },
       "Intune.Commander.Core.Services.ExportService/<ExportRoleDefinitionAsync>d__25": {
         "System.Void Intune.Commander.Core.Services.ExportService/<ExportRoleDefinitionAsync>d__25::MoveNext()": {
           "Lines": {
@@ -15793,11 +16119,11 @@
       "Intune.Commander.Core.Services.ExportService/<SaveMigrationTableAsync>d__3": {
         "System.Void Intune.Commander.Core.Services.ExportService/<SaveMigrationTableAsync>d__3::MoveNext()": {
           "Lines": {
-            "59": 27,
-            "60": 27,
-            "61": 27,
-            "62": 27,
-            "63": 27
+            "59": 30,
+            "60": 30,
+            "61": 30,
+            "62": 30,
+            "63": 30
           },
           "Branches": []
         }
@@ -23750,6 +24076,193 @@
         }
       }
     },
+    "/home/runner/work/IntuneCommander/IntuneCommander/src/Intune.Commander.Core/Services/NotificationTemplateService.cs": {
+      "Intune.Commander.Core.Services.NotificationTemplateService": {
+        "System.Void Intune.Commander.Core.Services.NotificationTemplateService::.ctor(Microsoft.Graph.Beta.GraphServiceClient)": {
+          "Lines": {
+            "11": 0,
+            "12": 0,
+            "13": 0,
+            "14": 0
+          },
+          "Branches": []
+        }
+      },
+      "Intune.Commander.Core.Services.NotificationTemplateService/<>c": {
+        "System.Void Intune.Commander.Core.Services.NotificationTemplateService/<>c::<ListNotificationTemplatesAsync>b__2_0(Microsoft.Kiota.Abstractions.RequestConfiguration`1<Microsoft.Graph.Beta.DeviceManagement.NotificationMessageTemplates.NotificationMessageTemplatesRequestBuilder/NotificationMessageTemplatesRequestBuilderGetQueryParameters>)": {
+          "Lines": {
+            "22": 0,
+            "23": 0,
+            "24": 0
+          },
+          "Branches": []
+        }
+      },
+      "Intune.Commander.Core.Services.NotificationTemplateService/<>c__DisplayClass5_0": {
+        "System.Threading.Tasks.Task`1<Microsoft.Graph.Beta.Models.NotificationMessageTemplate> Intune.Commander.Core.Services.NotificationTemplateService/<>c__DisplayClass5_0::<UpdateNotificationTemplateAsync>b__0()": {
+          "Lines": {
+            "68": 0
+          },
+          "Branches": []
+        }
+      },
+      "Intune.Commander.Core.Services.NotificationTemplateService/<CreateNotificationTemplateAsync>d__4": {
+        "System.Void Intune.Commander.Core.Services.NotificationTemplateService/<CreateNotificationTemplateAsync>d__4::MoveNext()": {
+          "Lines": {
+            "53": 0,
+            "54": 0,
+            "55": 0,
+            "57": 0,
+            "58": 0
+          },
+          "Branches": [
+            {
+              "Line": 57,
+              "Offset": 175,
+              "EndOffset": 177,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 0
+            },
+            {
+              "Line": 57,
+              "Offset": 175,
+              "EndOffset": 189,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 0
+            }
+          ]
+        }
+      },
+      "Intune.Commander.Core.Services.NotificationTemplateService/<DeleteNotificationTemplateAsync>d__6": {
+        "System.Void Intune.Commander.Core.Services.NotificationTemplateService/<DeleteNotificationTemplateAsync>d__6::MoveNext()": {
+          "Lines": {
+            "72": 0,
+            "73": 0,
+            "74": 0,
+            "75": 0
+          },
+          "Branches": []
+        }
+      },
+      "Intune.Commander.Core.Services.NotificationTemplateService/<GetNotificationTemplateAsync>d__3": {
+        "System.Void Intune.Commander.Core.Services.NotificationTemplateService/<GetNotificationTemplateAsync>d__3::MoveNext()": {
+          "Lines": {
+            "47": 0,
+            "48": 0,
+            "49": 0,
+            "50": 0
+          },
+          "Branches": []
+        }
+      },
+      "Intune.Commander.Core.Services.NotificationTemplateService/<ListNotificationTemplatesAsync>d__2": {
+        "System.Void Intune.Commander.Core.Services.NotificationTemplateService/<ListNotificationTemplatesAsync>d__2::MoveNext()": {
+          "Lines": {
+            "17": 0,
+            "18": 0,
+            "20": 0,
+            "21": 0,
+            "26": 0,
+            "27": 0,
+            "28": 0,
+            "29": 0,
+            "31": 0,
+            "32": 0,
+            "33": 0,
+            "34": 0,
+            "35": 0,
+            "36": 0,
+            "38": 0,
+            "39": 0,
+            "41": 0,
+            "43": 0,
+            "44": 0
+          },
+          "Branches": [
+            {
+              "Line": 26,
+              "Offset": 481,
+              "EndOffset": 222,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 0
+            },
+            {
+              "Line": 28,
+              "Offset": 241,
+              "EndOffset": 243,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 0
+            },
+            {
+              "Line": 28,
+              "Offset": 241,
+              "EndOffset": 266,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 0
+            },
+            {
+              "Line": 31,
+              "Offset": 289,
+              "EndOffset": 294,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 0
+            },
+            {
+              "Line": 31,
+              "Offset": 289,
+              "EndOffset": 464,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 0
+            },
+            {
+              "Line": 26,
+              "Offset": 481,
+              "EndOffset": 486,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 0
+            }
+          ]
+        }
+      },
+      "Intune.Commander.Core.Services.NotificationTemplateService/<UpdateNotificationTemplateAsync>d__5": {
+        "System.Void Intune.Commander.Core.Services.NotificationTemplateService/<UpdateNotificationTemplateAsync>d__5::MoveNext()": {
+          "Lines": {
+            "61": 0,
+            "62": 0,
+            "64": 0,
+            "65": 0,
+            "67": 0,
+            "69": 0
+          },
+          "Branches": [
+            {
+              "Line": 62,
+              "Offset": 92,
+              "EndOffset": 94,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 0
+            },
+            {
+              "Line": 62,
+              "Offset": 92,
+              "EndOffset": 106,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 0
+            }
+          ]
+        }
+      }
+    },
     "/home/runner/work/IntuneCommander/IntuneCommander/src/Intune.Commander.Core/Services/PolicySetService.cs": {
       "Intune.Commander.Core.Services.PolicySetService": {
         "System.Void Intune.Commander.Core.Services.PolicySetService::.ctor(Microsoft.Graph.Beta.GraphServiceClient)": {
@@ -24621,6 +25134,193 @@
         }
       }
     },
+    "/home/runner/work/IntuneCommander/IntuneCommander/src/Intune.Commander.Core/Services/ReusablePolicySettingService.cs": {
+      "Intune.Commander.Core.Services.ReusablePolicySettingService": {
+        "System.Void Intune.Commander.Core.Services.ReusablePolicySettingService::.ctor(Microsoft.Graph.Beta.GraphServiceClient)": {
+          "Lines": {
+            "11": 0,
+            "12": 0,
+            "13": 0,
+            "14": 0
+          },
+          "Branches": []
+        }
+      },
+      "Intune.Commander.Core.Services.ReusablePolicySettingService/<>c": {
+        "System.Void Intune.Commander.Core.Services.ReusablePolicySettingService/<>c::<ListReusablePolicySettingsAsync>b__2_0(Microsoft.Kiota.Abstractions.RequestConfiguration`1<Microsoft.Graph.Beta.DeviceManagement.ReusablePolicySettings.ReusablePolicySettingsRequestBuilder/ReusablePolicySettingsRequestBuilderGetQueryParameters>)": {
+          "Lines": {
+            "22": 0,
+            "23": 0,
+            "24": 0
+          },
+          "Branches": []
+        }
+      },
+      "Intune.Commander.Core.Services.ReusablePolicySettingService/<>c__DisplayClass5_0": {
+        "System.Threading.Tasks.Task`1<Microsoft.Graph.Beta.Models.DeviceManagementReusablePolicySetting> Intune.Commander.Core.Services.ReusablePolicySettingService/<>c__DisplayClass5_0::<UpdateReusablePolicySettingAsync>b__0()": {
+          "Lines": {
+            "68": 0
+          },
+          "Branches": []
+        }
+      },
+      "Intune.Commander.Core.Services.ReusablePolicySettingService/<CreateReusablePolicySettingAsync>d__4": {
+        "System.Void Intune.Commander.Core.Services.ReusablePolicySettingService/<CreateReusablePolicySettingAsync>d__4::MoveNext()": {
+          "Lines": {
+            "53": 0,
+            "54": 0,
+            "55": 0,
+            "57": 0,
+            "58": 0
+          },
+          "Branches": [
+            {
+              "Line": 57,
+              "Offset": 175,
+              "EndOffset": 177,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 0
+            },
+            {
+              "Line": 57,
+              "Offset": 175,
+              "EndOffset": 189,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 0
+            }
+          ]
+        }
+      },
+      "Intune.Commander.Core.Services.ReusablePolicySettingService/<DeleteReusablePolicySettingAsync>d__6": {
+        "System.Void Intune.Commander.Core.Services.ReusablePolicySettingService/<DeleteReusablePolicySettingAsync>d__6::MoveNext()": {
+          "Lines": {
+            "72": 0,
+            "73": 0,
+            "74": 0,
+            "75": 0
+          },
+          "Branches": []
+        }
+      },
+      "Intune.Commander.Core.Services.ReusablePolicySettingService/<GetReusablePolicySettingAsync>d__3": {
+        "System.Void Intune.Commander.Core.Services.ReusablePolicySettingService/<GetReusablePolicySettingAsync>d__3::MoveNext()": {
+          "Lines": {
+            "47": 0,
+            "48": 0,
+            "49": 0,
+            "50": 0
+          },
+          "Branches": []
+        }
+      },
+      "Intune.Commander.Core.Services.ReusablePolicySettingService/<ListReusablePolicySettingsAsync>d__2": {
+        "System.Void Intune.Commander.Core.Services.ReusablePolicySettingService/<ListReusablePolicySettingsAsync>d__2::MoveNext()": {
+          "Lines": {
+            "17": 0,
+            "18": 0,
+            "20": 0,
+            "21": 0,
+            "26": 0,
+            "27": 0,
+            "28": 0,
+            "29": 0,
+            "31": 0,
+            "32": 0,
+            "33": 0,
+            "34": 0,
+            "35": 0,
+            "36": 0,
+            "38": 0,
+            "39": 0,
+            "41": 0,
+            "43": 0,
+            "44": 0
+          },
+          "Branches": [
+            {
+              "Line": 26,
+              "Offset": 481,
+              "EndOffset": 222,
+              "Path": 1,
+              "Ordinal": 5,
+              "Hits": 0
+            },
+            {
+              "Line": 28,
+              "Offset": 241,
+              "EndOffset": 243,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 0
+            },
+            {
+              "Line": 28,
+              "Offset": 241,
+              "EndOffset": 266,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 0
+            },
+            {
+              "Line": 31,
+              "Offset": 289,
+              "EndOffset": 294,
+              "Path": 0,
+              "Ordinal": 2,
+              "Hits": 0
+            },
+            {
+              "Line": 31,
+              "Offset": 289,
+              "EndOffset": 464,
+              "Path": 1,
+              "Ordinal": 3,
+              "Hits": 0
+            },
+            {
+              "Line": 26,
+              "Offset": 481,
+              "EndOffset": 486,
+              "Path": 0,
+              "Ordinal": 4,
+              "Hits": 0
+            }
+          ]
+        }
+      },
+      "Intune.Commander.Core.Services.ReusablePolicySettingService/<UpdateReusablePolicySettingAsync>d__5": {
+        "System.Void Intune.Commander.Core.Services.ReusablePolicySettingService/<UpdateReusablePolicySettingAsync>d__5::MoveNext()": {
+          "Lines": {
+            "61": 0,
+            "62": 0,
+            "64": 0,
+            "65": 0,
+            "67": 0,
+            "69": 0
+          },
+          "Branches": [
+            {
+              "Line": 62,
+              "Offset": 92,
+              "EndOffset": 94,
+              "Path": 0,
+              "Ordinal": 0,
+              "Hits": 0
+            },
+            {
+              "Line": 62,
+              "Offset": 92,
+              "EndOffset": 106,
+              "Path": 1,
+              "Ordinal": 1,
+              "Hits": 0
+            }
+          ]
+        }
+      }
+    },
     "/home/runner/work/IntuneCommander/IntuneCommander/src/Intune.Commander.Core/Services/RoleDefinitionService.cs": {
       "Intune.Commander.Core.Services.RoleDefinitionService": {
         "System.Void Intune.Commander.Core.Services.RoleDefinitionService::.ctor(Microsoft.Graph.Beta.GraphServiceClient)": {
@@ -24639,14 +25339,6 @@
             "22": 0,
             "23": 0,
             "24": 0
-          },
-          "Branches": []
-        },
-        "System.Void Intune.Commander.Core.Services.RoleDefinitionService/<>c::<GetRoleAssignmentsAsync>b__7_0(Microsoft.Kiota.Abstractions.RequestConfiguration`1<Microsoft.Graph.Beta.DeviceManagement.RoleAssignments.RoleAssignmentsRequestBuilder/RoleAssignmentsRequestBuilderGetQueryParameters>)": {
-          "Lines": {
-            "83": 0,
-            "84": 0,
-            "85": 0
           },
           "Branches": []
         }
@@ -24697,81 +25389,6 @@
             "75": 0
           },
           "Branches": []
-        }
-      },
-      "Intune.Commander.Core.Services.RoleDefinitionService/<GetRoleAssignmentsAsync>d__7": {
-        "System.Void Intune.Commander.Core.Services.RoleDefinitionService/<GetRoleAssignmentsAsync>d__7::MoveNext()": {
-          "Lines": {
-            "78": 0,
-            "79": 0,
-            "81": 0,
-            "82": 0,
-            "87": 0,
-            "88": 0,
-            "89": 0,
-            "90": 0,
-            "92": 0,
-            "93": 0,
-            "94": 0,
-            "95": 0,
-            "96": 0,
-            "97": 0,
-            "99": 0,
-            "100": 0,
-            "102": 0,
-            "104": 0,
-            "105": 0
-          },
-          "Branches": [
-            {
-              "Line": 87,
-              "Offset": 481,
-              "EndOffset": 222,
-              "Path": 1,
-              "Ordinal": 5,
-              "Hits": 0
-            },
-            {
-              "Line": 89,
-              "Offset": 241,
-              "EndOffset": 243,
-              "Path": 0,
-              "Ordinal": 0,
-              "Hits": 0
-            },
-            {
-              "Line": 89,
-              "Offset": 241,
-              "EndOffset": 266,
-              "Path": 1,
-              "Ordinal": 1,
-              "Hits": 0
-            },
-            {
-              "Line": 92,
-              "Offset": 289,
-              "EndOffset": 294,
-              "Path": 0,
-              "Ordinal": 2,
-              "Hits": 0
-            },
-            {
-              "Line": 92,
-              "Offset": 289,
-              "EndOffset": 464,
-              "Path": 1,
-              "Ordinal": 3,
-              "Hits": 0
-            },
-            {
-              "Line": 87,
-              "Offset": 481,
-              "EndOffset": 486,
-              "Path": 0,
-              "Ordinal": 4,
-              "Hits": 0
-            }
-          ]
         }
       },
       "Intune.Commander.Core.Services.RoleDefinitionService/<GetRoleDefinitionAsync>d__3": {
@@ -25894,115 +26511,6 @@
               "EndOffset": 938,
               "Path": 1,
               "Ordinal": 13,
-              "Hits": 0
-            }
-          ]
-        }
-      }
-    },
-    "/home/runner/work/IntuneCommander/IntuneCommander/src/Intune.Commander.Core/Services/VppTokenService.cs": {
-      "Intune.Commander.Core.Services.VppTokenService": {
-        "System.Void Intune.Commander.Core.Services.VppTokenService::.ctor(Microsoft.Graph.Beta.GraphServiceClient)": {
-          "Lines": {
-            "11": 0,
-            "12": 0,
-            "13": 0,
-            "14": 0
-          },
-          "Branches": []
-        }
-      },
-      "Intune.Commander.Core.Services.VppTokenService/<>c": {
-        "System.Void Intune.Commander.Core.Services.VppTokenService/<>c::<ListVppTokensAsync>b__2_0(Microsoft.Kiota.Abstractions.RequestConfiguration`1<Microsoft.Graph.Beta.DeviceAppManagement.VppTokens.VppTokensRequestBuilder/VppTokensRequestBuilderGetQueryParameters>)": {
-          "Lines": {
-            "22": 0,
-            "23": 0,
-            "24": 0
-          },
-          "Branches": []
-        }
-      },
-      "Intune.Commander.Core.Services.VppTokenService/<GetVppTokenAsync>d__3": {
-        "System.Void Intune.Commander.Core.Services.VppTokenService/<GetVppTokenAsync>d__3::MoveNext()": {
-          "Lines": {
-            "47": 0,
-            "48": 0,
-            "49": 0,
-            "50": 0
-          },
-          "Branches": []
-        }
-      },
-      "Intune.Commander.Core.Services.VppTokenService/<ListVppTokensAsync>d__2": {
-        "System.Void Intune.Commander.Core.Services.VppTokenService/<ListVppTokensAsync>d__2::MoveNext()": {
-          "Lines": {
-            "17": 0,
-            "18": 0,
-            "20": 0,
-            "21": 0,
-            "26": 0,
-            "27": 0,
-            "28": 0,
-            "29": 0,
-            "31": 0,
-            "32": 0,
-            "33": 0,
-            "34": 0,
-            "35": 0,
-            "36": 0,
-            "38": 0,
-            "39": 0,
-            "41": 0,
-            "43": 0,
-            "44": 0
-          },
-          "Branches": [
-            {
-              "Line": 26,
-              "Offset": 481,
-              "EndOffset": 222,
-              "Path": 1,
-              "Ordinal": 5,
-              "Hits": 0
-            },
-            {
-              "Line": 28,
-              "Offset": 241,
-              "EndOffset": 243,
-              "Path": 0,
-              "Ordinal": 0,
-              "Hits": 0
-            },
-            {
-              "Line": 28,
-              "Offset": 241,
-              "EndOffset": 266,
-              "Path": 1,
-              "Ordinal": 1,
-              "Hits": 0
-            },
-            {
-              "Line": 31,
-              "Offset": 289,
-              "EndOffset": 294,
-              "Path": 0,
-              "Ordinal": 2,
-              "Hits": 0
-            },
-            {
-              "Line": 31,
-              "Offset": 289,
-              "EndOffset": 464,
-              "Path": 1,
-              "Ordinal": 3,
-              "Hits": 0
-            },
-            {
-              "Line": 26,
-              "Offset": 481,
-              "EndOffset": 486,
-              "Path": 0,
-              "Ordinal": 4,
               "Hits": 0
             }
           ]
@@ -30412,31 +30920,31 @@
       "Intune.Commander.Core.Models.MigrationEntry": {
         "System.String Intune.Commander.Core.Models.MigrationEntry::get_ObjectType()": {
           "Lines": {
-            "8": 270
+            "8": 295
           },
           "Branches": []
         },
         "System.String Intune.Commander.Core.Models.MigrationEntry::get_OriginalId()": {
           "Lines": {
-            "11": 272
+            "11": 297
           },
           "Branches": []
         },
         "System.String Intune.Commander.Core.Models.MigrationEntry::get_NewId()": {
           "Lines": {
-            "14": 106
+            "14": 112
           },
           "Branches": []
         },
         "System.String Intune.Commander.Core.Models.MigrationEntry::get_Name()": {
           "Lines": {
-            "17": 174
+            "17": 190
           },
           "Branches": []
         },
         "System.DateTime Intune.Commander.Core.Models.MigrationEntry::get_ExportedAt()": {
           "Lines": {
-            "20": 171
+            "20": 187
           },
           "Branches": []
         }
@@ -30446,24 +30954,24 @@
       "Intune.Commander.Core.Models.MigrationTable": {
         "System.Collections.Generic.List`1<Intune.Commander.Core.Models.MigrationEntry> Intune.Commander.Core.Models.MigrationTable::get_Entries()": {
           "Lines": {
-            "8": 509
+            "8": 542
           },
           "Branches": []
         },
         "System.Void Intune.Commander.Core.Models.MigrationTable::AddOrUpdate(Intune.Commander.Core.Models.MigrationEntry)": {
           "Lines": {
-            "11": 116,
-            "12": 116,
-            "13": 143,
-            "15": 116,
+            "11": 126,
+            "12": 126,
+            "13": 156,
+            "15": 126,
             "16": 1,
             "17": 1,
             "18": 1,
             "19": 1,
-            "21": 115,
-            "22": 115,
-            "23": 115,
-            "24": 116
+            "21": 125,
+            "22": 125,
+            "23": 125,
+            "24": 126
           },
           "Branches": [
             {
@@ -30480,7 +30988,7 @@
               "EndOffset": 86,
               "Path": 1,
               "Ordinal": 1,
-              "Hits": 115
+              "Hits": 125
             },
             {
               "Line": 13,
@@ -30488,7 +30996,7 @@
               "EndOffset": 24,
               "Path": 0,
               "Ordinal": 0,
-              "Hits": 26
+              "Hits": 29
             },
             {
               "Line": 13,
