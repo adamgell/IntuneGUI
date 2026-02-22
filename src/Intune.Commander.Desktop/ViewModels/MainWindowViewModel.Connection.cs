@@ -261,7 +261,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
             var cachedCount = TryLoadFromCache(profile.TenantId ?? "");
 
-            if (cachedCount >= 26)
+            if (cachedCount >= 28)
 
             {
 
@@ -277,7 +277,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
                 if (cachedCount > 0)
 
-                    DebugLog.Log("Cache", $"Partial cache hit ({cachedCount}/26) — refreshing from Graph");
+                    DebugLog.Log("Cache", $"Partial cache hit ({cachedCount}/28) — refreshing from Graph");
 
                 await RefreshAsync(CancellationToken.None);
 
@@ -601,9 +601,13 @@ public partial class MainWindowViewModel : ViewModelBase
 
         SelectedQualityUpdateProfile = null;
 
+        _qualityUpdateProfilesLoaded = false;
+
         DriverUpdateProfiles.Clear();
 
         SelectedDriverUpdateProfile = null;
+
+        _driverUpdateProfilesLoaded = false;
 
         DynamicGroupRows.Clear();
 
