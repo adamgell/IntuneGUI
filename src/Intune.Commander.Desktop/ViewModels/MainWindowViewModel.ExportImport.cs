@@ -1209,6 +1209,10 @@ public partial class MainWindowViewModel : ViewModelBase
             foreach (var profile in driverUpdateProfiles)
             {
                 await _importService.ImportDriverUpdateProfileAsync(profile, migrationTable, cancellationToken);
+                imported++;
+                StatusText = $"Imported {imported} item(s)...";
+            }
+
             // Import settings catalog policies
             var settingsCatalogPolicies = await _importService.ReadSettingsCatalogPoliciesFromFolderAsync(folderPath, cancellationToken);
             foreach (var export in settingsCatalogPolicies)

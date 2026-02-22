@@ -236,7 +236,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
                 _qualityUpdateProfileService,
 
-                _driverUpdateProfileService);
+                _driverUpdateProfileService,
+
                 _settingsCatalogService);
 
 

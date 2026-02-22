@@ -1692,6 +1692,10 @@ public class ImportServiceTests : IDisposable
     {
         var sut = new ImportService(new StubConfigurationService());
         var result = await sut.ReadQualityUpdateProfilesFromFolderAsync(_tempDir);
+        Assert.Empty(result);
+    }
+
+    [Fact]
     public async Task ReadSettingsCatalogPoliciesFromFolderAsync_MissingFolder_ReturnsEmpty()
     {
         var sut = new ImportService(new StubConfigurationService());
@@ -1712,6 +1716,10 @@ public class ImportServiceTests : IDisposable
 
         var sut = new ImportService(new StubConfigurationService());
         var result = await sut.ReadQualityUpdateProfilesFromFolderAsync(_tempDir);
+        Assert.Equal(2, result.Count);
+    }
+
+    [Fact]
     public async Task ReadSettingsCatalogPoliciesFromFolderAsync_ReadsAllJsonFiles()
     {
         var folder = Path.Combine(_tempDir, "SettingsCatalog");
@@ -1788,6 +1796,9 @@ public class ImportServiceTests : IDisposable
         var result = await sut.ReadDriverUpdateProfilesFromFolderAsync(_tempDir);
 
         Assert.Equal(2, result.Count);
+    }
+
+    [Fact]
     public async Task ImportSettingsCatalogPolicyAsync_WithoutService_Throws()
     {
         var sut = new ImportService(new StubConfigurationService());
@@ -2501,6 +2512,8 @@ public class ImportServiceTests : IDisposable
 
         public Task DeleteDriverUpdateProfileAsync(string id, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
+    }
+
     private sealed class StubSettingsCatalogService : ISettingsCatalogService
     {
         public DeviceManagementConfigurationPolicy? LastCreatedPolicy { get; private set; }

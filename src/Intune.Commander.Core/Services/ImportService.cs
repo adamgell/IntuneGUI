@@ -63,7 +63,7 @@ public class ImportService : IImportService
         IDeviceShellScriptService? deviceShellScriptService = null,
         IComplianceScriptService? complianceScriptService = null,
         IQualityUpdateProfileService? qualityUpdateProfileService = null,
-        IDriverUpdateProfileService? driverUpdateProfileService = null)
+        IDriverUpdateProfileService? driverUpdateProfileService = null,
         ISettingsCatalogService? settingsCatalogService = null)
     {
         _configProfileService = configProfileService;
@@ -1480,7 +1480,21 @@ public class ImportService : IImportService
     public async Task<List<WindowsQualityUpdateProfile>> ReadQualityUpdateProfilesFromFolderAsync(string folderPath, CancellationToken cancellationToken = default)
     {
         var results = new List<WindowsQualityUpdateProfile>();
-        var folder = Path.Combine(folderPath, "Quali=======
+        var folder = Path.Combine(folderPath, "QualityUpdates");
+
+        if (!Directory.Exists(folder))
+            return results;
+
+        foreach (var file in Directory.GetFiles(folder, "*.json"))
+        {
+            var profile = await ReadQualityUpdateProfileAsync(file, cancellationToken);
+            if (profile != null)
+                results.Add(profile);
+        }
+
+        return results;
+    }
+
     // --- Settings Catalog ---
 
     public async Task<SettingsCatalogExport?> ReadSettingsCatalogPolicyAsync(string filePath, CancellationToken cancellationToken = default)
@@ -1494,15 +1508,11 @@ public class ImportService : IImportService
         var results = new List<SettingsCatalogExport>();
         var folder = Path.Combine(folderPath, "SettingsCatalog");
 
-
         if (!Directory.Exists(folder))
             return results;
 
         foreach (var file in Directory.GetFiles(folder, "*.json"))
         {
-            var profile = await ReadQualityUpdateProfileAsync(file, cancellationToken);
-            if (profile != null)
-                results.Add(profile);
             var export = await ReadSettingsCatalogPolicyAsync(file, cancellationToken);
             if (export != null)
                 results.Add(export);
@@ -1575,6 +1585,20 @@ public class ImportService : IImportService
 
         var created = await _driverUpdateProfileService.CreateDriverUpdateProfileAsync(profile, cancellationToken);
 
+        if (originalId != null && created.Id != null)
+        {
+            migrationTable.AddOrUpdate(new MigrationEntry
+            {
+                ObjectType = "DriverUpdateProfile",
+                OriginalId = originalId,
+                NewId = created.Id,
+                Name = created.DisplayName ?? "Unknown"
+            });
+        }
+
+        return created;
+    }
+
     public async Task<DeviceManagementConfigurationPolicy> ImportSettingsCatalogPolicyAsync(
         SettingsCatalogExport export,
         MigrationTable migrationTable,
@@ -1621,10 +1645,6 @@ public class ImportService : IImportService
         {
             migrationTable.AddOrUpdate(new MigrationEntry
             {
-                ObjectType = "DriverUpdateProfile",
-                OriginalId = originalId,
-                NewId = created.Id,
-                Name = created.DisplayName ?? "Unknown"
                 ObjectType = "SettingsCatalog",
                 OriginalId = originalId,
                 NewId = created.Id,
