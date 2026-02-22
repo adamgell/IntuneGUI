@@ -17,11 +17,11 @@ public class AssignmentCheckerServiceTests
     public void Service_HasGraphClientConstructor()
     {
         var ctors = typeof(AssignmentCheckerService).GetConstructors();
-        Assert.True(ctors.Any(c =>
+        Assert.Contains(ctors, c =>
         {
             var p = c.GetParameters();
             return p.Length >= 1 && p[0].ParameterType == typeof(GraphServiceClient);
-        }));
+        });
     }
 
     // ── Interface contract tests ─────────────────────────────────────────────────
