@@ -98,4 +98,16 @@ public class RoleDefinitionServiceTests
         var methods = typeof(IRoleDefinitionService).GetMethods();
         Assert.Equal(6, methods.Length);
     }
+
+    [Fact]
+    public void Interface_DefinesGetRoleAssignmentsMethod()
+    {
+        var method = typeof(IRoleDefinitionService).GetMethod("GetRoleAssignmentsAsync");
+        Assert.NotNull(method);
+        Assert.Equal(typeof(Task<List<RoleAssignment>>), method.ReturnType);
+        var parameters = method.GetParameters();
+        Assert.Equal(typeof(string), parameters[0].ParameterType);
+        Assert.Equal(typeof(CancellationToken), parameters[1].ParameterType);
+        Assert.True(parameters[1].HasDefaultValue);
+    }
 }
