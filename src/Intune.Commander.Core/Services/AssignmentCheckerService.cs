@@ -1210,6 +1210,66 @@ public class AssignmentCheckerService : IAssignmentCheckerService
         progress?.Invoke("Downloading enrollment configurations...");
         await FetchEnrollmentConfigurationsAsync(cancellationToken);
 
+        progress?.Invoke("Downloading conditional access policies...");
+        await FetchConditionalAccessPoliciesAsync(cancellationToken);
+
+        progress?.Invoke("Downloading assignment filters...");
+        await FetchAssignmentFiltersAsync(cancellationToken);
+
+        progress?.Invoke("Downloading policy sets...");
+        await FetchPolicySetsAsync(cancellationToken);
+
+        progress?.Invoke("Downloading terms and conditions...");
+        await FetchTermsAndConditionsAsync(cancellationToken);
+
+        progress?.Invoke("Downloading scope tags...");
+        await FetchScopeTagsAsync(cancellationToken);
+
+        progress?.Invoke("Downloading role definitions...");
+        await FetchRoleDefinitionsAsync(cancellationToken);
+
+        progress?.Invoke("Downloading Intune branding profiles...");
+        await FetchIntuneBrandingProfilesAsync(cancellationToken);
+
+        progress?.Invoke("Downloading Azure branding localizations...");
+        await FetchAzureBrandingLocalizationsAsync(cancellationToken);
+
+        progress?.Invoke("Downloading Autopilot profiles...");
+        await FetchAutopilotProfilesAsync(cancellationToken);
+
+        progress?.Invoke("Downloading Mac custom attributes...");
+        await FetchMacCustomAttributesAsync(cancellationToken);
+
+        progress?.Invoke("Downloading feature update profiles...");
+        await FetchFeatureUpdateProfilesAsync(cancellationToken);
+
+        progress?.Invoke("Downloading device shell scripts...");
+        await FetchDeviceShellScriptsAsync(cancellationToken);
+
+        progress?.Invoke("Downloading compliance scripts...");
+        await FetchComplianceScriptsAsync(cancellationToken);
+
+        progress?.Invoke("Downloading named locations...");
+        await FetchNamedLocationsAsync(cancellationToken);
+
+        progress?.Invoke("Downloading authentication strength policies...");
+        await FetchAuthenticationStrengthPoliciesAsync(cancellationToken);
+
+        progress?.Invoke("Downloading authentication context class references...");
+        await FetchAuthenticationContextClassReferencesAsync(cancellationToken);
+
+        progress?.Invoke("Downloading terms of use agreements...");
+        await FetchTermsOfUseAgreementsAsync(cancellationToken);
+
+        progress?.Invoke("Downloading targeted managed app configurations...");
+        await FetchTargetedManagedAppConfigurationsAsync(cancellationToken);
+
+        progress?.Invoke("Downloading dynamic groups...");
+        await FetchDynamicGroupsAsync(cancellationToken);
+
+        progress?.Invoke("Downloading assigned groups...");
+        await FetchAssignedGroupsAsync(cancellationToken);
+
         progress?.Invoke("All policy data downloaded and cached.");
     }
 
@@ -1458,6 +1518,462 @@ public class AssignmentCheckerService : IAssignmentCheckerService
             else break;
         }
         TrySetCache("EnrollmentConfigurations", result);
+        return result;
+    }
+
+    private async Task<List<ConditionalAccessPolicy>> FetchConditionalAccessPoliciesAsync(CancellationToken ct)
+    {
+        if (TryGetFromCache<ConditionalAccessPolicy>("ConditionalAccessPolicies") is { } cached) return cached;
+        var result = new List<ConditionalAccessPolicy>();
+        var resp = await _graphClient.Identity.ConditionalAccess.Policies.GetAsync(
+            req =>
+            {
+                req.QueryParameters.Select = ["id", "displayName", "state"];
+                req.QueryParameters.Top = 200;
+            }, ct);
+        while (resp != null)
+        {
+            if (resp.Value != null) result.AddRange(resp.Value);
+            if (!string.IsNullOrEmpty(resp.OdataNextLink))
+                resp = await _graphClient.Identity.ConditionalAccess.Policies
+                    .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
+            else break;
+        }
+        TrySetCache("ConditionalAccessPolicies", result);
+        return result;
+    }
+
+    private async Task<List<DeviceAndAppManagementAssignmentFilter>> FetchAssignmentFiltersAsync(CancellationToken ct)
+    {
+        if (TryGetFromCache<DeviceAndAppManagementAssignmentFilter>("AssignmentFilters") is { } cached) return cached;
+        var result = new List<DeviceAndAppManagementAssignmentFilter>();
+        var resp = await _graphClient.DeviceManagement.AssignmentFilters.GetAsync(
+            req =>
+            {
+                req.QueryParameters.Select = ["id", "displayName", "platform"];
+                req.QueryParameters.Top = 200;
+            }, ct);
+        while (resp != null)
+        {
+            if (resp.Value != null) result.AddRange(resp.Value);
+            if (!string.IsNullOrEmpty(resp.OdataNextLink))
+                resp = await _graphClient.DeviceManagement.AssignmentFilters
+                    .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
+            else break;
+        }
+        TrySetCache("AssignmentFilters", result);
+        return result;
+    }
+
+    private async Task<List<PolicySet>> FetchPolicySetsAsync(CancellationToken ct)
+    {
+        if (TryGetFromCache<PolicySet>("PolicySets") is { } cached) return cached;
+        var result = new List<PolicySet>();
+        var resp = await _graphClient.DeviceAppManagement.PolicySets.GetAsync(
+            req =>
+            {
+                req.QueryParameters.Select = ["id", "displayName", "status"];
+                req.QueryParameters.Top = 200;
+            }, ct);
+        while (resp != null)
+        {
+            if (resp.Value != null) result.AddRange(resp.Value);
+            if (!string.IsNullOrEmpty(resp.OdataNextLink))
+                resp = await _graphClient.DeviceAppManagement.PolicySets
+                    .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
+            else break;
+        }
+        TrySetCache("PolicySets", result);
+        return result;
+    }
+
+    private async Task<List<TermsAndConditions>> FetchTermsAndConditionsAsync(CancellationToken ct)
+    {
+        if (TryGetFromCache<TermsAndConditions>("TermsAndConditions") is { } cached) return cached;
+        var result = new List<TermsAndConditions>();
+        var resp = await _graphClient.DeviceManagement.TermsAndConditions.GetAsync(
+            req =>
+            {
+                req.QueryParameters.Select = ["id", "displayName", "version"];
+                req.QueryParameters.Top = 200;
+            }, ct);
+        while (resp != null)
+        {
+            if (resp.Value != null) result.AddRange(resp.Value);
+            if (!string.IsNullOrEmpty(resp.OdataNextLink))
+                resp = await _graphClient.DeviceManagement.TermsAndConditions
+                    .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
+            else break;
+        }
+        TrySetCache("TermsAndConditions", result);
+        return result;
+    }
+
+    private async Task<List<RoleScopeTag>> FetchScopeTagsAsync(CancellationToken ct)
+    {
+        if (TryGetFromCache<RoleScopeTag>("ScopeTags") is { } cached) return cached;
+        var result = new List<RoleScopeTag>();
+        var resp = await _graphClient.DeviceManagement.RoleScopeTags.GetAsync(
+            req =>
+            {
+                req.QueryParameters.Select = ["id", "displayName"];
+                req.QueryParameters.Top = 200;
+            }, ct);
+        while (resp != null)
+        {
+            if (resp.Value != null) result.AddRange(resp.Value);
+            if (!string.IsNullOrEmpty(resp.OdataNextLink))
+                resp = await _graphClient.DeviceManagement.RoleScopeTags
+                    .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
+            else break;
+        }
+        TrySetCache("ScopeTags", result);
+        return result;
+    }
+
+    private async Task<List<RoleDefinition>> FetchRoleDefinitionsAsync(CancellationToken ct)
+    {
+        if (TryGetFromCache<RoleDefinition>("RoleDefinitions") is { } cached) return cached;
+        var result = new List<RoleDefinition>();
+        var resp = await _graphClient.DeviceManagement.RoleDefinitions.GetAsync(
+            req =>
+            {
+                req.QueryParameters.Select = ["id", "displayName", "isBuiltIn"];
+                req.QueryParameters.Top = 200;
+            }, ct);
+        while (resp != null)
+        {
+            if (resp.Value != null) result.AddRange(resp.Value);
+            if (!string.IsNullOrEmpty(resp.OdataNextLink))
+                resp = await _graphClient.DeviceManagement.RoleDefinitions
+                    .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
+            else break;
+        }
+        TrySetCache("RoleDefinitions", result);
+        return result;
+    }
+
+    private async Task<List<IntuneBrandingProfile>> FetchIntuneBrandingProfilesAsync(CancellationToken ct)
+    {
+        if (TryGetFromCache<IntuneBrandingProfile>("IntuneBrandingProfiles") is { } cached) return cached;
+        var result = new List<IntuneBrandingProfile>();
+        var resp = await _graphClient.DeviceManagement.IntuneBrandingProfiles.GetAsync(
+            req =>
+            {
+                req.QueryParameters.Select = ["id", "displayName"];
+                req.QueryParameters.Top = 200;
+            }, ct);
+        while (resp != null)
+        {
+            if (resp.Value != null) result.AddRange(resp.Value);
+            if (!string.IsNullOrEmpty(resp.OdataNextLink))
+                resp = await _graphClient.DeviceManagement.IntuneBrandingProfiles
+                    .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
+            else break;
+        }
+        TrySetCache("IntuneBrandingProfiles", result);
+        return result;
+    }
+
+    private async Task<List<OrganizationalBrandingLocalization>> FetchAzureBrandingLocalizationsAsync(CancellationToken ct)
+    {
+        if (TryGetFromCache<OrganizationalBrandingLocalization>("AzureBrandingLocalizations") is { } cached) return cached;
+        var result = new List<OrganizationalBrandingLocalization>();
+        var orgResp = await _graphClient.Organization.GetAsync(req => req.QueryParameters.Top = 1, ct);
+        var orgId = orgResp?.Value?.FirstOrDefault()?.Id;
+        if (string.IsNullOrEmpty(orgId)) return result;
+        var resp = await _graphClient.Organization[orgId].Branding.Localizations.GetAsync(
+            req => req.QueryParameters.Top = 200, ct);
+        while (resp != null)
+        {
+            if (resp.Value != null) result.AddRange(resp.Value);
+            if (!string.IsNullOrEmpty(resp.OdataNextLink))
+                resp = await _graphClient.Organization[orgId].Branding.Localizations
+                    .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
+            else break;
+        }
+        TrySetCache("AzureBrandingLocalizations", result);
+        return result;
+    }
+
+    private async Task<List<WindowsAutopilotDeploymentProfile>> FetchAutopilotProfilesAsync(CancellationToken ct)
+    {
+        if (TryGetFromCache<WindowsAutopilotDeploymentProfile>("AutopilotProfiles") is { } cached) return cached;
+        var result = new List<WindowsAutopilotDeploymentProfile>();
+        var resp = await _graphClient.DeviceManagement.WindowsAutopilotDeploymentProfiles.GetAsync(
+            req =>
+            {
+                req.QueryParameters.Select = ["id", "displayName"];
+                req.QueryParameters.Top = 200;
+            }, ct);
+        while (resp != null)
+        {
+            if (resp.Value != null) result.AddRange(resp.Value);
+            if (!string.IsNullOrEmpty(resp.OdataNextLink))
+                resp = await _graphClient.DeviceManagement.WindowsAutopilotDeploymentProfiles
+                    .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
+            else break;
+        }
+        TrySetCache("AutopilotProfiles", result);
+        return result;
+    }
+
+    private async Task<List<DeviceCustomAttributeShellScript>> FetchMacCustomAttributesAsync(CancellationToken ct)
+    {
+        if (TryGetFromCache<DeviceCustomAttributeShellScript>("MacCustomAttributes") is { } cached) return cached;
+        var result = new List<DeviceCustomAttributeShellScript>();
+        var resp = await _graphClient.DeviceManagement.DeviceCustomAttributeShellScripts.GetAsync(
+            req =>
+            {
+                req.QueryParameters.Select = ["id", "displayName"];
+                req.QueryParameters.Top = 200;
+            }, ct);
+        while (resp != null)
+        {
+            if (resp.Value != null) result.AddRange(resp.Value);
+            if (!string.IsNullOrEmpty(resp.OdataNextLink))
+                resp = await _graphClient.DeviceManagement.DeviceCustomAttributeShellScripts
+                    .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
+            else break;
+        }
+        TrySetCache("MacCustomAttributes", result);
+        return result;
+    }
+
+    private async Task<List<WindowsFeatureUpdateProfile>> FetchFeatureUpdateProfilesAsync(CancellationToken ct)
+    {
+        if (TryGetFromCache<WindowsFeatureUpdateProfile>("FeatureUpdateProfiles") is { } cached) return cached;
+        var result = new List<WindowsFeatureUpdateProfile>();
+        var resp = await _graphClient.DeviceManagement.WindowsFeatureUpdateProfiles.GetAsync(
+            req =>
+            {
+                req.QueryParameters.Select = ["id", "displayName"];
+                req.QueryParameters.Top = 200;
+            }, ct);
+        while (resp != null)
+        {
+            if (resp.Value != null) result.AddRange(resp.Value);
+            if (!string.IsNullOrEmpty(resp.OdataNextLink))
+                resp = await _graphClient.DeviceManagement.WindowsFeatureUpdateProfiles
+                    .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
+            else break;
+        }
+        TrySetCache("FeatureUpdateProfiles", result);
+        return result;
+    }
+
+    private async Task<List<DeviceShellScript>> FetchDeviceShellScriptsAsync(CancellationToken ct)
+    {
+        if (TryGetFromCache<DeviceShellScript>("DeviceShellScripts") is { } cached) return cached;
+        var result = new List<DeviceShellScript>();
+        var resp = await _graphClient.DeviceManagement.DeviceShellScripts.GetAsync(
+            req =>
+            {
+                req.QueryParameters.Select = ["id", "displayName"];
+                req.QueryParameters.Top = 200;
+            }, ct);
+        while (resp != null)
+        {
+            if (resp.Value != null) result.AddRange(resp.Value);
+            if (!string.IsNullOrEmpty(resp.OdataNextLink))
+                resp = await _graphClient.DeviceManagement.DeviceShellScripts
+                    .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
+            else break;
+        }
+        TrySetCache("DeviceShellScripts", result);
+        return result;
+    }
+
+    private async Task<List<DeviceComplianceScript>> FetchComplianceScriptsAsync(CancellationToken ct)
+    {
+        if (TryGetFromCache<DeviceComplianceScript>("ComplianceScripts") is { } cached) return cached;
+        var result = new List<DeviceComplianceScript>();
+        var resp = await _graphClient.DeviceManagement.DeviceComplianceScripts.GetAsync(
+            req =>
+            {
+                req.QueryParameters.Select = ["id", "displayName"];
+                req.QueryParameters.Top = 200;
+            }, ct);
+        while (resp != null)
+        {
+            if (resp.Value != null) result.AddRange(resp.Value);
+            if (!string.IsNullOrEmpty(resp.OdataNextLink))
+                resp = await _graphClient.DeviceManagement.DeviceComplianceScripts
+                    .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
+            else break;
+        }
+        TrySetCache("ComplianceScripts", result);
+        return result;
+    }
+
+    private async Task<List<NamedLocation>> FetchNamedLocationsAsync(CancellationToken ct)
+    {
+        if (TryGetFromCache<NamedLocation>("NamedLocations") is { } cached) return cached;
+        var result = new List<NamedLocation>();
+        var resp = await _graphClient.Identity.ConditionalAccess.NamedLocations.GetAsync(
+            req =>
+            {
+                req.QueryParameters.Select = ["id", "displayName"];
+                req.QueryParameters.Top = 200;
+            }, ct);
+        while (resp != null)
+        {
+            if (resp.Value != null) result.AddRange(resp.Value);
+            if (!string.IsNullOrEmpty(resp.OdataNextLink))
+                resp = await _graphClient.Identity.ConditionalAccess.NamedLocations
+                    .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
+            else break;
+        }
+        TrySetCache("NamedLocations", result);
+        return result;
+    }
+
+    private async Task<List<AuthenticationStrengthPolicy>> FetchAuthenticationStrengthPoliciesAsync(CancellationToken ct)
+    {
+        if (TryGetFromCache<AuthenticationStrengthPolicy>("AuthenticationStrengths") is { } cached) return cached;
+        var result = new List<AuthenticationStrengthPolicy>();
+        var resp = await _graphClient.Identity.ConditionalAccess.AuthenticationStrength.Policies.GetAsync(
+            req =>
+            {
+                req.QueryParameters.Select = ["id", "displayName", "policyType"];
+                req.QueryParameters.Top = 200;
+            }, ct);
+        while (resp != null)
+        {
+            if (resp.Value != null) result.AddRange(resp.Value);
+            if (!string.IsNullOrEmpty(resp.OdataNextLink))
+                resp = await _graphClient.Identity.ConditionalAccess.AuthenticationStrength.Policies
+                    .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
+            else break;
+        }
+        TrySetCache("AuthenticationStrengths", result);
+        return result;
+    }
+
+    private async Task<List<AuthenticationContextClassReference>> FetchAuthenticationContextClassReferencesAsync(CancellationToken ct)
+    {
+        if (TryGetFromCache<AuthenticationContextClassReference>("AuthenticationContexts") is { } cached) return cached;
+        var result = new List<AuthenticationContextClassReference>();
+        var resp = await _graphClient.Identity.ConditionalAccess.AuthenticationContextClassReferences.GetAsync(
+            req =>
+            {
+                req.QueryParameters.Select = ["id", "displayName", "isAvailable"];
+                req.QueryParameters.Top = 200;
+            }, ct);
+        while (resp != null)
+        {
+            if (resp.Value != null) result.AddRange(resp.Value);
+            if (!string.IsNullOrEmpty(resp.OdataNextLink))
+                resp = await _graphClient.Identity.ConditionalAccess.AuthenticationContextClassReferences
+                    .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
+            else break;
+        }
+        TrySetCache("AuthenticationContexts", result);
+        return result;
+    }
+
+    private async Task<List<Agreement>> FetchTermsOfUseAgreementsAsync(CancellationToken ct)
+    {
+        if (TryGetFromCache<Agreement>("TermsOfUseAgreements") is { } cached) return cached;
+        var result = new List<Agreement>();
+        var resp = await _graphClient.IdentityGovernance.TermsOfUse.Agreements.GetAsync(
+            req =>
+            {
+                req.QueryParameters.Select = ["id", "displayName"];
+                req.QueryParameters.Top = 200;
+            }, ct);
+        while (resp != null)
+        {
+            if (resp.Value != null) result.AddRange(resp.Value);
+            if (!string.IsNullOrEmpty(resp.OdataNextLink))
+                resp = await _graphClient.IdentityGovernance.TermsOfUse.Agreements
+                    .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
+            else break;
+        }
+        TrySetCache("TermsOfUseAgreements", result);
+        return result;
+    }
+
+    private async Task<List<TargetedManagedAppConfiguration>> FetchTargetedManagedAppConfigurationsAsync(CancellationToken ct)
+    {
+        if (TryGetFromCache<TargetedManagedAppConfiguration>("TargetedManagedAppConfigurations") is { } cached) return cached;
+        var result = new List<TargetedManagedAppConfiguration>();
+        var resp = await _graphClient.DeviceAppManagement.TargetedManagedAppConfigurations.GetAsync(
+            req =>
+            {
+                req.QueryParameters.Select = ["id", "displayName"];
+                req.QueryParameters.Top = 200;
+            }, ct);
+        while (resp != null)
+        {
+            if (resp.Value != null) result.AddRange(resp.Value);
+            if (!string.IsNullOrEmpty(resp.OdataNextLink))
+                resp = await _graphClient.DeviceAppManagement.TargetedManagedAppConfigurations
+                    .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
+            else break;
+        }
+        TrySetCache("TargetedManagedAppConfigurations", result);
+        return result;
+    }
+
+    private async Task<List<Group>> FetchDynamicGroupsAsync(CancellationToken ct)
+    {
+        if (TryGetFromCache<Group>("DynamicGroups") is { } cached) return cached;
+        var result = new List<Group>();
+        var resp = await _graphClient.Groups.GetAsync(
+            req =>
+            {
+                req.QueryParameters.Filter = "groupTypes/any(g:g eq 'DynamicMembership')";
+                req.QueryParameters.Select = ["id", "displayName", "description", "groupTypes",
+                    "membershipRule", "membershipRuleProcessingState",
+                    "securityEnabled", "mailEnabled", "createdDateTime", "mail"];
+                req.QueryParameters.Top = 200;
+                req.Headers.Add("ConsistencyLevel", "eventual");
+                req.QueryParameters.Count = true;
+            }, ct);
+        while (resp != null)
+        {
+            if (resp.Value != null) result.AddRange(resp.Value);
+            if (!string.IsNullOrEmpty(resp.OdataNextLink))
+                resp = await _graphClient.Groups
+                    .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
+            else break;
+        }
+        TrySetCache("DynamicGroups", result);
+        return result;
+    }
+
+    private async Task<List<Group>> FetchAssignedGroupsAsync(CancellationToken ct)
+    {
+        if (TryGetFromCache<Group>("AssignedGroups") is { } cached) return cached;
+        var result = new List<Group>();
+        var resp = await _graphClient.Groups.GetAsync(
+            req =>
+            {
+                req.QueryParameters.Select = ["id", "displayName", "description", "groupTypes",
+                    "membershipRule", "membershipRuleProcessingState",
+                    "securityEnabled", "mailEnabled", "createdDateTime", "mail"];
+                req.QueryParameters.Top = 200;
+                req.Headers.Add("ConsistencyLevel", "eventual");
+                req.QueryParameters.Count = true;
+            }, ct);
+        while (resp != null)
+        {
+            if (resp.Value != null)
+            {
+                foreach (var item in resp.Value)
+                {
+                    if (item.GroupTypes == null ||
+                        !item.GroupTypes.Contains("DynamicMembership", StringComparer.OrdinalIgnoreCase))
+                        result.Add(item);
+                }
+            }
+            if (!string.IsNullOrEmpty(resp.OdataNextLink))
+                resp = await _graphClient.Groups
+                    .WithUrl(resp.OdataNextLink).GetAsync(cancellationToken: ct);
+            else break;
+        }
+        TrySetCache("AssignedGroups", result);
         return result;
     }
 
