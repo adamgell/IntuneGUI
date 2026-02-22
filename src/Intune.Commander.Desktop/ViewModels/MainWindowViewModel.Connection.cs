@@ -223,7 +223,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
                 _deviceShellScriptService,
 
-                _complianceScriptService);
+                _complianceScriptService,
+
+                _settingsCatalogService);
 
 
 
