@@ -16,7 +16,7 @@ Add a "Download All to Cache" button to the main window toolbar that aggressivel
    - Create linked `CancellationTokenSource`, wire to a cancel action.
 
 2. **Build a task list of all 32 data types**, each as a `Func<CancellationToken, Task>` that:
-   - Calls the service's list method (e.g. `_configProfileService!.ListDeviceConfigurationsAsync(ct)`)
+   - Calls the existing service list method (e.g. `_configProfileService!.ListDeviceConfigurationsAsync(ct)`) — **all 29 services already have paginated `List*Async` methods with `@odata.nextLink` loops; no new fetch logic needed**
    - Dispatches results into the corresponding `ObservableCollection` on the UI thread
    - Sets the corresponding `_*Loaded = true` flag
    - Saves to cache via existing `_cacheService.Set(tenantId, cacheKey, items)`
@@ -24,9 +24,9 @@ Add a "Download All to Cache" button to the main window toolbar that aggressivel
 
 3. **Execute in parallel batches of ~5** using `SemaphoreSlim(5)` or chunked `Task.WhenAll`. Each completed task streams its results into the collection immediately. Update progress text after each batch/task completes.
 
-4. **Include groups + top-N users**:
-   - Groups: call `_groupService.ListDynamicGroupsAsync` + `_groupService.ListAssignedGroupsAsync` (same as lazy-load today)
-   - Users: new `_userService.ListUsersAsync(top: 999)` (single page of users, cached; subsequent searches fall through to Graph if not found)
+4. **Include groups + users**:
+   - Groups: call existing `_groupService.ListDynamicGroupsAsync` + `_groupService.ListAssignedGroupsAsync` (already paginated with `$top=200`)
+   - Users: **only new method needed** — add `_userService.ListUsersAsync(CancellationToken)` with `$top=200` + `@odata.nextLink` pagination (same pattern as every other service). `SearchUsersAsync` already exists for on-demand search fallthrough.
    - These populate `DynamicGroupRows`, `AssignedGroupRows`, and a new user cache entry.
 
 5. **On completion**: call `SaveToCache()` (existing method) for belt-and-suspenders. Set `IsDownloadingAll = false`. Update status to "All data downloaded and cached."
@@ -74,9 +74,9 @@ Add a "Download All to Cache" button to the main window toolbar that aggressivel
 - `src/Intune.Commander.Desktop/ViewModels/MainWindowViewModel.cs` — add `IsDownloadingAll`, `DownloadProgress`, `DownloadProgressPercent` properties
 - `src/Intune.Commander.Desktop/ViewModels/MainWindowViewModel.Loading.cs` — add `DownloadAllToCacheAsync` command, reuse `LoadCollectionAsync<T>` and `SaveToCache` patterns
 - `src/Intune.Commander.Desktop/Views/MainWindow.axaml` — add button to toolbar, add progress bar below toolbar
-- `src/Intune.Commander.Core/Services/IUserService.cs` — may need `ListUsersAsync(int top, CancellationToken)` if not present
-- `src/Intune.Commander.Core/Services/UserService.cs` — implement list-users-top-N
-- `src/Intune.Commander.Core/Services/AssignmentCheckerService.cs` — optionally expand `PrefetchAllToCacheAsync` to cover all types (or leave scoped to assignment types)
+- `src/Intune.Commander.Core/Services/IUserService.cs` — add `ListUsersAsync(CancellationToken)` (only new service method in this plan)
+- `src/Intune.Commander.Core/Services/UserService.cs` — implement `ListUsersAsync` using `$top=200` + `@odata.nextLink` loop (same pattern as all other services)
+- `src/Intune.Commander.Core/Services/AssignmentCheckerService.cs` — expand `PrefetchAllToCacheAsync` from 11 to 32 types (add fetch methods for missing types, reuse `$top=200` page size)
 - `tests/Intune.Commander.Core.Tests/` — add tests for new service methods
 
 ## Verification
@@ -84,13 +84,13 @@ Add a "Download All to Cache" button to the main window toolbar that aggressivel
 1. `dotnet build` — no compile errors
 2. `dotnet test --filter "Category!=Integration"` — all unit tests pass, coverage ≥ 40%
 3. Manual test: connect to tenant → click "Download All" → observe all tabs populating progressively → cancel mid-download works → navigate to tabs, data already there
-4. Manual test: in Assignment Report, search for a user not in the prefetched top-999 → still finds via live Graph query
+4. Manual test: in Assignment Report, search for a user not in cache → still finds via live Graph query
 5. Check `DebugLog` entries show per-type download progress
 
 ## Decisions
 
 - **Parallel batch size = 5**: balances speed vs. Graph throttling. Could make configurable later.
-- **Top-999 users only**: full user enumeration is impractical in large tenants. Search falls through to Graph for misses.
+- **Pagination: `$top=200` in services, `$top=999` in AssignmentCheckerService**: The 29 standard services already use `$top=200` with `@odata.nextLink` pagination. `AssignmentCheckerService`'s private `Fetch*Async` methods use `$top=999`. Not all Graph Beta endpoints support 999, so the services' `$top=200` is the safer default. The only new list method needed is `UserService.ListUsersAsync` (also `$top=200`). Search methods (`SearchUsersAsync`, `SearchGroupsAsync`) remain single-page for on-demand lookups.
 - **Groups = Dynamic + Assigned**: same scope as today's lazy-load. `SearchGroupsAsync` falls through to Graph for misses.
 - **New command lives in MainWindowViewModel, not a service**: it needs access to all 30+ service fields + ObservableCollections + cache keys. Pushing this into a service would require massive parameter passing.
 - **AssignmentCheckerService expanded to 32 types**: Both the main window and assignment report "Download All" buttons prefetch the same full set of types. Shared cache keys mean whichever fires first warms the cache for the other.
