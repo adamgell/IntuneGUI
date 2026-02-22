@@ -122,6 +122,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private const string CacheKeyComplianceScripts = "ComplianceScripts";
 
+    private const string CacheKeyQualityUpdateProfiles = "QualityUpdateProfiles";
+
+    private const string CacheKeyDriverUpdateProfiles = "DriverUpdateProfiles";
     private const string CacheKeyAdmxFiles = "AdmxFiles";
 
     private const string CacheKeyReusablePolicySettings = "ReusablePolicySettings";
@@ -185,6 +188,10 @@ public partial class MainWindowViewModel : ViewModelBase
     private IMacCustomAttributeService? _macCustomAttributeService;
 
     private IFeatureUpdateProfileService? _featureUpdateProfileService;
+
+    private IQualityUpdateProfileService? _qualityUpdateProfileService;
+
+    private IDriverUpdateProfileService? _driverUpdateProfileService;
 
     private INamedLocationService? _namedLocationService;
 
@@ -672,6 +679,23 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private bool _roleAssignmentsLoaded;
 
+    // --- Quality Update Profiles ---
+    [ObservableProperty]
+    private ObservableCollection<WindowsQualityUpdateProfile> _qualityUpdateProfiles = [];
+
+    [ObservableProperty]
+    private WindowsQualityUpdateProfile? _selectedQualityUpdateProfile;
+
+    private bool _qualityUpdateProfilesLoaded;
+
+    // --- Driver Update Profiles ---
+    [ObservableProperty]
+    private ObservableCollection<WindowsDriverUpdateProfile> _driverUpdateProfiles = [];
+
+    [ObservableProperty]
+    private WindowsDriverUpdateProfile? _selectedDriverUpdateProfile;
+
+    private bool _driverUpdateProfilesLoaded;
     // --- ADMX Files ---
     [ObservableProperty]
     private ObservableCollection<GroupPolicyUploadedDefinitionFile> _admxFiles = [];
@@ -1407,6 +1431,24 @@ public partial class MainWindowViewModel : ViewModelBase
 
 
 
+    public ObservableCollection<DataGridColumnConfig> QualityUpdateProfileColumns { get; } =
+
+    [
+
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+
+        new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
+
+        new() { Header = "Created", BindingPath = "CreatedDateTime", Width = 150, IsVisible = false },
+
+        new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = true },
+
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+
+    ];
+
+
+
     public ObservableCollection<DataGridColumnConfig> AdmxFileColumns { get; } =
 
     [
@@ -1435,9 +1477,30 @@ public partial class MainWindowViewModel : ViewModelBase
 
         new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
 
+        new() { Header = "Created", BindingPath = "CreatedDateTime", Width = 150, IsVisible = false },
         new() { Header = "Setting Definition", BindingPath = "SettingDefinitionId", Width = 220, IsVisible = true },
 
         new() { Header = "References", BindingPath = "ReferencingConfigurationPolicyCount", Width = 90, IsVisible = true },
+
+        new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = true },
+
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+
+    ];
+
+
+
+    public ObservableCollection<DataGridColumnConfig> DriverUpdateProfileColumns { get; } =
+
+    [
+
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+
+        new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
+
+        new() { Header = "Approval Type", BindingPath = "ApprovalType", Width = 150, IsVisible = true },
+
+        new() { Header = "Created", BindingPath = "CreatedDateTime", Width = 150, IsVisible = false },
 
         new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = true },
 

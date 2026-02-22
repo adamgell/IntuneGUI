@@ -166,6 +166,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
             _complianceScriptService = new ComplianceScriptService(_graphClient);
 
+            _qualityUpdateProfileService = new QualityUpdateProfileService(_graphClient);
+
+            _driverUpdateProfileService = new DriverUpdateProfileService(_graphClient);
             _admxFileService = new AdmxFileService(_graphClient);
 
             _reusablePolicySettingService = new ReusablePolicySettingService(_graphClient);
@@ -235,6 +238,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
                 _complianceScriptService,
 
+                _qualityUpdateProfileService,
+
+                _driverUpdateProfileService,
+
                 _settingsCatalogService);
 
 
@@ -265,7 +272,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
             var cachedCount = TryLoadFromCache(profile.TenantId ?? "");
 
-            if (cachedCount >= 26)
+            if (cachedCount >= 28)
 
             {
 
@@ -281,7 +288,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
                 if (cachedCount > 0)
 
-                    DebugLog.Log("Cache", $"Partial cache hit ({cachedCount}/26) — refreshing from Graph");
+                    DebugLog.Log("Cache", $"Partial cache hit ({cachedCount}/28) — refreshing from Graph");
 
                 await RefreshAsync(CancellationToken.None);
 
@@ -625,6 +632,18 @@ public partial class MainWindowViewModel : ViewModelBase
 
         SelectedRoleAssignment = null;
 
+        QualityUpdateProfiles.Clear();
+
+        SelectedQualityUpdateProfile = null;
+
+        _qualityUpdateProfilesLoaded = false;
+
+        DriverUpdateProfiles.Clear();
+
+        SelectedDriverUpdateProfile = null;
+
+        _driverUpdateProfilesLoaded = false;
+
         AdmxFiles.Clear();
 
         SelectedAdmxFile = null;
@@ -719,6 +738,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
         _complianceScriptService = null;
 
+        _qualityUpdateProfileService = null;
+
+        _driverUpdateProfileService = null;
         _admxFileService = null;
 
         _reusablePolicySettingService = null;
