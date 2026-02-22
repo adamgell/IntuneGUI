@@ -104,11 +104,12 @@ public class HumanDateTimeConverter : IValueConverter
 }
 
 /// <summary>
-/// Decodes a Base64-encoded byte array to a UTF-8 string.
+/// Converts a <see cref="byte[]"/> to a UTF-8 string for display.
+/// Graph API returns script content as raw bytes that represent UTF-8 text.
 /// </summary>
-public class Base64DecodeConverter : IValueConverter
+public class BytesToUtf8Converter : IValueConverter
 {
-    public static readonly Base64DecodeConverter Instance = new();
+    public static readonly BytesToUtf8Converter Instance = new();
 
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {

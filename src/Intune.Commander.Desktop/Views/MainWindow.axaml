@@ -2364,7 +2364,7 @@
                                            Margin="0,0,0,6" />
                                 <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
                                         CornerRadius="4" Padding="10" Margin="0,0,0,12">
-                                    <SelectableTextBlock Text="{Binding SelectedDeviceManagementScript.ScriptContent, Converter={x:Static conv:Base64DecodeConverter.Instance}}"
+                                    <SelectableTextBlock Text="{Binding SelectedDeviceManagementScript.ScriptContent, Converter={x:Static conv:BytesToUtf8Converter.Instance}}"
                                                FontFamily="Monospace" FontSize="11"
                                                TextWrapping="Wrap"
                                                Foreground="{DynamicResource AppTextSecondaryBrush}" />
@@ -2476,7 +2476,7 @@
                                            Margin="0,0,0,6" />
                                 <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
                                         CornerRadius="4" Padding="10" Margin="0,0,0,12">
-                                    <SelectableTextBlock Text="{Binding SelectedDeviceShellScript.ScriptContent, Converter={x:Static conv:Base64DecodeConverter.Instance}}"
+                                    <SelectableTextBlock Text="{Binding SelectedDeviceShellScript.ScriptContent, Converter={x:Static conv:BytesToUtf8Converter.Instance}}"
                                                FontFamily="Monospace" FontSize="11"
                                                TextWrapping="Wrap"
                                                Foreground="{DynamicResource AppTextSecondaryBrush}" />
@@ -2564,7 +2564,7 @@
                                            Margin="0,0,0,6" />
                                 <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
                                         CornerRadius="4" Padding="10" Margin="0,0,0,12">
-                                    <SelectableTextBlock Text="{Binding SelectedComplianceScript.DetectionScriptContent, Converter={x:Static conv:Base64DecodeConverter.Instance}}"
+                                    <SelectableTextBlock Text="{Binding SelectedComplianceScript.DetectionScriptContent, Converter={x:Static conv:BytesToUtf8Converter.Instance}}"
                                                FontFamily="Monospace" FontSize="11"
                                                TextWrapping="Wrap"
                                                Foreground="{DynamicResource AppTextSecondaryBrush}" />

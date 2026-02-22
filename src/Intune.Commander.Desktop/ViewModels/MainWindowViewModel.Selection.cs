@@ -1966,7 +1966,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
                 items.Add(await MapAssignmentAsync(a.Target));
 
-            SelectedItemAssignments = new ObservableCollection<AssignmentDisplayItem>(items);
+            if (SelectedDeviceManagementScript?.Id == scriptId)
+
+                SelectedItemAssignments = new ObservableCollection<AssignmentDisplayItem>(items);
 
         }
 
@@ -2004,7 +2006,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
                 items.Add(await MapAssignmentAsync(a.Target));
 
-            SelectedItemAssignments = new ObservableCollection<AssignmentDisplayItem>(items);
+            if (SelectedDeviceShellScript?.Id == scriptId)
+
+                SelectedItemAssignments = new ObservableCollection<AssignmentDisplayItem>(items);
 
         }
 
