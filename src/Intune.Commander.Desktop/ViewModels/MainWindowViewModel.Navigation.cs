@@ -56,6 +56,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
                 new() { Name = "Enrollment Configurations", Icon = "🪪" },
 
+                new() { Name = "Device Categories", Icon = "🗂" },
+
             }
 
         },
@@ -187,6 +189,22 @@ public partial class MainWindowViewModel : ViewModelBase
                 new() { Name = "Reusable Policy Settings", Icon = "🔗" },
 
                 new() { Name = "Notification Templates", Icon = "🔔" },
+
+            }
+
+        },
+
+        new NavCategoryGroup
+
+        {
+
+            Name = "Apple", Icon = "🍎",
+
+            Children = new ObservableCollection<NavCategory>
+
+            {
+
+                new() { Name = "Apple DEP", Icon = "📱" },
 
             }
 
@@ -368,6 +386,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
         "Compliance Scripts" => ComplianceScriptColumns,
 
+        "Apple DEP" => AppleDepColumns,
+
+        "Device Categories" => DeviceCategoryColumns,
         "ADMX Files" => AdmxFileColumns,
 
         "Reusable Policy Settings" => ReusablePolicySettingColumns,
@@ -492,6 +513,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public bool IsComplianceScriptsCategory => SelectedCategory?.Name == "Compliance Scripts";
 
+    public bool IsAppleDepCategory => SelectedCategory?.Name == "Apple DEP";
+
+    public bool IsDeviceCategoriesCategory => SelectedCategory?.Name == "Device Categories";
     public bool IsAdmxFilesCategory => SelectedCategory?.Name == "ADMX Files";
 
     public bool IsReusablePolicySettingsCategory => SelectedCategory?.Name == "Reusable Policy Settings";
@@ -552,6 +576,8 @@ public partial class MainWindowViewModel : ViewModelBase
         "Device Management Scripts" => FilteredDeviceManagementScripts.Count,
         "Device Shell Scripts" => FilteredDeviceShellScripts.Count,
         "Compliance Scripts" => FilteredComplianceScripts.Count,
+        "Apple DEP" => FilteredAppleDepSettings.Count,
+        "Device Categories" => FilteredDeviceCategories.Count,
         "Cloud PC Provisioning Policies" => FilteredCloudPcProvisioningPolicies.Count,
         "Cloud PC User Settings" => FilteredCloudPcUserSettings.Count,
         "VPP Tokens" => FilteredVppTokens.Count,
@@ -642,6 +668,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
         SelectedComplianceScript = null;
 
+        SelectedAppleDepSetting = null;
+
+        SelectedDeviceCategory = null;
         SelectedAdmxFile = null;
 
         SelectedReusablePolicySetting = null;
@@ -744,6 +773,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
         OnPropertyChanged(nameof(IsComplianceScriptsCategory));
 
+        OnPropertyChanged(nameof(IsAppleDepCategory));
+
+        OnPropertyChanged(nameof(IsDeviceCategoriesCategory));
         OnPropertyChanged(nameof(IsAdmxFilesCategory));
 
         OnPropertyChanged(nameof(IsReusablePolicySettingsCategory));
@@ -1686,6 +1718,36 @@ public partial class MainWindowViewModel : ViewModelBase
 
             }
 
+        }
+
+        if (value?.Name == "Apple DEP" && !_appleDepSettingsLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<DepOnboardingSetting>(CacheKeyAppleDepSettings, rows =>
+            {
+                AppleDepSettings = new ObservableCollection<DepOnboardingSetting>(rows);
+                _appleDepSettingsLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} Apple DEP onboarding setting(s) from cache";
+            }))
+            {
+                _appleDepSettingsLoaded = true;
+                _ = LoadAppleDepSettingsAsync();
+            }
+        }
+
+        if (value?.Name == "Device Categories" && !_deviceCategoriesLoaded)
+        {
+            if (!TryLoadLazyCacheEntry<DeviceCategory>(CacheKeyDeviceCategories, rows =>
+            {
+                DeviceCategories = new ObservableCollection<DeviceCategory>(rows);
+                _deviceCategoriesLoaded = true;
+                ApplyFilter();
+                StatusText = $"Loaded {rows.Count} device category(ies) from cache";
+            }))
+            {
+                _deviceCategoriesLoaded = true;
+                _ = LoadDeviceCategoriesAsync();
+            }
         }
 
         if (value?.Name == "Cloud PC Provisioning Policies" && !_cloudPcProvisioningPoliciesLoaded)

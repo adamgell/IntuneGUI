@@ -145,6 +145,8 @@ public partial class MainWindow : Window
             or nameof(MainWindowViewModel.IsDeviceManagementScriptsCategory)
             or nameof(MainWindowViewModel.IsDeviceShellScriptsCategory)
             or nameof(MainWindowViewModel.IsComplianceScriptsCategory)
+            or nameof(MainWindowViewModel.IsAppleDepCategory)
+            or nameof(MainWindowViewModel.IsDeviceCategoriesCategory)
             or nameof(MainWindowViewModel.IsQualityUpdatesCategory)
             or nameof(MainWindowViewModel.IsDriverUpdatesCategory)
             or nameof(MainWindowViewModel.IsAdmxFilesCategory)
@@ -199,6 +201,8 @@ public partial class MainWindow : Window
             or nameof(MainWindowViewModel.FilteredDeviceManagementScripts)
             or nameof(MainWindowViewModel.FilteredDeviceShellScripts)
             or nameof(MainWindowViewModel.FilteredComplianceScripts)
+            or nameof(MainWindowViewModel.FilteredAppleDepSettings)
+            or nameof(MainWindowViewModel.FilteredDeviceCategories)
             or nameof(MainWindowViewModel.FilteredQualityUpdateProfiles)
             or nameof(MainWindowViewModel.FilteredDriverUpdateProfiles)
             or nameof(MainWindowViewModel.FilteredAdmxFiles)
@@ -253,6 +257,8 @@ public partial class MainWindow : Window
             nameof(MainWindowViewModel.FilteredDeviceManagementScripts) => _vm.IsDeviceManagementScriptsCategory,
             nameof(MainWindowViewModel.FilteredDeviceShellScripts) => _vm.IsDeviceShellScriptsCategory,
             nameof(MainWindowViewModel.FilteredComplianceScripts) => _vm.IsComplianceScriptsCategory,
+            nameof(MainWindowViewModel.FilteredAppleDepSettings) => _vm.IsAppleDepCategory,
+            nameof(MainWindowViewModel.FilteredDeviceCategories) => _vm.IsDeviceCategoriesCategory,
             nameof(MainWindowViewModel.FilteredQualityUpdateProfiles) => _vm.IsQualityUpdatesCategory,
             nameof(MainWindowViewModel.FilteredDriverUpdateProfiles) => _vm.IsDriverUpdatesCategory,
             nameof(MainWindowViewModel.FilteredAdmxFiles) => _vm.IsAdmxFilesCategory,
@@ -481,6 +487,20 @@ public partial class MainWindow : Window
                 new Binding(nameof(_vm.FilteredComplianceScripts)) { Source = _vm });
             _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
                 new Binding(nameof(_vm.SelectedComplianceScript)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
+        else if (_vm.IsAppleDepCategory)
+        {
+            _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
+                new Binding(nameof(_vm.FilteredAppleDepSettings)) { Source = _vm });
+            _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
+                new Binding(nameof(_vm.SelectedAppleDepSetting)) { Source = _vm, Mode = BindingMode.TwoWay });
+        }
+        else if (_vm.IsDeviceCategoriesCategory)
+        {
+            _mainDataGrid.Bind(DataGrid.ItemsSourceProperty,
+                new Binding(nameof(_vm.FilteredDeviceCategories)) { Source = _vm });
+            _mainDataGrid.Bind(DataGrid.SelectedItemProperty,
+                new Binding(nameof(_vm.SelectedDeviceCategory)) { Source = _vm, Mode = BindingMode.TwoWay });
         }
         else if (_vm.IsQualityUpdatesCategory)
         {

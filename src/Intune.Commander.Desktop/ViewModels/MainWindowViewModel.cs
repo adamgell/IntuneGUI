@@ -133,6 +133,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private const string CacheKeyUsers = "Users";
 
+    private const string CacheKeyAppleDepSettings = "AppleDepSettings";
+
+    private const string CacheKeyDeviceCategories = "DeviceCategories";
+
     private const string CacheKeyCloudPcProvisioningPolicies = "CloudPcProvisioningPolicies";
 
     private const string CacheKeyCloudPcUserSettings = "CloudPcUserSettings";
@@ -209,6 +213,8 @@ public partial class MainWindowViewModel : ViewModelBase
     private INotificationTemplateService? _notificationTemplateService;
     private IConditionalAccessPptExportService? _conditionalAccessPptExportService;
     private IUserService? _userService;
+    private IAppleDepService? _appleDepService;
+    private IDeviceCategoryService? _deviceCategoryService;
     private ICloudPcProvisioningService? _cloudPcProvisioningService;
     private ICloudPcUserSettingsService? _cloudPcUserSettingsService;
     private IVppTokenService? _vppTokenService;
@@ -642,6 +648,24 @@ public partial class MainWindowViewModel : ViewModelBase
     private DeviceComplianceScript? _selectedComplianceScript;
 
     private bool _complianceScriptsLoaded;
+
+    // --- Apple DEP Onboarding Settings ---
+    [ObservableProperty]
+    private ObservableCollection<DepOnboardingSetting> _appleDepSettings = [];
+
+    [ObservableProperty]
+    private DepOnboardingSetting? _selectedAppleDepSetting;
+
+    private bool _appleDepSettingsLoaded;
+
+    // --- Device Categories ---
+    [ObservableProperty]
+    private ObservableCollection<DeviceCategory> _deviceCategories = [];
+
+    [ObservableProperty]
+    private DeviceCategory? _selectedDeviceCategory;
+
+    private bool _deviceCategoriesLoaded;
 
     // --- Cloud PC Provisioning Policies ---
     [ObservableProperty]
@@ -1431,6 +1455,24 @@ public partial class MainWindowViewModel : ViewModelBase
 
 
 
+    public ObservableCollection<DataGridColumnConfig> AppleDepColumns { get; } =
+
+    [
+
+        new() { Header = "Token Name", BindingPath = "TokenName", IsStar = true, IsVisible = true },
+
+        new() { Header = "Apple ID", BindingPath = "AppleIdentifier", Width = 220, IsVisible = true },
+
+        new() { Header = "Token Expiry", BindingPath = "TokenExpirationDateTime", Width = 160, IsVisible = true },
+
+        new() { Header = "Last Sync", BindingPath = "LastSuccessfulSyncDateTime", Width = 160, IsVisible = true },
+
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+
+    ];
+
+
+
     public ObservableCollection<DataGridColumnConfig> QualityUpdateProfileColumns { get; } =
 
     [
@@ -1483,6 +1525,20 @@ public partial class MainWindowViewModel : ViewModelBase
         new() { Header = "References", BindingPath = "ReferencingConfigurationPolicyCount", Width = 90, IsVisible = true },
 
         new() { Header = "Last Modified", BindingPath = "LastModifiedDateTime", Width = 150, IsVisible = true },
+
+        new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
+
+    ];
+
+
+
+    public ObservableCollection<DataGridColumnConfig> DeviceCategoryColumns { get; } =
+
+    [
+
+        new() { Header = "Display Name", BindingPath = "DisplayName", IsStar = true, IsVisible = true },
+
+        new() { Header = "Description", BindingPath = "Description", Width = 260, IsVisible = true },
 
         new() { Header = "ID", BindingPath = "Id", Width = 280, IsVisible = false }
 

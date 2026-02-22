@@ -237,6 +237,12 @@ public partial class MainWindowViewModel : ViewModelBase
 
 
     [ObservableProperty]
+    private ObservableCollection<DepOnboardingSetting> _filteredAppleDepSettings = [];
+
+    [ObservableProperty]
+    private ObservableCollection<DeviceCategory> _filteredDeviceCategories = [];
+
+    [ObservableProperty]
     private ObservableCollection<CloudPcProvisioningPolicy> _filteredCloudPcProvisioningPolicies = [];
 
     [ObservableProperty]
@@ -353,6 +359,10 @@ public partial class MainWindowViewModel : ViewModelBase
             FilteredDeviceShellScripts = new ObservableCollection<DeviceShellScript>(DeviceShellScripts);
 
             FilteredComplianceScripts = new ObservableCollection<DeviceComplianceScript>(ComplianceScripts);
+
+            FilteredAppleDepSettings = new ObservableCollection<DepOnboardingSetting>(AppleDepSettings);
+
+            FilteredDeviceCategories = new ObservableCollection<DeviceCategory>(DeviceCategories);
 
             FilteredCloudPcProvisioningPolicies = new ObservableCollection<CloudPcProvisioningPolicy>(CloudPcProvisioningPolicies);
 
@@ -780,6 +790,18 @@ public partial class MainWindowViewModel : ViewModelBase
                 Contains(TryReadStringProperty(s, "Publisher"), q) ||
 
                 Contains(s.Id, q)));
+
+        FilteredAppleDepSettings = new ObservableCollection<DepOnboardingSetting>(
+            AppleDepSettings.Where(d =>
+                Contains(d.TokenName, q) ||
+                Contains(d.AppleIdentifier, q) ||
+                Contains(d.Id, q)));
+
+        FilteredDeviceCategories = new ObservableCollection<DeviceCategory>(
+            DeviceCategories.Where(c =>
+                Contains(c.DisplayName, q) ||
+                Contains(c.Description, q) ||
+                Contains(c.Id, q)));
 
         FilteredCloudPcProvisioningPolicies = new ObservableCollection<CloudPcProvisioningPolicy>(
             CloudPcProvisioningPolicies.Where(p =>

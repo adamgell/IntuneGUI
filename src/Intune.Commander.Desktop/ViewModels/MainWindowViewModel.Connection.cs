@@ -177,6 +177,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
             _userService = new UserService(_graphClient);
 
+            _appleDepService = new AppleDepService(_graphClient);
+
+            _deviceCategoryService = new DeviceCategoryService(_graphClient);
+
             _conditionalAccessPptExportService = new ConditionalAccessPptExportService(
                 _conditionalAccessPolicyService,
                 _namedLocationService,
@@ -504,6 +508,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
         _complianceScriptsLoaded = false;
 
+        _appleDepSettingsLoaded = false;
+
+        _deviceCategoriesLoaded = false;
+
         _cloudPcProvisioningPoliciesLoaded = false;
 
         _cloudPcUserSettingsLoaded = false;
@@ -615,6 +623,16 @@ public partial class MainWindowViewModel : ViewModelBase
         ComplianceScripts.Clear();
 
         SelectedComplianceScript = null;
+
+        AppleDepSettings.Clear();
+        FilteredAppleDepSettings.Clear();
+
+        SelectedAppleDepSetting = null;
+
+        DeviceCategories.Clear();
+        FilteredDeviceCategories.Clear();
+
+        SelectedDeviceCategory = null;
 
         CloudPcProvisioningPolicies.Clear();
 
@@ -748,6 +766,10 @@ public partial class MainWindowViewModel : ViewModelBase
         _notificationTemplateService = null;
 
         _userService = null;
+
+        _appleDepService = null;
+
+        _deviceCategoryService = null;
 
         _cloudPcProvisioningService = null;
 
