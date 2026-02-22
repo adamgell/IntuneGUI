@@ -1076,6 +1076,8 @@ public partial class MainWindowViewModel : ViewModelBase
                 items => DriverUpdateProfiles = items,
                 () => _driverUpdateProfilesLoaded = true,
                 "driver update profile(s)", ref oldestCacheTime))
+                typesLoaded++;
+
             if (TryLoadCollectionFromCache<GroupPolicyUploadedDefinitionFile>(
                 tenantId, CacheKeyAdmxFiles,
                 items => AdmxFiles = items,
@@ -1099,7 +1101,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
             if (typesLoaded > 0)
             {
-                var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count + EndpointSecurityIntents.Count + AdministrativeTemplates.Count + EnrollmentConfigurations.Count + AppProtectionPolicies.Count + ManagedDeviceAppConfigurations.Count + TargetedManagedAppConfigurations.Count + TermsAndConditionsCollection.Count + ScopeTags.Count + RoleDefinitions.Count + IntuneBrandingProfiles.Count + AzureBrandingLocalizations.Count + ConditionalAccessPolicies.Count + AssignmentFilters.Count + PolicySets.Count + AutopilotProfiles.Count + DeviceHealthScripts.Count + MacCustomAttributes.Count + FeatureUpdateProfiles.Count + NamedLocations.Count + AuthenticationStrengthPolicies.Count + AuthenticationContextClassReferences.Count + TermsOfUseAgreements.Count + DeviceManagementScripts.Count + DeviceShellScripts.Count + ComplianceScripts.Count + AppleDepSettings.Count + DeviceCategories.Count + AdmxFiles.Count + ReusablePolicySettings.Count + NotificationTemplates.Count;
+                var totalItems = DeviceConfigurations.Count + CompliancePolicies.Count + Applications.Count + SettingsCatalogPolicies.Count + EndpointSecurityIntents.Count + AdministrativeTemplates.Count + EnrollmentConfigurations.Count + AppProtectionPolicies.Count + ManagedDeviceAppConfigurations.Count + TargetedManagedAppConfigurations.Count + TermsAndConditionsCollection.Count + ScopeTags.Count + RoleDefinitions.Count + IntuneBrandingProfiles.Count + AzureBrandingLocalizations.Count + ConditionalAccessPolicies.Count + AssignmentFilters.Count + PolicySets.Count + AutopilotProfiles.Count + DeviceHealthScripts.Count + MacCustomAttributes.Count + FeatureUpdateProfiles.Count + NamedLocations.Count + AuthenticationStrengthPolicies.Count + AuthenticationContextClassReferences.Count + TermsOfUseAgreements.Count + DeviceManagementScripts.Count + DeviceShellScripts.Count + ComplianceScripts.Count + AppleDepSettings.Count + DeviceCategories.Count + QualityUpdateProfiles.Count + DriverUpdateProfiles.Count + AdmxFiles.Count + ReusablePolicySettings.Count + NotificationTemplates.Count;
                 var ageText = FormatCacheAge(oldestCacheTime);
                 CacheStatusText = oldestCacheTime.HasValue
                     ? $"Cache: {oldestCacheTime.Value.ToLocalTime():MMM dd, h:mm tt}"

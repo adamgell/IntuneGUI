@@ -613,10 +613,12 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedComplianceScript = null;
 
         AppleDepSettings.Clear();
+        FilteredAppleDepSettings.Clear();
 
         SelectedAppleDepSetting = null;
 
         DeviceCategories.Clear();
+        FilteredDeviceCategories.Clear();
 
         SelectedDeviceCategory = null;
         QualityUpdateProfiles.Clear();
