@@ -1026,6 +1026,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private ObservableCollection<string> _selectedItemTemplateFamilies = [];
 
+    [ObservableProperty]
+    private ObservableCollection<Models.SettingItem> _selectedItemCatalogSettings = [];
+
     // Endpoint Security specific
     [ObservableProperty]
     private string _selectedItemTemplateDisplayName = "";

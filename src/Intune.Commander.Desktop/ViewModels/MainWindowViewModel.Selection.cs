@@ -1172,9 +1172,13 @@ public partial class MainWindowViewModel : ViewModelBase
 
         OnPropertyChanged(nameof(CanRefreshSelectedItem));
 
-        if (value?.Id != null)
+        SelectedItemCatalogSettings = [];
 
+        if (value?.Id != null)
+        {
             _ = LoadSettingsCatalogAssignmentsAsync(value.Id);
+            _ = LoadSettingsCatalogSettingsAsync(value.Id);
+        }
 
     }
 
@@ -3042,5 +3046,90 @@ public partial class MainWindowViewModel : ViewModelBase
         finally { IsLoadingDetails = false; }
 
     }
+
+    private async Task LoadSettingsCatalogSettingsAsync(string policyId)
+    {
+        if (_settingsCatalogService == null) return;
+
+        IsLoadingDetails = true;
+        try
+        {
+            var settings = await _settingsCatalogService.GetPolicySettingsAsync(policyId);
+            SelectedItemCatalogSettings = new ObservableCollection<Models.SettingItem>(
+                settings
+                    .Select(s => new Models.SettingItem(
+                        FormatSettingDefinitionId(s.SettingInstance?.SettingDefinitionId),
+                        ExtractSettingInstanceValue(s.SettingInstance)))
+                    .OrderBy(s => s.Label));
+        }
+        catch (Exception ex)
+        {
+            DebugLog.LogError($"Failed to load settings catalog settings: {FormatGraphError(ex)}", ex);
+        }
+        finally { IsLoadingDetails = false; }
+    }
+
+    /// <summary>Strips vendor path prefixes from a setting definition ID and title-cases the remainder.</summary>
+    private static string FormatSettingDefinitionId(string? id)
+    {
+        if (string.IsNullOrEmpty(id)) return "";
+        // Strip known vendor path prefixes
+        foreach (var prefix in new[] {
+            "device_vendor_msft_policy_config_",
+            "user_vendor_msft_policy_config_",
+            "device_vendor_msft_",
+            "user_vendor_msft_" })
+        {
+            if (id.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                id = id[prefix.Length..];
+                break;
+            }
+        }
+        // Convert remaining snake_case segments to Title Case words separated by " › "
+        var parts = id.Split('_');
+        return string.Join(" › ", parts.Select(p => p.Length > 0 ? char.ToUpper(p[0]) + p[1..] : ""));
+    }
+
+    /// <summary>Extracts a display-friendly value from a polymorphic setting instance.</summary>
+    private static string ExtractSettingInstanceValue(Microsoft.Graph.Beta.Models.DeviceManagementConfigurationSettingInstance? instance)
+    {
+        return instance switch
+        {
+            Microsoft.Graph.Beta.Models.DeviceManagementConfigurationSimpleSettingInstance s =>
+                ExtractSimpleValue(s.SimpleSettingValue),
+
+            Microsoft.Graph.Beta.Models.DeviceManagementConfigurationSimpleSettingCollectionInstance sc =>
+                sc.SimpleSettingCollectionValue is { Count: > 0 } vals
+                    ? string.Join(", ", vals.Select(ExtractSimpleValue))
+                    : "(empty)",
+
+            Microsoft.Graph.Beta.Models.DeviceManagementConfigurationChoiceSettingInstance c =>
+                // Choice values are full definition IDs; take the last underscore segment for brevity
+                c.ChoiceSettingValue?.Value?.Split('_').LastOrDefault() ?? "",
+
+            Microsoft.Graph.Beta.Models.DeviceManagementConfigurationChoiceSettingCollectionInstance cc =>
+                cc.ChoiceSettingCollectionValue is { Count: > 0 } cvals
+                    ? string.Join(", ", cvals.Select(v => v.Value?.Split('_').LastOrDefault() ?? ""))
+                    : "(empty)",
+
+            Microsoft.Graph.Beta.Models.DeviceManagementConfigurationGroupSettingInstance g =>
+                $"[{g.GroupSettingValue?.Children?.Count ?? 0} child setting(s)]",
+
+            Microsoft.Graph.Beta.Models.DeviceManagementConfigurationGroupSettingCollectionInstance gc =>
+                $"[{gc.GroupSettingCollectionValue?.Count ?? 0} group(s)]",
+
+            _ => instance?.OdataType?.Split('.').LastOrDefault() ?? ""
+        };
+    }
+
+    private static string ExtractSimpleValue(Microsoft.Graph.Beta.Models.DeviceManagementConfigurationSimpleSettingValue? v) =>
+        v switch
+        {
+            Microsoft.Graph.Beta.Models.DeviceManagementConfigurationStringSettingValue sv  => sv.Value ?? "",
+            Microsoft.Graph.Beta.Models.DeviceManagementConfigurationIntegerSettingValue iv => iv.Value?.ToString() ?? "",
+            Microsoft.Graph.Beta.Models.DeviceManagementConfigurationSecretSettingValue sec => $"[secret: {sec.ValueState}]",
+            _ => v?.AdditionalData != null && v.AdditionalData.TryGetValue("value", out var raw) ? raw?.ToString() ?? "" : ""
+        };
 
 }

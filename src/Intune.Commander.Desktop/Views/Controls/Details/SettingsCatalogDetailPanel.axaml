@@ -89,6 +89,39 @@
                 </StackPanel>
             </Border>
 
+            <!-- Section: Settings -->
+            <TextBlock Text="Settings" Classes="SectionHeader" />
+            <Border Classes="SectionCard">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="No settings loaded — select item and click Refresh if list is empty."
+                               Foreground="{DynamicResource AppTextSecondaryBrush}"
+                               FontSize="{StaticResource FontSizeCaption}"
+                               IsVisible="{Binding !SelectedItemCatalogSettings.Count}"
+                               TextWrapping="Wrap" />
+                    <ItemsControl ItemsSource="{Binding SelectedItemCatalogSettings}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="0,4" BorderThickness="0,0,0,1"
+                                        BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <SelectableTextBlock Grid.Column="0"
+                                                             Text="{Binding Label}"
+                                                             FontSize="{StaticResource FontSizeBody}"
+                                                             TextWrapping="Wrap" />
+                                        <SelectableTextBlock Grid.Column="1"
+                                                             Text="{Binding Value}"
+                                                             FontSize="{StaticResource FontSizeBody}"
+                                                             FontWeight="SemiBold"
+                                                             Margin="12,0,0,0"
+                                                             HorizontalAlignment="Right" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
             <!-- Section: Assignments -->
             <controls:AssignmentListControl Assignments="{Binding SelectedItemAssignments}" />
 
