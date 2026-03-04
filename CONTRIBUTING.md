@@ -23,7 +23,7 @@ test(core): add unit tests for ProfileService [P2]
 
 - `feat`: New feature
 - `fix`: Bug fix
-- `docs`: Documentation onl
+- `docs`: Documentation only
 - `refactor`: Code restructuring without behavior change
 - `test`: Adding or updating tests
 - `style`: Code style changes (formatting, etc.)
