@@ -6,6 +6,8 @@ using System.Collections.ObjectModel;
 
 using System.Linq;
 
+using CommunityToolkit.Mvvm.Input;
+
 using Microsoft.Graph.Beta.Models;
 
 
@@ -475,6 +477,14 @@ public partial class MainWindowViewModel : ViewModelBase
         var cat = NavCategories.FirstOrDefault(c => c.Name == name);
         if (cat != null)
             SelectedCategory = cat;
+    }
+
+    /// <summary>Command entry-point for nav sidebar buttons. Delegates to ActivateCategoryByName.</summary>
+    [RelayCommand]
+    private void SelectNavItem(string? name)
+    {
+        if (!string.IsNullOrEmpty(name))
+            ActivateCategoryByName(name);
     }
 
 

@@ -1232,7 +1232,7 @@ public partial class MainWindowViewModel : ViewModelBase
         // Common properties
         SelectedItemDescription = value?.Description ?? "";
 
-        // Resolve location names
+        // Resolve location names (local lookup — named locations are not directory objects)
         var inclLocs = value?.Conditions?.Locations?.IncludeLocations ?? [];
         SelectedCAPolicyIncludeLocations = new ObservableCollection<string>(
             inclLocs.Select(id => id switch {
@@ -1248,11 +1248,35 @@ public partial class MainWindowViewModel : ViewModelBase
                 _ => ResolveNamedLocationId(id)
             }));
 
-        // Resolve group names
+        // Seed groups synchronously from local cache as fallback (replaced async below)
         var inclGroups = value?.Conditions?.Users?.IncludeGroups ?? [];
         SelectedCAPolicyIncludeGroups = new ObservableCollection<string>(inclGroups.Select(ResolveGroupId));
         var exclGroups = value?.Conditions?.Users?.ExcludeGroups ?? [];
         SelectedCAPolicyExcludeGroups = new ObservableCollection<string>(exclGroups.Select(ResolveGroupId));
+
+        // Seed users synchronously (raw GUIDs as placeholder — resolved async below)
+        var inclUsers = value?.Conditions?.Users?.IncludeUsers ?? [];
+        SelectedCAPolicyIncludeUsers = new ObservableCollection<string>(
+            inclUsers.Select(id => id switch {
+                "All" => "All Users",
+                "None" => "None",
+                "GuestsOrExternalUsers" => "Guests or external users",
+                _ => id
+            }));
+        var exclUsers = value?.Conditions?.Users?.ExcludeUsers ?? [];
+        SelectedCAPolicyExcludeUsers = new ObservableCollection<string>(
+            exclUsers.Select(id => id switch {
+                "All" => "All Users",
+                "None" => "None",
+                "GuestsOrExternalUsers" => "Guests or external users",
+                _ => id
+            }));
+
+        // Seed roles synchronously (raw GUIDs as placeholder — resolved async below)
+        var inclRoles = value?.Conditions?.Users?.IncludeRoles ?? [];
+        SelectedCAPolicyIncludeRoles = new ObservableCollection<string>(inclRoles);
+        var exclRoles = value?.Conditions?.Users?.ExcludeRoles ?? [];
+        SelectedCAPolicyExcludeRoles = new ObservableCollection<string>(exclRoles);
 
         // Resolve app names
         var inclApps = value?.Conditions?.Applications?.IncludeApplications ?? [];
@@ -1268,7 +1292,109 @@ public partial class MainWindowViewModel : ViewModelBase
 
         OnPropertyChanged(nameof(CanRefreshSelectedItem));
 
+        // Fire async GUID resolution to replace raw GUIDs with display names
+        if (value != null)
+            _ = ResolveCAPolicyGuidsAsync(value);
+
     }
+
+    /// <summary>
+    /// Resolves all GUIDs in a CA policy (groups, users, roles, apps) to display names
+    /// using the DirectoryObjectResolver batch API. Updates the SelectedCAPolicy* collections
+    /// once resolved. Named locations are excluded (not directory objects).
+    /// </summary>
+    private async Task ResolveCAPolicyGuidsAsync(ConditionalAccessPolicy policy)
+    {
+        if (_directoryObjectResolver == null) return;
+
+        // Collect all raw GUIDs, filtering out special keyword values
+        var allGuids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        void AddGuids(IReadOnlyList<string>? ids)
+        {
+            if (ids == null) return;
+            foreach (var id in ids)
+                if (!IsSpecialCaValue(id))
+                    allGuids.Add(id);
+        }
+
+        AddGuids(policy.Conditions?.Users?.IncludeUsers);
+        AddGuids(policy.Conditions?.Users?.ExcludeUsers);
+        AddGuids(policy.Conditions?.Users?.IncludeGroups);
+        AddGuids(policy.Conditions?.Users?.ExcludeGroups);
+        AddGuids(policy.Conditions?.Users?.IncludeRoles);
+        AddGuids(policy.Conditions?.Users?.ExcludeRoles);
+        AddGuids(policy.Conditions?.Applications?.IncludeApplications);
+        AddGuids(policy.Conditions?.Applications?.ExcludeApplications);
+
+        if (allGuids.Count == 0) return;
+
+        IsLoadingDetails = true;
+        try
+        {
+            var nameMap = await _directoryObjectResolver.ResolveAsync([.. allGuids]);
+
+            // Guard: abort if a different policy was selected while we were awaiting
+            if (SelectedConditionalAccessPolicy?.Id != policy.Id) return;
+
+            string Resolve(string? id) => id switch
+            {
+                null or "" => "",
+                "All" => "All",
+                "None" => "None",
+                "AllTrusted" => "All trusted locations",
+                "GuestsOrExternalUsers" => "Guests or external users",
+                "Office365" => "Office 365",
+                "MicrosoftAdminPortals" => "Microsoft Admin Portals",
+                _ => nameMap.TryGetValue(id, out var name) ? name : id
+            };
+
+            string Resolve2(string? id) => id switch
+            {
+                null or "" => "",
+                "All" => "All Users",
+                "None" => "None",
+                "GuestsOrExternalUsers" => "Guests or external users",
+                _ => nameMap.TryGetValue(id, out var name) ? name : id
+            };
+
+            string ResolveApp(string? id) => id switch
+            {
+                null or "" => "",
+                "All" => "All Applications",
+                "Office365" => "Office 365",
+                "MicrosoftAdminPortals" => "Microsoft Admin Portals",
+                _ => nameMap.TryGetValue(id, out var name) ? name : ResolveApplicationId(id)
+            };
+
+            SelectedCAPolicyIncludeGroups = new ObservableCollection<string>(
+                (policy.Conditions?.Users?.IncludeGroups ?? []).Select(id => Resolve(id)));
+            SelectedCAPolicyExcludeGroups = new ObservableCollection<string>(
+                (policy.Conditions?.Users?.ExcludeGroups ?? []).Select(id => Resolve(id)));
+            SelectedCAPolicyIncludeUsers = new ObservableCollection<string>(
+                (policy.Conditions?.Users?.IncludeUsers ?? []).Select(id => Resolve2(id)));
+            SelectedCAPolicyExcludeUsers = new ObservableCollection<string>(
+                (policy.Conditions?.Users?.ExcludeUsers ?? []).Select(id => Resolve2(id)));
+            SelectedCAPolicyIncludeRoles = new ObservableCollection<string>(
+                (policy.Conditions?.Users?.IncludeRoles ?? []).Select(id => Resolve(id)));
+            SelectedCAPolicyExcludeRoles = new ObservableCollection<string>(
+                (policy.Conditions?.Users?.ExcludeRoles ?? []).Select(id => Resolve(id)));
+            SelectedCAPolicyIncludeApps = new ObservableCollection<string>(
+                (policy.Conditions?.Applications?.IncludeApplications ?? []).Select(id => ResolveApp(id)));
+            SelectedCAPolicyExcludeApps = new ObservableCollection<string>(
+                (policy.Conditions?.Applications?.ExcludeApplications ?? []).Select(id => ResolveApp(id)));
+        }
+        catch (Exception ex)
+        {
+            DebugLog.LogError($"Failed to resolve CA policy GUIDs: {FormatGraphError(ex)}", ex);
+        }
+        finally { IsLoadingDetails = false; }
+    }
+
+    /// <summary>Returns true for CA keyword values that are not directory object GUIDs.</summary>
+    private static bool IsSpecialCaValue(string id) => id is
+        "All" or "None" or "AllTrusted" or "GuestsOrExternalUsers" or
+        "Office365" or "MicrosoftAdminPortals";
 
 
 
@@ -1649,6 +1775,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
         SelectedItemPlatform = "";
 
+        SelectedItemRunAsAccount = value?.RunAsAccount.HasValue == true
+            ? value.RunAsAccount.Value.ToString()
+            : "";
+
         OnPropertyChanged(nameof(CanRefreshSelectedItem));
 
         if (value?.Id != null)
@@ -1850,6 +1980,13 @@ public partial class MainWindowViewModel : ViewModelBase
 
         SelectedItemPlatform = "";
 
+        SelectedItemPublisher = value?.Publisher ?? "";
+        SelectedItemRunAsAccount = value?.RunAsAccount.HasValue == true
+            ? value.RunAsAccount.Value.ToString()
+            : "";
+        SelectedItemRunAs32BitText = value?.RunAs32Bit == true ? "Yes" : "No";
+        SelectedItemEnforceSignatureCheck = value?.EnforceSignatureCheck ?? false;
+
         OnPropertyChanged(nameof(CanRefreshSelectedItem));
 
     }
@@ -1886,7 +2023,78 @@ public partial class MainWindowViewModel : ViewModelBase
 
     }
 
+    partial void OnSelectedAdmxFileChanged(GroupPolicyUploadedDefinitionFile? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "ADMX File";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
 
+    partial void OnSelectedReusablePolicySettingChanged(DeviceManagementReusablePolicySetting? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Reusable Policy Setting";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedNotificationTemplateChanged(NotificationMessageTemplate? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Notification Template";
+        SelectedItemPlatform = "";
+        SelectedItemNotificationMessages.Clear();
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedAppleDepSettingChanged(DepOnboardingSetting? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Apple DEP Setting";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedDeviceCategoryChanged(DeviceCategory? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Device Category";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedVppTokenChanged(VppToken? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "VPP Token";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedCloudPcProvisioningPolicyChanged(CloudPcProvisioningPolicy? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Cloud PC Provisioning Policy";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedCloudPcUserSettingChanged(CloudPcUserSetting? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Cloud PC User Setting";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
+
+    partial void OnSelectedRoleAssignmentChanged(DeviceAndAppManagementRoleAssignment? value)
+    {
+        SelectedItemAssignments.Clear();
+        SelectedItemTypeName = "Role Assignment";
+        SelectedItemPlatform = "";
+        OnPropertyChanged(nameof(CanRefreshSelectedItem));
+    }
 
     partial void OnSelectedDynamicGroupRowChanged(GroupRow? value)
 

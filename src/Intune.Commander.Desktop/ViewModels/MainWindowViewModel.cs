@@ -219,6 +219,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private ICloudPcUserSettingsService? _cloudPcUserSettingsService;
     private IVppTokenService? _vppTokenService;
     private IPermissionCheckService? _permissionCheckService;
+    private IDirectoryObjectResolver? _directoryObjectResolver;
 
 
 
@@ -945,6 +946,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private ObservableCollection<AssignmentDisplayItem> _selectedItemAssignments = [];
 
+    [ObservableProperty]
+
+    private ObservableCollection<LocalizedNotificationMessageItem> _selectedItemNotificationMessages = [];
+
 
 
     [ObservableProperty]
@@ -1141,6 +1146,18 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
     private ObservableCollection<string> _selectedCAPolicyExcludeApps = [];
+
+    [ObservableProperty]
+    private ObservableCollection<string> _selectedCAPolicyIncludeUsers = [];
+
+    [ObservableProperty]
+    private ObservableCollection<string> _selectedCAPolicyExcludeUsers = [];
+
+    [ObservableProperty]
+    private ObservableCollection<string> _selectedCAPolicyIncludeRoles = [];
+
+    [ObservableProperty]
+    private ObservableCollection<string> _selectedCAPolicyExcludeRoles = [];
 
 
 

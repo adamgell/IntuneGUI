@@ -160,7 +160,29 @@ public partial class MainWindowViewModel : ViewModelBase
 
             ?? SelectedDeviceShellScript as object
 
-            ?? SelectedComplianceScript as object;
+            ?? SelectedComplianceScript as object
+
+            ?? SelectedAdmxFile as object
+
+            ?? SelectedReusablePolicySetting as object
+
+            ?? SelectedNotificationTemplate as object
+
+            ?? SelectedQualityUpdateProfile as object
+
+            ?? SelectedDriverUpdateProfile as object
+
+            ?? SelectedAppleDepSetting as object
+
+            ?? SelectedDeviceCategory as object
+
+            ?? SelectedVppToken as object
+
+            ?? SelectedCloudPcProvisioningPolicy as object
+
+            ?? SelectedCloudPcUserSetting as object
+
+            ?? SelectedRoleAssignment as object;
 
 
 
@@ -229,6 +251,18 @@ public partial class MainWindowViewModel : ViewModelBase
             DeviceShellScript dss => dss.DisplayName ?? "Device Shell Script",
 
             DeviceComplianceScript cs => cs.DisplayName ?? "Compliance Script",
+
+            GroupPolicyUploadedDefinitionFile admx => admx.FileName ?? "ADMX File",
+            DeviceManagementReusablePolicySetting rps => rps.DisplayName ?? "Reusable Policy Setting",
+            NotificationMessageTemplate nmt => nmt.DisplayName ?? "Notification Template",
+            WindowsQualityUpdateProfile qup => qup.DisplayName ?? "Quality Update Profile",
+            WindowsDriverUpdateProfile dup => dup.DisplayName ?? "Driver Update Profile",
+            DepOnboardingSetting dep => dep.AppleIdentifier ?? "Apple DEP Setting",
+            DeviceCategory dc => dc.DisplayName ?? "Device Category",
+            VppToken vpp => vpp.OrganizationName ?? "VPP Token",
+            CloudPcProvisioningPolicy cppol => cppol.DisplayName ?? "Cloud PC Provisioning Policy",
+            CloudPcUserSetting cpus => cpus.DisplayName ?? "Cloud PC User Setting",
+            DeviceAndAppManagementRoleAssignment ra => ra.DisplayName ?? "Role Assignment",
 
             _ => "Item"
 
@@ -872,11 +906,23 @@ public partial class MainWindowViewModel : ViewModelBase
             if (SelectedCAPolicyExcludeLocations.Count > 0)
                 Append(sb, "Exclude Locations", string.Join(", ", SelectedCAPolicyExcludeLocations));
 
+            if (SelectedCAPolicyIncludeUsers.Count > 0)
+                Append(sb, "Include Users", string.Join(", ", SelectedCAPolicyIncludeUsers));
+
+            if (SelectedCAPolicyExcludeUsers.Count > 0)
+                Append(sb, "Exclude Users", string.Join(", ", SelectedCAPolicyExcludeUsers));
+
             if (SelectedCAPolicyIncludeGroups.Count > 0)
                 Append(sb, "Include Groups", string.Join(", ", SelectedCAPolicyIncludeGroups));
 
             if (SelectedCAPolicyExcludeGroups.Count > 0)
                 Append(sb, "Exclude Groups", string.Join(", ", SelectedCAPolicyExcludeGroups));
+
+            if (SelectedCAPolicyIncludeRoles.Count > 0)
+                Append(sb, "Include Roles", string.Join(", ", SelectedCAPolicyIncludeRoles));
+
+            if (SelectedCAPolicyExcludeRoles.Count > 0)
+                Append(sb, "Exclude Roles", string.Join(", ", SelectedCAPolicyExcludeRoles));
 
             if (SelectedCAPolicyIncludeApps.Count > 0)
                 Append(sb, "Include Apps", string.Join(", ", SelectedCAPolicyIncludeApps));
@@ -1128,6 +1174,101 @@ public partial class MainWindowViewModel : ViewModelBase
 
             Append(sb, "Group ID", ag.GroupId);
 
+        }
+
+        else if (SelectedAdmxFile is { } admx)
+        {
+            sb.AppendLine("=== ADMX File ===");
+            sb.AppendLine($"File Name: {admx.FileName}");
+            sb.AppendLine($"Status: {admx.Status}");
+            sb.AppendLine($"Target Prefix: {admx.TargetPrefix}");
+            sb.AppendLine($"Target Namespace: {admx.TargetNamespace}");
+            sb.AppendLine($"Last Modified: {admx.LastModifiedDateTime:g}");
+        }
+        else if (SelectedReusablePolicySetting is { } rps)
+        {
+            sb.AppendLine("=== Reusable Policy Setting ===");
+            sb.AppendLine($"Display Name: {rps.DisplayName}");
+            sb.AppendLine($"Description: {rps.Description}");
+            sb.AppendLine($"Setting Definition ID: {rps.SettingDefinitionId}");
+            sb.AppendLine($"Referencing Policies: {rps.ReferencingConfigurationPolicyCount ?? 0}");
+            sb.AppendLine($"Created: {rps.CreatedDateTime:g}");
+            sb.AppendLine($"Last Modified: {rps.LastModifiedDateTime:g}");
+        }
+        else if (SelectedNotificationTemplate is { } nmt)
+        {
+            sb.AppendLine("=== Notification Template ===");
+            sb.AppendLine($"Display Name: {nmt.DisplayName}");
+            sb.AppendLine($"Description: {nmt.Description}");
+            sb.AppendLine($"Default Locale: {nmt.DefaultLocale}");
+            sb.AppendLine($"Branding Options: {nmt.BrandingOptions}");
+            sb.AppendLine($"Last Modified: {nmt.LastModifiedDateTime:g}");
+        }
+        else if (SelectedQualityUpdateProfile is { } qup)
+        {
+            sb.AppendLine("=== Quality Update Profile ===");
+            sb.AppendLine($"Display Name: {qup.DisplayName}");
+            sb.AppendLine($"Description: {qup.Description}");
+            sb.AppendLine($"Deployable Content: {qup.DeployableContentDisplayName}");
+            sb.AppendLine($"Created: {qup.CreatedDateTime:g}");
+            sb.AppendLine($"Last Modified: {qup.LastModifiedDateTime:g}");
+        }
+        else if (SelectedDriverUpdateProfile is { } dup)
+        {
+            sb.AppendLine("=== Driver Update Profile ===");
+            sb.AppendLine($"Display Name: {dup.DisplayName}");
+            sb.AppendLine($"Description: {dup.Description}");
+            sb.AppendLine($"Approval Type: {dup.ApprovalType}");
+            sb.AppendLine($"Created: {dup.CreatedDateTime:g}");
+            sb.AppendLine($"Last Modified: {dup.LastModifiedDateTime:g}");
+        }
+        else if (SelectedAppleDepSetting is { } dep)
+        {
+            sb.AppendLine("=== Apple DEP Setting ===");
+            sb.AppendLine($"Apple Identifier: {dep.AppleIdentifier}");
+            sb.AppendLine($"Token Name: {dep.TokenName}");
+            sb.AppendLine($"Token Type: {dep.TokenType}");
+            sb.AppendLine($"Token Expires: {dep.TokenExpirationDateTime:g}");
+            sb.AppendLine($"Synced Devices: {dep.SyncedDeviceCount}");
+        }
+        else if (SelectedDeviceCategory is { } dc)
+        {
+            sb.AppendLine("=== Device Category ===");
+            sb.AppendLine($"Display Name: {dc.DisplayName}");
+            sb.AppendLine($"Description: {dc.Description}");
+            sb.AppendLine($"ID: {dc.Id}");
+        }
+        else if (SelectedVppToken is { } vpp)
+        {
+            sb.AppendLine("=== VPP Token ===");
+            sb.AppendLine($"Organization: {vpp.OrganizationName}");
+            sb.AppendLine($"Apple ID: {vpp.AppleId}");
+            sb.AppendLine($"State: {vpp.State}");
+            sb.AppendLine($"Token Expires: {vpp.ExpirationDateTime:g}");
+        }
+        else if (SelectedCloudPcProvisioningPolicy is { } cpPol)
+        {
+            sb.AppendLine("=== Cloud PC Provisioning Policy ===");
+            sb.AppendLine($"Display Name: {cpPol.DisplayName}");
+            sb.AppendLine($"Description: {cpPol.Description}");
+            sb.AppendLine($"Image: {cpPol.ImageDisplayName}");
+            sb.AppendLine($"Enable SSO: {cpPol.EnableSingleSignOn}");
+            sb.AppendLine($"Local Admin: {cpPol.LocalAdminEnabled}");
+        }
+        else if (SelectedCloudPcUserSetting is { } cpUs)
+        {
+            sb.AppendLine("=== Cloud PC User Setting ===");
+            sb.AppendLine($"Display Name: {cpUs.DisplayName}");
+            sb.AppendLine($"Self-Service: {cpUs.SelfServiceEnabled}");
+            sb.AppendLine($"Local Admin: {cpUs.LocalAdminEnabled}");
+        }
+        else if (SelectedRoleAssignment is { } ra)
+        {
+            sb.AppendLine("=== Role Assignment ===");
+            sb.AppendLine($"Display Name: {ra.DisplayName}");
+            sb.AppendLine($"Description: {ra.Description}");
+            sb.AppendLine($"Scope Type: {ra.ScopeType}");
+            sb.AppendLine($"Resource Scopes: {string.Join(", ", ra.ResourceScopes ?? [])}");
         }
 
 

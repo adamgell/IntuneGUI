@@ -16,6 +16,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Intune.Commander.Core.Models;
 using Intune.Commander.Desktop.Converters;
 
@@ -51,18 +52,28 @@ public partial class MainWindow : SukiWindow
     {
         base.OnLoaded(e);
 
-        _mainDataGrid = this.FindControl<DataGrid>("MainDataGrid");
+        // FindControl only searches the window's own name scope; after the
+        // UserControl extraction the named controls live in child name scopes.
+        // GetVisualDescendants() traverses the full visual tree.
+        _mainDataGrid = this.GetVisualDescendants()
+                            .OfType<DataGrid>()
+                            .FirstOrDefault(g => g.Name == "MainDataGrid");
 
-        // With this:
-        var importMenuItem = this.FindControl<MenuItem>("ImportMenuItem");
+        var importMenuItem = this.GetVisualDescendants()
+                                 .OfType<MenuItem>()
+                                 .FirstOrDefault(m => m.Name == "ImportMenuItem");
         if (importMenuItem != null)
             importMenuItem.Click += OnImportClick;
 
-        var groupLookupButton = this.FindControl<Button>("GroupLookupButton");
+        var groupLookupButton = this.GetVisualDescendants()
+                                    .OfType<Button>()
+                                    .FirstOrDefault(b => b.Name == "GroupLookupButton");
         if (groupLookupButton != null)
             groupLookupButton.Click += OnGroupLookupClick;
 
-        var columnChooserButton = this.FindControl<Button>("ColumnChooserButton");
+        var columnChooserButton = this.GetVisualDescendants()
+                                      .OfType<Button>()
+                                      .FirstOrDefault(b => b.Name == "ColumnChooserButton");
         if (columnChooserButton != null)
             columnChooserButton.Click += OnColumnChooserClick;
 
