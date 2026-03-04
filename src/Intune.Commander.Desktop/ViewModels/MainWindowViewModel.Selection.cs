@@ -1819,6 +1819,7 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedItemRolloutStartDate = value?.RolloutSettings?.OfferStartDateTimeInUTC;
         SelectedItemRolloutEndDate = value?.RolloutSettings?.OfferEndDateTimeInUTC;
         SelectedItemInstallLatestOnEOL = value?.InstallLatestWindows10OnWindows11IneligibleDevice ?? false;
+        SelectedItemCreatedDateTime = value?.CreatedDateTime;
 
         OnPropertyChanged(nameof(CanRefreshSelectedItem));
 
@@ -1949,6 +1950,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
         SelectedItemPlatform = "";
 
+        SelectedItemRoleScopeTags = new ObservableCollection<string>(value?.RoleScopeTagIds ?? []);
+
         OnPropertyChanged(nameof(CanRefreshSelectedItem));
 
         if (value?.Id != null)
@@ -1968,6 +1971,8 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedItemTypeName = "Device Shell Script";
 
         SelectedItemPlatform = "";
+
+        SelectedItemRoleScopeTags = new ObservableCollection<string>(value?.RoleScopeTagIds ?? []);
 
         OnPropertyChanged(nameof(CanRefreshSelectedItem));
 
@@ -1995,6 +2000,7 @@ public partial class MainWindowViewModel : ViewModelBase
             : "";
         SelectedItemRunAs32BitText = value?.RunAs32Bit == true ? "Yes" : "No";
         SelectedItemEnforceSignatureCheck = value?.EnforceSignatureCheck ?? false;
+        SelectedItemRoleScopeTags = new ObservableCollection<string>(value?.RoleScopeTagIds ?? []);
 
         OnPropertyChanged(nameof(CanRefreshSelectedItem));
 
@@ -2011,6 +2017,8 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedItemTypeName = "Quality Update Profile";
 
         SelectedItemPlatform = "";
+
+        SelectedItemDaysUntilForcedReboot = value?.ExpeditedUpdateSettings?.DaysUntilForcedReboot;
 
         OnPropertyChanged(nameof(CanRefreshSelectedItem));
 
@@ -2070,6 +2078,7 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedItemAssignments.Clear();
         SelectedItemTypeName = "Device Category";
         SelectedItemPlatform = "";
+        SelectedItemRoleScopeTags = new ObservableCollection<string>(value?.RoleScopeTagIds ?? []);
         OnPropertyChanged(nameof(CanRefreshSelectedItem));
     }
 
@@ -2094,6 +2103,8 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedItemAssignments.Clear();
         SelectedItemTypeName = "Cloud PC User Setting";
         SelectedItemPlatform = "";
+        SelectedItemRestorePointFrequency = value?.RestorePointSetting?.FrequencyType?.ToString() ?? "";
+        SelectedItemUserRestoreEnabled = value?.RestorePointSetting?.UserRestoreEnabled ?? false;
         OnPropertyChanged(nameof(CanRefreshSelectedItem));
     }
 

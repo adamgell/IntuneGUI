@@ -31,7 +31,27 @@
                 </StackPanel>
             </Border>
 
-            <TextBlock Text="Metadata" Classes="SectionHeader" />
+            <TextBlock Text="Additional Branding" Classes="SectionHeaderSpaced" />
+            <Border Classes="SectionCard">
+                <StackPanel Spacing="10" DataContext="{Binding SelectedAzureBrandingLocalization}">
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="Background Image URL" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                        <SelectableTextBlock Text="{Binding BackgroundImageRelativeUrl}" FontSize="{StaticResource FontSizeBody}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Grid ColumnDefinitions="*,*">
+                        <StackPanel Grid.Column="0" Spacing="2">
+                            <TextBlock Text="Square Logo URL" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                            <SelectableTextBlock Text="{Binding SquareLogoRelativeUrl}" FontSize="{StaticResource FontSizeBody}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock Text="Forgot Password Text" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                            <SelectableTextBlock Text="{Binding CustomForgotMyPasswordText}" FontSize="{StaticResource FontSizeBody}" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <TextBlock Text="Metadata" Classes="SectionHeaderSpaced" />
             <Border Classes="SectionCard">
                 <StackPanel Spacing="10" DataContext="{Binding SelectedAzureBrandingLocalization}">
                     <StackPanel Spacing="2">

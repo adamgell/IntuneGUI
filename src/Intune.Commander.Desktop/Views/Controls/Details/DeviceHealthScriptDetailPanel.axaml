@@ -35,8 +35,18 @@
                             <SelectableTextBlock Text="{Binding $parent[ScrollViewer].((vm:MainWindowViewModel)DataContext).SelectedItemPublisher}" FontSize="{StaticResource FontSizeBody}" TextWrapping="Wrap" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Spacing="2">
-                            <TextBlock Text="Created Date" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                            <TextBlock Text="Created" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
                             <SelectableTextBlock Text="{Binding CreatedDateTime, Converter={x:Static conv:HumanDateTimeConverter.Instance}}" FontSize="{StaticResource FontSizeBody}" />
+                        </StackPanel>
+                    </Grid>
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto">
+                        <StackPanel Grid.Column="0" Spacing="2">
+                            <TextBlock Text="Last Modified" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                            <SelectableTextBlock Text="{Binding LastModifiedDateTime, Converter={x:Static conv:HumanDateTimeConverter.Instance}}" FontSize="{StaticResource FontSizeBody}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock Text="File Name" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                            <SelectableTextBlock Text="{Binding FileName}" FontSize="{StaticResource FontSizeBody}" TextWrapping="Wrap" />
                         </StackPanel>
                     </Grid>
                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto">

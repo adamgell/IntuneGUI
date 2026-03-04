@@ -30,14 +30,18 @@
                     </Grid>
                     <Grid ColumnDefinitions="*,*">
                         <StackPanel Grid.Column="0" Spacing="2">
+                            <TextBlock Text="Created" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                            <SelectableTextBlock Text="{Binding CreatedDateTime, Converter={x:Static conv:HumanDateTimeConverter.Instance}}" FontSize="{StaticResource FontSizeBody}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="2">
                             <TextBlock Text="Last Modified" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
                             <SelectableTextBlock Text="{Binding LastModifiedDateTime, Converter={x:Static conv:HumanDateTimeConverter.Instance}}" FontSize="{StaticResource FontSizeBody}" />
                         </StackPanel>
-                        <StackPanel Grid.Column="1" Spacing="2">
-                            <TextBlock Text="ID" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
-                            <SelectableTextBlock Text="{Binding Id}" FontSize="{StaticResource FontSizeCaption}" Opacity="0.8" />
-                        </StackPanel>
                     </Grid>
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="ID" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                        <SelectableTextBlock Text="{Binding Id}" FontSize="{StaticResource FontSizeCaption}" Opacity="0.8" />
+                    </StackPanel>
                 </StackPanel>
             </Border>
 

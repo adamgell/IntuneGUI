@@ -24,6 +24,16 @@
                     </StackPanel>
                     <Grid ColumnDefinitions="*,*">
                         <StackPanel Grid.Column="0" Spacing="2">
+                            <TextBlock Text="Status" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                            <SelectableTextBlock Text="{Binding Status}" FontSize="{StaticResource FontSizeBody}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock Text="Error Code" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                            <SelectableTextBlock Text="{Binding ErrorCode}" FontSize="{StaticResource FontSizeBody}" />
+                        </StackPanel>
+                    </Grid>
+                    <Grid ColumnDefinitions="*,*">
+                        <StackPanel Grid.Column="0" Spacing="2">
                             <TextBlock Text="Created" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
                             <SelectableTextBlock Text="{Binding CreatedDateTime, Converter={x:Static conv:HumanDateTimeConverter.Instance}}" FontSize="{StaticResource FontSizeBody}" />
                         </StackPanel>

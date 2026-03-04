@@ -48,6 +48,27 @@
                 </StackPanel>
             </Border>
 
+            <!-- Configuration -->
+            <TextBlock Text="Configuration" Classes="SectionHeaderSpaced" />
+            <Border Classes="SectionCard">
+                <StackPanel Spacing="10">
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="PC Naming Template" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                        <SelectableTextBlock Text="{Binding SelectedCloudPcProvisioningPolicy.CloudPcNamingTemplate}" FontSize="{StaticResource FontSizeBody}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Grid ColumnDefinitions="*,*">
+                        <StackPanel Grid.Column="0" Spacing="2">
+                            <TextBlock Text="Single Sign-On" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                            <SelectableTextBlock Text="{Binding SelectedCloudPcProvisioningPolicy.EnableSingleSignOn}" FontSize="{StaticResource FontSizeBody}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock Text="Grace Period (hours)" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                            <SelectableTextBlock Text="{Binding SelectedCloudPcProvisioningPolicy.GracePeriodInHours}" FontSize="{StaticResource FontSizeBody}" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
             <!-- Assignments -->
             <controls:AssignmentListControl Assignments="{Binding SelectedItemAssignments}" />
         </StackPanel>

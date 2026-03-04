@@ -28,6 +28,16 @@
                             <SelectableTextBlock Text="{Binding LastModifiedDateTime, Converter={x:Static conv:HumanDateTimeConverter.Instance}}" FontSize="{StaticResource FontSizeBody}" />
                         </StackPanel>
                     </Grid>
+                    <Grid ColumnDefinitions="*,*">
+                        <StackPanel Grid.Column="0" Spacing="2">
+                            <TextBlock Text="Template ID" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                            <SelectableTextBlock Text="{Binding TemplateId}" FontSize="{StaticResource FontSizeBody}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock Text="Migrating to Config Policy" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                            <SelectableTextBlock Text="{Binding IsMigratingToConfigurationPolicy}" FontSize="{StaticResource FontSizeBody}" />
+                        </StackPanel>
+                    </Grid>
                     <StackPanel Spacing="2">
                         <TextBlock Text="ID" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
                         <SelectableTextBlock Text="{Binding Id}" FontSize="{StaticResource FontSizeCaption}" Opacity="0.8" />

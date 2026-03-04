@@ -35,6 +35,10 @@
                         <TextBlock Text="Setting Definition ID" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
                         <SelectableTextBlock Text="{Binding SelectedReusablePolicySetting.SettingDefinitionId}" FontSize="{StaticResource FontSizeBody}" TextWrapping="Wrap" />
                     </StackPanel>
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="Referenced By" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                        <SelectableTextBlock Text="{Binding SelectedReusablePolicySetting.ReferencingConfigurationPolicyCount}" FontSize="{StaticResource FontSizeBody}" />
+                    </StackPanel>
                     <Grid ColumnDefinitions="*,*">
                         <StackPanel Grid.Column="0" Spacing="2">
                             <TextBlock Text="Created" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />

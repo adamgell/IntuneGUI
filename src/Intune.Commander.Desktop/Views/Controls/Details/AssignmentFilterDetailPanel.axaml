@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Intune.Commander.Desktop.ViewModels"
+             xmlns:conv="using:Intune.Commander.Desktop.Converters"
              x:Class="Intune.Commander.Desktop.Views.Controls.Details.AssignmentFilterDetailPanel"
              x:DataType="vm:MainWindowViewModel">
     <ScrollViewer HorizontalScrollBarVisibility="Disabled">
@@ -28,6 +29,20 @@
                         <SelectableTextBlock Text="{Binding Rule}" TextWrapping="Wrap"
                                              FontFamily="Consolas,Courier New,monospace" FontSize="{StaticResource FontSizeBody}" />
                     </StackPanel>
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="Description" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                        <SelectableTextBlock Text="{Binding Description}" FontSize="{StaticResource FontSizeBody}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Grid ColumnDefinitions="*,*">
+                        <StackPanel Grid.Column="0" Spacing="2">
+                            <TextBlock Text="Created" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                            <SelectableTextBlock Text="{Binding CreatedDateTime, Converter={x:Static conv:HumanDateTimeConverter.Instance}}" FontSize="{StaticResource FontSizeBody}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock Text="Last Modified" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                            <SelectableTextBlock Text="{Binding LastModifiedDateTime, Converter={x:Static conv:HumanDateTimeConverter.Instance}}" FontSize="{StaticResource FontSizeBody}" />
+                        </StackPanel>
+                    </Grid>
                     <StackPanel Spacing="2">
                         <TextBlock Text="ID" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
                         <SelectableTextBlock Text="{Binding Id}" FontSize="{StaticResource FontSizeCaption}" Opacity="0.8" />

@@ -48,6 +48,23 @@
                     </ItemsControl>
                 </StackPanel>
             </Expander>
+
+            <TextBlock Text="Scope Members" Classes="SectionHeaderSpaced" />
+            <Border Classes="SectionCard">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="No scope members"
+                               Foreground="{DynamicResource AppTextSecondaryBrush}"
+                               FontSize="{StaticResource FontSizeBody}"
+                               IsVisible="{Binding !SelectedRoleAssignment.ScopeMembers.Count}" />
+                    <ItemsControl ItemsSource="{Binding SelectedRoleAssignment.ScopeMembers}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <SelectableTextBlock Text="{Binding}" FontSize="{StaticResource FontSizeBody}" Margin="0,1,0,1" TextWrapping="Wrap" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

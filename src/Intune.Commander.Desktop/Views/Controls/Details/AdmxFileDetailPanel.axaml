@@ -47,6 +47,19 @@
                             <SelectableTextBlock Text="{Binding SelectedAdmxFile.TargetNamespace}" FontSize="{StaticResource FontSizeBody}" TextWrapping="Wrap" />
                         </StackPanel>
                     </Grid>
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="Policy Type" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                        <SelectableTextBlock Text="{Binding SelectedAdmxFile.PolicyType}" FontSize="{StaticResource FontSizeBody}" />
+                    </StackPanel>
+                    <Expander Header="Language Codes" IsExpanded="True" Margin="0,4,0,0">
+                        <ItemsControl ItemsSource="{Binding SelectedAdmxFile.LanguageCodes}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" FontSize="{StaticResource FontSizeBody}" Margin="0,1,0,1" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Expander>
                 </StackPanel>
             </Border>
         </StackPanel>

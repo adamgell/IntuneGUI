@@ -41,6 +41,27 @@
                 </StackPanel>
             </Border>
 
+            <!-- Deployment Settings -->
+            <TextBlock Text="Deployment Settings" Classes="SectionHeaderSpaced" />
+            <Border Classes="SectionCard">
+                <StackPanel Spacing="10">
+                    <Grid ColumnDefinitions="*,*">
+                        <StackPanel Grid.Column="0" Spacing="2">
+                            <TextBlock Text="Deferral In Days" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                            <SelectableTextBlock Text="{Binding SelectedDriverUpdateProfile.DeploymentDeferralInDays}" FontSize="{StaticResource FontSizeBody}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock Text="Device Reporting" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                            <SelectableTextBlock Text="{Binding SelectedDriverUpdateProfile.DeviceReporting}" FontSize="{StaticResource FontSizeBody}" />
+                        </StackPanel>
+                    </Grid>
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="New Updates Available" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                        <SelectableTextBlock Text="{Binding SelectedDriverUpdateProfile.NewUpdatesAvailable}" FontSize="{StaticResource FontSizeBody}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <!-- Assignments -->
             <controls:AssignmentListControl Assignments="{Binding SelectedItemAssignments}" />
         </StackPanel>

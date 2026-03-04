@@ -1107,6 +1107,14 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private bool _selectedItemInstallLatestOnEOL = false;
 
+    // Quality Update Profile specific
+    [ObservableProperty] private int? _selectedItemServiceWindowDays;
+    [ObservableProperty] private int? _selectedItemDaysUntilForcedReboot;
+
+    // Cloud PC User Setting specific
+    [ObservableProperty] private string _selectedItemRestorePointFrequency = "";
+    [ObservableProperty] private bool _selectedItemUserRestoreEnabled;
+
     // Named Location specific
     [ObservableProperty]
     private ObservableCollection<string> _selectedItemCountryCodes = [];
