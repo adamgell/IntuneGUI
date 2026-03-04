@@ -1090,6 +1090,18 @@ public partial class MainWindowViewModel : ViewModelBase
             ?.GetValue(value) as System.Collections.IList;
         SelectedItemOmaSettingsCount = omaSettingsList?.Count ?? 0;
 
+        // Extract all typed settings from the derived Device Configuration type
+        if (value != null)
+        {
+            var settings = ExtractGraphObjectSettings(value);
+            SelectedItemConfigurationSettings = new ObservableCollection<Models.SettingItem>(
+                settings.Select(s => new Models.SettingItem(s.Label, s.Value)));
+        }
+        else
+        {
+            SelectedItemConfigurationSettings = [];
+        }
+
         OnPropertyChanged(nameof(CanRefreshSelectedItem));
 
         if (value?.Id != null)

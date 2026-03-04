@@ -1015,6 +1015,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private int _selectedItemOmaSettingsCount = 0;
 
+    [ObservableProperty]
+    private ObservableCollection<Models.SettingItem> _selectedItemConfigurationSettings = [];
+
     // Compliance Policy specific
     [ObservableProperty]
     private ObservableCollection<Models.SettingItem> _selectedItemComplianceSettings = [];

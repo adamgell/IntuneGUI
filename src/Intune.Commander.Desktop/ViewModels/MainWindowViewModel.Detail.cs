@@ -307,6 +307,18 @@ public partial class MainWindowViewModel : ViewModelBase
                     writer.WriteEndObject();
                 }
 
+                // Add device configuration settings
+                if (item is DeviceConfiguration)
+                {
+                    if (SelectedItemConfigurationSettings.Count > 0)
+                    {
+                        writer.WriteStartObject("_settings");
+                        foreach (var s in SelectedItemConfigurationSettings)
+                            writer.WriteString(s.Label, s.Value);
+                        writer.WriteEndObject();
+                    }
+                }
+
                 // Add compliance settings
                 if (item is DeviceCompliancePolicy cp)
                 {
@@ -401,6 +413,14 @@ public partial class MainWindowViewModel : ViewModelBase
             Append(sb, "Last Modified", cfg.LastModifiedDateTime?.ToString("g"));
 
             Append(sb, "Version", cfg.Version?.ToString());
+
+            if (SelectedItemConfigurationSettings.Count > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("SETTINGS:");
+                foreach (var s in SelectedItemConfigurationSettings)
+                    sb.AppendLine($"  {s.Label}: {s.Value}");
+            }
 
             AppendAssignments(sb);
 
@@ -1462,21 +1482,42 @@ public partial class MainWindowViewModel : ViewModelBase
     /// </summary>
     private List<(string Label, string Value)> ExtractComplianceSettings(DeviceCompliancePolicy policy)
     {
+        // Reuse the generic extractor — compliance policies are just another Graph object
+        return ExtractGraphObjectSettings(policy);
+    }
+
+    /// <summary>
+    /// Generic settings extractor that works on any Graph SDK model.
+    /// Serializes the object to JSON and extracts all non-metadata properties
+    /// for human-readable display.
+    /// </summary>
+    private List<(string Label, string Value)> ExtractGraphObjectSettings(object graphObject)
+    {
         var settings = new List<(string Label, string Value)>();
 
-        // Properties to exclude (metadata, organizational, actions — displayed elsewhere)
+        // Metadata properties displayed elsewhere in the Properties section
         var excludedProperties = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "Id", "DisplayName", "Description", "OdataType", "CreatedDateTime",
             "LastModifiedDateTime", "Version", "RoleScopeTagIds", "Assignments",
             "ScheduledActionsForRule", "AdditionalData", "BackingStore",
-            "@odata.context", "@odata.type"
+            "@odata.context", "@odata.type", "SupportsScopeTags",
+            "DeviceManagementApplicabilityRuleOsEdition",
+            "DeviceManagementApplicabilityRuleOsVersion",
+            "DeviceManagementApplicabilityRuleDeviceMode"
+        };
+
+        // Graph navigation properties that are empty collection stubs (not real settings)
+        var navigationProperties = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "DeviceStatuses", "UserStatuses", "DeviceStatusOverview", "UserStatusOverview",
+            "DeviceSettingStateSummaries", "GroupAssignments", "DeviceStates",
+            "ScheduledActionsForRule"
         };
 
         try
         {
-            // Serialize with the runtime type so all derived properties are included
-            var json = JsonSerializer.Serialize(policy, policy.GetType(), new JsonSerializerOptions
+            var json = JsonSerializer.Serialize(graphObject, graphObject.GetType(), new JsonSerializerOptions
             {
                 WriteIndented = false
             });
@@ -1486,6 +1527,8 @@ public partial class MainWindowViewModel : ViewModelBase
             {
                 if (excludedProperties.Contains(prop.Name))
                     continue;
+                if (navigationProperties.Contains(prop.Name))
+                    continue;
 
                 var label = FormatPropertyName(prop.Name);
                 var formattedValue = FormatJsonElementValue(prop.Value);
@@ -1494,7 +1537,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            DebugLog.LogError($"ComplianceSettings: Failed to extract settings: {ex.Message}");
+            DebugLog.LogError($"ExtractGraphObjectSettings: Failed to extract settings: {ex.Message}");
         }
 
         return settings;
@@ -1537,12 +1580,101 @@ public partial class MainWindowViewModel : ViewModelBase
             JsonValueKind.Null or JsonValueKind.Undefined => "Not Configured",
             JsonValueKind.String => element.GetString() is { Length: > 0 } s ? s : "Not Configured",
             JsonValueKind.Number => element.ToString(),
-            JsonValueKind.Array => element.GetArrayLength() > 0
-                ? string.Join(", ", element.EnumerateArray().Select(e => e.ToString()))
-                : "None",
-            JsonValueKind.Object => "(complex)",
+            JsonValueKind.Array => FormatJsonArray(element),
+            JsonValueKind.Object => FormatJsonObject(element),
             _ => element.ToString()
         };
+    }
+
+    /// <summary>
+    /// Properties that are Graph SDK / backing store internals and should never be shown.
+    /// </summary>
+    private static readonly HashSet<string> BackingStoreProperties = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "AdditionalData", "BackingStore", "InitializationCompleted",
+        "ReturnOnlyChangedValues", "OdataType", "@odata.type"
+    };
+
+    /// <summary>
+    /// Formats a JSON array for display, handling arrays of primitives and arrays of objects.
+    /// </summary>
+    private static string FormatJsonArray(JsonElement element)
+    {
+        if (element.GetArrayLength() == 0)
+            return "None";
+
+        var items = element.EnumerateArray().ToList();
+
+        // Array of primitives (strings, numbers, bools)
+        if (items.All(i => i.ValueKind is JsonValueKind.String or JsonValueKind.Number
+                                       or JsonValueKind.True or JsonValueKind.False))
+        {
+            return string.Join(", ", items.Select(i => FormatJsonElementValue(i)));
+        }
+
+        // Array of objects — extract meaningful values from each
+        var parts = new List<string>();
+        foreach (var item in items)
+        {
+            if (item.ValueKind == JsonValueKind.Object)
+            {
+                var meaningful = ExtractMeaningfulObjectValues(item);
+                if (!string.IsNullOrEmpty(meaningful))
+                    parts.Add(meaningful);
+            }
+            else
+            {
+                parts.Add(FormatJsonElementValue(item));
+            }
+        }
+
+        return parts.Count > 0 ? string.Join("; ", parts) : "None";
+    }
+
+    /// <summary>
+    /// Formats a JSON object for display by extracting its meaningful properties.
+    /// </summary>
+    private static string FormatJsonObject(JsonElement element)
+    {
+        var meaningful = ExtractMeaningfulObjectValues(element);
+        return !string.IsNullOrEmpty(meaningful) ? meaningful : "Not Configured";
+    }
+
+    /// <summary>
+    /// Extracts human-readable key=value pairs from a JSON object,
+    /// filtering out Graph SDK backing store internals.
+    /// </summary>
+    private static string ExtractMeaningfulObjectValues(JsonElement obj)
+    {
+        var parts = new List<string>();
+        foreach (var prop in obj.EnumerateObject())
+        {
+            // Skip backing store / SDK internal properties
+            if (BackingStoreProperties.Contains(prop.Name))
+                continue;
+
+            // Skip nulls
+            if (prop.Value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+                continue;
+
+            // For simple values, show key=value
+            var val = prop.Value.ValueKind switch
+            {
+                JsonValueKind.String => prop.Value.GetString(),
+                JsonValueKind.Number => prop.Value.ToString(),
+                JsonValueKind.True => "Yes",
+                JsonValueKind.False => "No",
+                JsonValueKind.Array when prop.Value.GetArrayLength() == 0 => null,
+                JsonValueKind.Array => FormatJsonArray(prop.Value),
+                JsonValueKind.Object => null, // Don't recurse infinitely into nested objects
+                _ => null
+            };
+
+            if (!string.IsNullOrEmpty(val))
+                parts.Add($"{FormatPropertyName(prop.Name)}: {val}");
+        }
+
+        return string.Join(", ", parts);
     }
 
     private static string? TryReadStringProperty(object? instance, string propertyName)
