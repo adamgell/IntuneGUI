@@ -116,7 +116,7 @@ Update the status emoji in each wave section as work progresses:
 
 ## Notes
 
-- Each wave document contains detailed method signatures and checklists
+- Service implementation details (method signatures, checklists, and status) are tracked in [SERVICE-IMPLEMENTATION-PLAN.md](../SERVICE-IMPLEMENTATION-PLAN.md) and the corresponding [GitHub Issues](https://github.com/adamgell/IntuneCommander/issues)
 - Reference the main [SERVICE-IMPLEMENTATION-PLAN.md](../SERVICE-IMPLEMENTATION-PLAN.md) for architectural context
 - Follow the conventions documented in [.github/copilot-instructions.md](../../.github/copilot-instructions.md)
 - See [CLAUDE.md](../../CLAUDE.md) for overall design decisions
