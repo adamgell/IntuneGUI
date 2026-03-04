@@ -274,7 +274,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         {
 
-            var json = JsonSerializer.Serialize(item, item.GetType(), new JsonSerializerOptions
+            var jsonOptions = new JsonSerializerOptions
 
             {
 
@@ -282,7 +282,73 @@ public partial class MainWindowViewModel : ViewModelBase
 
                 DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
 
-            });
+            };
+
+            var baseJson = JsonSerializer.Serialize(item, item.GetType(), jsonOptions);
+
+            // Enrich with detail data that isn't in the raw Graph object
+            string json;
+            using var doc = JsonDocument.Parse(baseJson);
+            using var stream = new System.IO.MemoryStream();
+            using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true }))
+            {
+                writer.WriteStartObject();
+
+                // Copy all original properties
+                foreach (var prop in doc.RootElement.EnumerateObject())
+                    prop.WriteTo(writer);
+
+                // Add settings catalog settings
+                if (item is DeviceManagementConfigurationPolicy && SelectedItemCatalogSettings.Count > 0)
+                {
+                    writer.WriteStartObject("_settings");
+                    foreach (var s in SelectedItemCatalogSettings)
+                        writer.WriteString(s.Label, s.Value);
+                    writer.WriteEndObject();
+                }
+
+                // Add compliance settings
+                if (item is DeviceCompliancePolicy cp)
+                {
+                    var settings = ExtractComplianceSettings(cp);
+                    if (settings.Count > 0)
+                    {
+                        writer.WriteStartObject("_settings");
+                        foreach (var (label, value) in settings)
+                            writer.WriteString(label, value);
+                        writer.WriteEndObject();
+                    }
+                }
+
+                // Add script content
+                if (item is DeviceHealthScript or DeviceManagementScript or DeviceShellScript or DeviceComplianceScript)
+                {
+                    if (SelectedItemDetectionScript is { Length: > 0 } and not "Loading...")
+                        writer.WriteString("_detectionScript", SelectedItemDetectionScript);
+                    if (SelectedItemRemediationScript is { Length: > 0 } and not "Loading...")
+                        writer.WriteString("_remediationScript", SelectedItemRemediationScript);
+                }
+
+                // Add assignments
+                if (SelectedItemAssignments.Count > 0)
+                {
+                    writer.WriteStartArray("_assignments");
+                    foreach (var a in SelectedItemAssignments)
+                    {
+                        writer.WriteStartObject();
+                        writer.WriteString("intent", a.Intent);
+                        writer.WriteString("target", a.Target);
+                        writer.WriteString("groupId", a.GroupId);
+                        writer.WriteString("targetKind", a.TargetKind);
+                        writer.WriteEndObject();
+                    }
+                    writer.WriteEndArray();
+                }
+
+                writer.WriteEndObject();
+            }
+
+            json = Encoding.UTF8.GetString(stream.ToArray());
 
             ViewRawJsonRequested?.Invoke(title, json);
 
@@ -447,6 +513,15 @@ public partial class MainWindowViewModel : ViewModelBase
             Append(sb, "Created", sc.CreatedDateTime?.ToString("g"));
 
             Append(sb, "Last Modified", sc.LastModifiedDateTime?.ToString("g"));
+
+            // SETTINGS section
+            if (SelectedItemCatalogSettings.Count > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("SETTINGS");
+                foreach (var setting in SelectedItemCatalogSettings)
+                    sb.AppendLine($"  {setting.Label}: {setting.Value}");
+            }
 
             AppendAssignments(sb);
 
@@ -763,6 +838,22 @@ public partial class MainWindowViewModel : ViewModelBase
             if (SelectedItemVersion is { Length: > 0 })
                 Append(sb, "Version", SelectedItemVersion);
 
+            // SCRIPTS section
+            if (SelectedItemDetectionScript is { Length: > 0 } and not "Loading...")
+            {
+                sb.AppendLine();
+                sb.AppendLine("DETECTION SCRIPT");
+                sb.AppendLine(SelectedItemDetectionScript);
+            }
+            if (SelectedItemRemediationScript is { Length: > 0 } and not "Loading...")
+            {
+                sb.AppendLine();
+                sb.AppendLine("REMEDIATION SCRIPT");
+                sb.AppendLine(SelectedItemRemediationScript);
+            }
+
+            AppendAssignments(sb);
+
         }
 
         else if (SelectedMacCustomAttribute is { } macCustomAttribute)
@@ -986,6 +1077,14 @@ public partial class MainWindowViewModel : ViewModelBase
 
             Append(sb, "ID", dms.Id);
 
+            // SCRIPT CONTENT
+            if (SelectedItemDetectionScript is { Length: > 0 } and not "Loading...")
+            {
+                sb.AppendLine();
+                sb.AppendLine("SCRIPT CONTENT");
+                sb.AppendLine(SelectedItemDetectionScript);
+            }
+
             AppendAssignments(sb);
 
         }
@@ -1016,6 +1115,14 @@ public partial class MainWindowViewModel : ViewModelBase
 
             Append(sb, "ID", dss.Id);
 
+            // SCRIPT CONTENT
+            if (SelectedItemDetectionScript is { Length: > 0 } and not "Loading...")
+            {
+                sb.AppendLine();
+                sb.AppendLine("SCRIPT CONTENT");
+                sb.AppendLine(SelectedItemDetectionScript);
+            }
+
             AppendAssignments(sb);
 
         }
@@ -1043,6 +1150,14 @@ public partial class MainWindowViewModel : ViewModelBase
             Append(sb, "Created", cs.CreatedDateTime?.ToString("g"));
 
             Append(sb, "Last Modified", cs.LastModifiedDateTime?.ToString("g"));
+
+            // SCRIPT CONTENT
+            if (SelectedItemDetectionScript is { Length: > 0 } and not "Loading...")
+            {
+                sb.AppendLine();
+                sb.AppendLine("DETECTION SCRIPT");
+                sb.AppendLine(SelectedItemDetectionScript);
+            }
 
         }
 
