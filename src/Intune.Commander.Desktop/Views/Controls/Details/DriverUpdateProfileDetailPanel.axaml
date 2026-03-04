@@ -55,10 +55,6 @@
                             <SelectableTextBlock Text="{Binding SelectedDriverUpdateProfile.DeviceReporting}" FontSize="{StaticResource FontSizeBody}" />
                         </StackPanel>
                     </Grid>
-                    <StackPanel Spacing="2">
-                        <TextBlock Text="New Updates Available" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
-                        <SelectableTextBlock Text="{Binding SelectedDriverUpdateProfile.NewUpdatesAvailable}" FontSize="{StaticResource FontSizeBody}" />
-                    </StackPanel>
                 </StackPanel>
             </Border>
 

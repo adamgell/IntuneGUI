@@ -45,8 +45,8 @@
                             <SelectableTextBlock Text="{Binding SelectedVppToken.LastSyncStatus}" FontSize="{StaticResource FontSizeBody}" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Spacing="2">
-                            <TextBlock Text="Read Only Account" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
-                            <SelectableTextBlock Text="{Binding SelectedVppToken.IsReadOnlyAccount}" FontSize="{StaticResource FontSizeBody}" />
+                            <TextBlock Text="Country/Region" FontSize="{StaticResource FontSizeCaption}" Foreground="{DynamicResource AppTextSecondaryBrush}" />
+                            <SelectableTextBlock Text="{Binding SelectedVppToken.CountryOrRegion}" FontSize="{StaticResource FontSizeBody}" />
                         </StackPanel>
                     </Grid>
                     <StackPanel Spacing="2">
