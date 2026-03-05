@@ -94,12 +94,25 @@ public static class SettingsCatalogDefinitionRegistry
 
     private static List<T> LoadGzipResource<T>(string resourceName)
     {
-        var assembly = typeof(SettingsCatalogDefinitionRegistry).Assembly;
-        using var stream = assembly.GetManifestResourceStream(resourceName);
-        if (stream == null) return [];
+        try
+        {
+            var assembly = typeof(SettingsCatalogDefinitionRegistry).Assembly;
+            using var stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream == null) return [];
 
-        using var gzip = new GZipStream(stream, CompressionMode.Decompress);
-        return JsonSerializer.Deserialize<List<T>>(gzip, JsonOptions) ?? [];
+            using var gzip = new GZipStream(stream, CompressionMode.Decompress);
+            return JsonSerializer.Deserialize<List<T>>(gzip, JsonOptions) ?? [];
+        }
+        catch (Exception ex) when (ex is InvalidDataException or JsonException)
+        {
+            // This runs inside Lazy<>, so an unhandled exception would be cached
+            // permanently and re-thrown on every future access for the lifetime of
+            // the process. Return empty so the app falls back to string-parsing
+            // display names instead of being permanently broken.
+            System.Diagnostics.Debug.WriteLine(
+                $"[SettingsCatalogDefinitionRegistry] Failed to load {resourceName}: {ex.Message}");
+            return [];
+        }
     }
 
     private static readonly JsonSerializerOptions JsonOptions = new()
