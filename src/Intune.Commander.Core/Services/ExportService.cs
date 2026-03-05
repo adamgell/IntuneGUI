@@ -742,14 +742,19 @@ public class ExportService : IExportService
         DeviceHealthScript script,
         string outputPath,
         MigrationTable migrationTable,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        List<DeviceHealthScriptAssignment>? assignments = null)
     {
         var folderPath = Path.Combine(outputPath, "DeviceHealthScripts");
         Directory.CreateDirectory(folderPath);
 
         var filePath = GetUniqueFilePath(folderPath, script.DisplayName ?? script.Id ?? "unknown", script.Id);
 
-        var json = JsonSerializer.Serialize(script, script.GetType(), JsonOptions);
+        object exportPayload = assignments != null
+            ? new Models.DeviceHealthScriptExport { Script = script, Assignments = assignments }
+            : script;
+
+        var json = JsonSerializer.Serialize(exportPayload, exportPayload.GetType(), JsonOptions);
         await File.WriteAllTextAsync(filePath, json, cancellationToken);
 
         if (script.Id != null)
