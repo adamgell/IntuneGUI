@@ -104,10 +104,10 @@ function Invoke-GraphPaginated {
             $response = Invoke-RestMethod -Uri $nextLink -Headers $headers -Method Get
         }
         catch {
-            $status = $_.Exception.Response.StatusCode.value__
-            if ($status -eq 429) {
+            $responseMessage = $_.Exception.Response
+            if ($null -ne $responseMessage -and $responseMessage.StatusCode.value__ -eq 429) {
                 $retryAfter = 30
-                $retryHeader = $_.Exception.Response.Headers | Where-Object { $_.Key -eq "Retry-After" }
+                $retryHeader = $responseMessage.Headers | Where-Object { $_.Key -eq "Retry-After" }
                 if ($retryHeader) { $retryAfter = [int]$retryHeader.Value[0] }
                 Write-Warning "  Throttled (429). Waiting ${retryAfter}s..."
                 Start-Sleep -Seconds $retryAfter
