@@ -1313,4 +1313,156 @@ public class ExportServiceTests : IDisposable
 
         Assert.Empty(table.Entries);
     }
+
+    [Fact]
+    public async Task ExportConditionalAccessPolicy_CreatesJsonFile()
+    {
+        var policy = new ConditionalAccessPolicy { Id = "ca-id", DisplayName = "Block Legacy Auth" };
+        var table = new MigrationTable();
+
+        await _service.ExportConditionalAccessPolicyAsync(policy, _tempDir, table);
+
+        Assert.True(File.Exists(Path.Combine(_tempDir, "ConditionalAccessPolicies", "Block Legacy Auth.json")));
+        Assert.Contains(table.Entries, e => e.ObjectType == "ConditionalAccessPolicy" && e.OriginalId == "ca-id");
+    }
+
+    [Fact]
+    public async Task ExportConditionalAccessPolicies_ExportsMultipleAndWritesMigrationTable()
+    {
+        var policies = new[]
+        {
+            new ConditionalAccessPolicy { Id = "ca-1", DisplayName = "Policy One" },
+            new ConditionalAccessPolicy { Id = "ca-2", DisplayName = "Policy Two" }
+        };
+
+        await _service.ExportConditionalAccessPoliciesAsync(policies, _tempDir);
+
+        var folder = Path.Combine(_tempDir, "ConditionalAccessPolicies");
+        Assert.Equal(2, Directory.GetFiles(folder, "*.json").Length);
+        Assert.True(File.Exists(Path.Combine(_tempDir, "migration-table.json")));
+    }
+
+    [Fact]
+    public async Task ExportConditionalAccessPolicy_NullId_SkipsMigrationTableEntry()
+    {
+        var policy = new ConditionalAccessPolicy { Id = null, DisplayName = "No Id Policy" };
+        var table = new MigrationTable();
+
+        await _service.ExportConditionalAccessPolicyAsync(policy, _tempDir, table);
+
+        Assert.Empty(table.Entries);
+    }
+
+    [Fact]
+    public async Task ExportConditionalAccessPolicyWithResolvedGuids_ReplacesGuidsInOutput()
+    {
+        var policy = new ConditionalAccessPolicy
+        {
+            Id = "ca-resolved-id",
+            DisplayName = "Resolved Policy",
+            Conditions = new ConditionalAccessConditionSet
+            {
+                Users = new ConditionalAccessUsers
+                {
+                    IncludeUsers = ["user-guid-1", "All"],
+                    ExcludeGroups = ["group-guid-1"]
+                },
+                Applications = new ConditionalAccessApplications
+                {
+                    IncludeApplications = ["app-guid-1", "Office365"]
+                },
+                Locations = new ConditionalAccessLocations
+                {
+                    IncludeLocations = ["loc-guid-1", "AllTrusted"]
+                }
+            }
+        };
+
+        var nameLookup = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["user-guid-1"] = "John Smith",
+            ["group-guid-1"] = "IT Department",
+            ["app-guid-1"] = "My Custom App",
+            ["loc-guid-1"] = "Corporate HQ"
+        };
+
+        var table = new MigrationTable();
+        await _service.ExportConditionalAccessPolicyWithResolvedGuidsAsync(
+            policy, _tempDir, table, nameLookup);
+
+        var filePath = Path.Combine(_tempDir, "ConditionalAccessPolicies", "Resolved Policy.json");
+        Assert.True(File.Exists(filePath));
+
+        var json = await File.ReadAllTextAsync(filePath);
+
+        // Resolved names should appear in the output
+        Assert.Contains("John Smith", json);
+        Assert.Contains("IT Department", json);
+        Assert.Contains("My Custom App", json);
+        Assert.Contains("Corporate HQ", json);
+
+        // Original GUIDs should NOT appear
+        Assert.DoesNotContain("user-guid-1", json);
+        Assert.DoesNotContain("group-guid-1", json);
+        Assert.DoesNotContain("app-guid-1", json);
+        Assert.DoesNotContain("loc-guid-1", json);
+
+        // Special values should be preserved as-is
+        Assert.Contains("All", json);
+        Assert.Contains("Office365", json);
+        Assert.Contains("AllTrusted", json);
+
+        // Migration table should still be populated
+        Assert.Contains(table.Entries, e => e.ObjectType == "ConditionalAccessPolicy" && e.OriginalId == "ca-resolved-id");
+    }
+
+    [Fact]
+    public async Task ExportConditionalAccessPolicyWithResolvedGuids_UnresolvedGuidsLeftAsIs()
+    {
+        var policy = new ConditionalAccessPolicy
+        {
+            Id = "ca-unresolved",
+            DisplayName = "Unresolved Test",
+            Conditions = new ConditionalAccessConditionSet
+            {
+                Users = new ConditionalAccessUsers
+                {
+                    IncludeUsers = ["unknown-guid-1"]
+                }
+            }
+        };
+
+        // Empty lookup — nothing resolves
+        var nameLookup = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var table = new MigrationTable();
+
+        await _service.ExportConditionalAccessPolicyWithResolvedGuidsAsync(
+            policy, _tempDir, table, nameLookup);
+
+        var filePath = Path.Combine(_tempDir, "ConditionalAccessPolicies", "Unresolved Test.json");
+        var json = await File.ReadAllTextAsync(filePath);
+
+        // Unresolved GUID should remain in the output
+        Assert.Contains("unknown-guid-1", json);
+    }
+
+    [Fact]
+    public async Task ExportConditionalAccessPolicyWithResolvedGuids_NullConditionsHandledGracefully()
+    {
+        var policy = new ConditionalAccessPolicy
+        {
+            Id = "ca-null-conditions",
+            DisplayName = "Null Conditions"
+            // No Conditions set — all null
+        };
+
+        var nameLookup = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var table = new MigrationTable();
+
+        // Should not throw
+        await _service.ExportConditionalAccessPolicyWithResolvedGuidsAsync(
+            policy, _tempDir, table, nameLookup);
+
+        Assert.True(File.Exists(Path.Combine(_tempDir, "ConditionalAccessPolicies", "Null Conditions.json")));
+    }
 }

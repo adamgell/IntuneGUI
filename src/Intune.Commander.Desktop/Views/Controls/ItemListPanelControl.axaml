@@ -53,6 +53,15 @@
                         <TextBlock Text="Export PowerPoint" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
+                <ToggleButton IsChecked="{Binding IsDetailPaneVisible}"
+                              Classes="Small"
+                              VerticalAlignment="Center"
+                              ToolTip.Tip="Toggle detail panel visibility">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <mi:MaterialIcon Kind="InformationOutline" Width="16" Height="16" />
+                        <TextBlock Text="Details" VerticalAlignment="Center" />
+                    </StackPanel>
+                </ToggleButton>
                 <Button Content="⋮ Columns"
                         x:Name="ColumnChooserButton"
                         Classes="Small"
@@ -79,6 +88,7 @@
                       AutoGenerateColumns="False"
                       IsReadOnly="True"
                       CanUserResizeColumns="True"
+                      FrozenColumnCount="1"
                       GridLinesVisibility="Horizontal"
                       FontSize="{StaticResource FontSizeBody}"
                       BorderThickness="1"

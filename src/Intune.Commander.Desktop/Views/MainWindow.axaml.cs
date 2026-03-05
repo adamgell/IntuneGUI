@@ -196,6 +196,10 @@ public partial class MainWindow : SukiWindow
                 }, DispatcherPriority.Render);
             }
         }
+        else if (e.PropertyName == nameof(MainWindowViewModel.IsDetailPaneVisible))
+        {
+            UpdateDetailPaneRowHeight();
+        }
         else if (e.PropertyName?.StartsWith("Filtered") == true)
         {
             _vm?.RefreshActiveItemsSource();
@@ -244,6 +248,32 @@ public partial class MainWindow : SukiWindow
             };
 
             grid.Columns.Add(dgCol);
+        }
+    }
+
+    private void UpdateDetailPaneRowHeight()
+    {
+        if (_vm == null) return;
+
+        // Find the content Grid that has 3 RowDefinitions (ItemList, Splitter, DetailPane)
+        var contentGrid = this.GetVisualDescendants()
+            .OfType<Grid>()
+            .FirstOrDefault(g => g.RowDefinitions.Count == 3);
+
+        if (contentGrid == null) return;
+
+        // The detail pane row is the third one (index 2), named "DetailPaneRow"
+        var detailRow = contentGrid.RowDefinitions[2];
+
+        if (_vm.IsDetailPaneVisible)
+        {
+            detailRow.Height = new GridLength(2, GridUnitType.Star);
+            detailRow.MinHeight = 100;
+        }
+        else
+        {
+            detailRow.Height = new GridLength(0);
+            detailRow.MinHeight = 0;
         }
     }
 

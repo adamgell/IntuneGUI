@@ -18,6 +18,7 @@ public class ConditionalAccessPptExportService : IConditionalAccessPptExportServ
     private readonly IAuthenticationContextService _authContextService;
     private readonly IApplicationService _applicationService;
     private readonly IDirectoryObjectResolver? _resolver;
+    private readonly ITermsOfUseService? _termsOfUseService;
 
     public ConditionalAccessPptExportService(
         IConditionalAccessPolicyService caPolicyService,
@@ -25,7 +26,8 @@ public class ConditionalAccessPptExportService : IConditionalAccessPptExportServ
         IAuthenticationStrengthService authStrengthService,
         IAuthenticationContextService authContextService,
         IApplicationService applicationService,
-        IDirectoryObjectResolver? resolver = null)
+        IDirectoryObjectResolver? resolver = null,
+        ITermsOfUseService? termsOfUseService = null)
     {
         _caPolicyService = caPolicyService;
         _namedLocationService = namedLocationService;
@@ -33,6 +35,7 @@ public class ConditionalAccessPptExportService : IConditionalAccessPptExportServ
         _authContextService = authContextService;
         _applicationService = applicationService;
         _resolver = resolver;
+        _termsOfUseService = termsOfUseService;
     }
 
     public async Task ExportAsync(
@@ -177,7 +180,7 @@ public class ConditionalAccessPptExportService : IConditionalAccessPptExportServ
             ppt.SetTextFormatted(Shape.DeviceFilters, deviceFilters.IncludeExclude);
 
         // ── Grant / block controls ────────────────────────────────────────────
-        var grantBlock = new ControlGrantBlock(policy);
+        var grantBlock = new ControlGrantBlock(policy, nameLookup);
         ppt.Show(grantBlock.IsGrant, Shape.GrantLabelGrantAccess, Shape.IconGrantAccess);
         ppt.Show(!grantBlock.IsGrant, Shape.GrantLabelBlockAccess, Shape.IconBlockAccess);
 
@@ -241,67 +244,189 @@ public class ConditionalAccessPptExportService : IConditionalAccessPptExportServ
     }
 
     /// <summary>
-    /// Collects all directory object GUIDs referenced across all policies and resolves them
-    /// in a single batch call. Returns an empty dictionary if no resolver is configured.
+    /// Collects all GUIDs referenced across all policies, categorises them by type,
+    /// and resolves each category via the appropriate service. Named location IDs,
+    /// auth context IDs, auth strength IDs, and terms-of-use IDs are NOT sent to
+    /// the directory object resolver — they are resolved via their own services.
     /// </summary>
     private async Task<IReadOnlyDictionary<string, string>> ResolveAllDirectoryObjectsAsync(
         List<ConditionalAccessPolicy> policies,
         CancellationToken cancellationToken)
     {
-        if (_resolver == null)
-            return new Dictionary<string, string>();
-
-        var allIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        // ── Collect IDs by category ──────────────────────────────────────────
+        var directoryObjectIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var locationIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var authContextIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var termsOfUseIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        bool hasAuthStrength = false;
 
         foreach (var policy in policies)
         {
             var conditions = policy.Conditions;
             if (conditions == null) continue;
 
-            // Users: include/exclude users, groups, roles
+            // Users: include/exclude users, groups, roles → directory objects
             var users = conditions.Users;
             if (users != null)
             {
-                AddAll(allIds, users.IncludeUsers);
-                AddAll(allIds, users.ExcludeUsers);
-                AddAll(allIds, users.IncludeGroups);
-                AddAll(allIds, users.ExcludeGroups);
-                AddAll(allIds, users.IncludeRoles);
-                AddAll(allIds, users.ExcludeRoles);
+                AddAll(directoryObjectIds, users.IncludeUsers);
+                AddAll(directoryObjectIds, users.ExcludeUsers);
+                AddAll(directoryObjectIds, users.IncludeGroups);
+                AddAll(directoryObjectIds, users.ExcludeGroups);
+                AddAll(directoryObjectIds, users.IncludeRoles);
+                AddAll(directoryObjectIds, users.ExcludeRoles);
             }
 
-            // Workload identities: service principals
+            // Workload identities: service principals → directory objects
             var clientApps = conditions.ClientApplications;
             if (clientApps != null)
             {
-                AddAll(allIds, clientApps.IncludeServicePrincipals);
-                AddAll(allIds, clientApps.ExcludeServicePrincipals);
+                AddAll(directoryObjectIds, clientApps.IncludeServicePrincipals);
+                AddAll(directoryObjectIds, clientApps.ExcludeServicePrincipals);
             }
 
-            // Applications: include/exclude app IDs
+            // Applications: include/exclude app IDs → directory objects
             var apps = conditions.Applications;
             if (apps != null)
             {
-                AddAll(allIds, apps.IncludeApplications);
-                AddAll(allIds, apps.ExcludeApplications);
+                AddAll(directoryObjectIds, apps.IncludeApplications);
+                AddAll(directoryObjectIds, apps.ExcludeApplications);
+
+                // Auth context class references → resolved via auth context service
+                AddAll(authContextIds, apps.IncludeAuthenticationContextClassReferences);
             }
 
-            // Locations: named location IDs
+            // Locations: named location IDs → resolved via named location service
             var locs = conditions.Locations;
             if (locs != null)
             {
-                AddAll(allIds, locs.IncludeLocations);
-                AddAll(allIds, locs.ExcludeLocations);
+                AddAll(locationIds, locs.IncludeLocations);
+                AddAll(locationIds, locs.ExcludeLocations);
+            }
+
+            // Grant controls: terms of use and auth strength
+            var grant = policy.GrantControls;
+            if (grant != null)
+            {
+                AddAll(termsOfUseIds, grant.TermsOfUse);
+                if (grant.AuthenticationStrength != null)
+                    hasAuthStrength = true;
             }
         }
 
-        // Remove empty entries
-        allIds.Remove(string.Empty);
+        // Remove well-known sentinel values that aren't real GUIDs
+        directoryObjectIds.Remove(string.Empty);
+        locationIds.Remove(string.Empty);
+        authContextIds.Remove(string.Empty);
+        termsOfUseIds.Remove(string.Empty);
 
-        if (allIds.Count == 0)
-            return new Dictionary<string, string>();
+        // ── Resolve each category in parallel ────────────────────────────────
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        return await _resolver.ResolveAsync(allIds, cancellationToken);
+        // Directory objects
+        var directoryTask = (directoryObjectIds.Count > 0 && _resolver != null)
+            ? _resolver.ResolveAsync(directoryObjectIds, cancellationToken)
+            : Task.FromResult<IReadOnlyDictionary<string, string>>(new Dictionary<string, string>());
+
+        // Named locations
+        var locationTask = locationIds.Count > 0
+            ? ResolveNamedLocationsAsync(cancellationToken)
+            : Task.FromResult<Dictionary<string, string>>(new Dictionary<string, string>());
+
+        // Auth strengths
+        var authStrengthTask = hasAuthStrength
+            ? ResolveAuthStrengthsAsync(cancellationToken)
+            : Task.FromResult<Dictionary<string, string>>(new Dictionary<string, string>());
+
+        // Auth contexts
+        var authContextTask = authContextIds.Count > 0
+            ? ResolveAuthContextsAsync(cancellationToken)
+            : Task.FromResult<Dictionary<string, string>>(new Dictionary<string, string>());
+
+        // Terms of use
+        var termsOfUseTask = termsOfUseIds.Count > 0 && _termsOfUseService != null
+            ? ResolveTermsOfUseAsync(cancellationToken)
+            : Task.FromResult<Dictionary<string, string>>(new Dictionary<string, string>());
+
+        await Task.WhenAll(directoryTask, locationTask, authStrengthTask, authContextTask, termsOfUseTask);
+
+        // Merge — directory objects first, then supplementary (TryAdd prevents overwrites)
+        foreach (var kvp in await directoryTask)
+            result.TryAdd(kvp.Key, kvp.Value);
+        foreach (var kvp in await locationTask)
+            result.TryAdd(kvp.Key, kvp.Value);
+        foreach (var kvp in await authStrengthTask)
+            result.TryAdd(kvp.Key, kvp.Value);
+        foreach (var kvp in await authContextTask)
+            result.TryAdd(kvp.Key, kvp.Value);
+        foreach (var kvp in await termsOfUseTask)
+            result.TryAdd(kvp.Key, kvp.Value);
+
+        return result;
+    }
+
+    private async Task<Dictionary<string, string>> ResolveNamedLocationsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var locations = await _namedLocationService.ListNamedLocationsAsync(cancellationToken);
+            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var loc in locations)
+            {
+                if (!string.IsNullOrEmpty(loc.Id) && !string.IsNullOrEmpty(loc.DisplayName))
+                    map.TryAdd(loc.Id, loc.DisplayName);
+            }
+            return map;
+        }
+        catch { return new Dictionary<string, string>(); }
+    }
+
+    private async Task<Dictionary<string, string>> ResolveAuthStrengthsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var strengths = await _authStrengthService.ListAuthenticationStrengthPoliciesAsync(cancellationToken);
+            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var s in strengths)
+            {
+                if (!string.IsNullOrEmpty(s.Id) && !string.IsNullOrEmpty(s.DisplayName))
+                    map.TryAdd(s.Id, s.DisplayName);
+            }
+            return map;
+        }
+        catch { return new Dictionary<string, string>(); }
+    }
+
+    private async Task<Dictionary<string, string>> ResolveAuthContextsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var contexts = await _authContextService.ListAuthenticationContextsAsync(cancellationToken);
+            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var ctx in contexts)
+            {
+                if (!string.IsNullOrEmpty(ctx.Id) && !string.IsNullOrEmpty(ctx.DisplayName))
+                    map.TryAdd(ctx.Id, ctx.DisplayName);
+            }
+            return map;
+        }
+        catch { return new Dictionary<string, string>(); }
+    }
+
+    private async Task<Dictionary<string, string>> ResolveTermsOfUseAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var agreements = await _termsOfUseService!.ListTermsOfUseAgreementsAsync(cancellationToken);
+            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var a in agreements)
+            {
+                if (!string.IsNullOrEmpty(a.Id) && !string.IsNullOrEmpty(a.DisplayName))
+                    map.TryAdd(a.Id, a.DisplayName);
+            }
+            return map;
+        }
+        catch { return new Dictionary<string, string>(); }
     }
 
     private static void AddAll(HashSet<string> target, List<string>? source)

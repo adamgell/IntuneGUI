@@ -528,6 +528,22 @@ public partial class MainWindowViewModel : ViewModelBase
                 await _exportService.ExportAuthenticationStrengthPolicyAsync(
                     SelectedAuthenticationStrengthPolicy, outputPath, migrationTable, cancellationToken);
             }
+            else if (IsConditionalAccessCategory && SelectedConditionalAccessPolicy != null)
+            {
+                StatusText = $"Exporting {SelectedConditionalAccessPolicy.DisplayName ?? "conditional access policy"}...";
+                if (ResolveGuidsInCaExport && _directoryObjectResolver != null)
+                {
+                    var lookup = await BuildCaGuidLookupAsync(
+                        [SelectedConditionalAccessPolicy], cancellationToken);
+                    await _exportService.ExportConditionalAccessPolicyWithResolvedGuidsAsync(
+                        SelectedConditionalAccessPolicy, outputPath, migrationTable, lookup, cancellationToken);
+                }
+                else
+                {
+                    await _exportService.ExportConditionalAccessPolicyAsync(
+                        SelectedConditionalAccessPolicy, outputPath, migrationTable, cancellationToken);
+                }
+            }
             else if (IsAuthenticationContextsCategory && SelectedAuthenticationContextClassReference != null)
             {
                 StatusText = $"Exporting {SelectedAuthenticationContextClassReference.DisplayName}...";
@@ -868,6 +884,34 @@ public partial class MainWindowViewModel : ViewModelBase
                 foreach (var policy in AuthenticationStrengthPolicies)
                 {
                     await _exportService.ExportAuthenticationStrengthPolicyAsync(policy, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
+            // Export conditional access policies
+            if (ConditionalAccessPolicies.Any())
+            {
+                StatusText = "Exporting conditional access policies...";
+                IReadOnlyDictionary<string, string>? caLookup = null;
+                if (ResolveGuidsInCaExport && _directoryObjectResolver != null)
+                {
+                    StatusText = "Resolving conditional access policy GUIDs...";
+                    caLookup = await BuildCaGuidLookupAsync(
+                        ConditionalAccessPolicies, cancellationToken);
+                }
+
+                foreach (var policy in ConditionalAccessPolicies)
+                {
+                    if (caLookup != null)
+                    {
+                        await _exportService.ExportConditionalAccessPolicyWithResolvedGuidsAsync(
+                            policy, outputPath, migrationTable, caLookup, cancellationToken);
+                    }
+                    else
+                    {
+                        await _exportService.ExportConditionalAccessPolicyAsync(
+                            policy, outputPath, migrationTable, cancellationToken);
+                    }
                     count++;
                 }
             }
@@ -1237,5 +1281,80 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             IsBusy = false;
         }
+    }
+
+    /// <summary>
+    /// Builds a comprehensive GUID → display-name lookup for Conditional Access
+    /// policy exports. Combines DirectoryObjectResolver results (users, groups,
+    /// roles, apps) with local collection lookups (named locations, auth strengths,
+    /// auth contexts).
+    /// </summary>
+    private async Task<IReadOnlyDictionary<string, string>> BuildCaGuidLookupAsync(
+        IEnumerable<ConditionalAccessPolicy> policies,
+        CancellationToken cancellationToken)
+    {
+        var allGuids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        void AddGuids(IReadOnlyList<string>? ids)
+        {
+            if (ids == null) return;
+            foreach (var id in ids)
+                if (!string.IsNullOrWhiteSpace(id) && !IsSpecialCaValue(id))
+                    allGuids.Add(id);
+        }
+
+        foreach (var policy in policies)
+        {
+            AddGuids(policy.Conditions?.Users?.IncludeUsers);
+            AddGuids(policy.Conditions?.Users?.ExcludeUsers);
+            AddGuids(policy.Conditions?.Users?.IncludeGroups);
+            AddGuids(policy.Conditions?.Users?.ExcludeGroups);
+            AddGuids(policy.Conditions?.Users?.IncludeRoles);
+            AddGuids(policy.Conditions?.Users?.ExcludeRoles);
+            AddGuids(policy.Conditions?.Applications?.IncludeApplications);
+            AddGuids(policy.Conditions?.Applications?.ExcludeApplications);
+        }
+
+        // Resolve directory objects (users, groups, roles, apps, service principals)
+        var lookup = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (allGuids.Count > 0 && _directoryObjectResolver != null)
+        {
+            var resolved = await _directoryObjectResolver.ResolveAsync(allGuids, cancellationToken);
+            foreach (var kvp in resolved)
+                lookup[kvp.Key] = kvp.Value;
+        }
+
+        // Supplement with named locations (not directory objects)
+        foreach (var loc in NamedLocations)
+        {
+            var locId = TryReadStringProperty(loc, "Id");
+            var locName = TryReadStringProperty(loc, "DisplayName");
+            if (!string.IsNullOrEmpty(locId) && !string.IsNullOrEmpty(locName))
+                lookup.TryAdd(locId, locName);
+        }
+
+        // Supplement with authentication strength policies
+        foreach (var strength in AuthenticationStrengthPolicies)
+        {
+            if (!string.IsNullOrEmpty(strength.Id) && !string.IsNullOrEmpty(strength.DisplayName))
+                lookup.TryAdd(strength.Id, strength.DisplayName);
+        }
+
+        // Supplement with authentication context class references
+        foreach (var ctx in AuthenticationContextClassReferences)
+        {
+            if (!string.IsNullOrEmpty(ctx.Id) && !string.IsNullOrEmpty(ctx.DisplayName))
+                lookup.TryAdd(ctx.Id, ctx.DisplayName);
+        }
+
+        // Add human-readable labels for common special values
+        lookup.TryAdd("All", "All");
+        lookup.TryAdd("None", "None");
+        lookup.TryAdd("AllTrusted", "All Trusted Locations");
+        lookup.TryAdd("GuestsOrExternalUsers", "Guests or External Users");
+        lookup.TryAdd("Office365", "Office 365");
+        lookup.TryAdd("MicrosoftAdminPortals", "Microsoft Admin Portals");
+
+        return lookup;
     }
 }

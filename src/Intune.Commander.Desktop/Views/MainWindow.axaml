@@ -37,6 +37,11 @@
             <MenuItem Header="Reports">
                 <MenuItem Header="Assignment Report..." x:Name="MenuAssignmentReport" Click="OnAssignmentReportClick" IsEnabled="{Binding IsConnected}" />
             </MenuItem>
+            <MenuItem Header="Options">
+                <MenuItem Header="Resolve GUIDs in CA Exports"
+                          ToggleType="CheckBox"
+                          IsChecked="{Binding ResolveGuidsInCaExport}" />
+            </MenuItem>
             <MenuItem Header="Help">
                 <MenuItem Header="Check for Updates..." x:Name="MenuCheckUpdates" Click="OnCheckForUpdatesClick" />
                 <Separator />
@@ -111,19 +116,46 @@
                     <!-- Sidebar -->
                     <controls:NavSidebarControl Grid.Column="0" />
 
-                    <!-- Content area -->
-                    <Grid Grid.Column="1" ColumnDefinitions="*,Auto">
+                    <!-- Content area: top/bottom split with draggable splitter -->
+                    <Grid Grid.Column="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="3*" MinHeight="150" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="2*" MinHeight="0" />
+                        </Grid.RowDefinitions>
 
-                        <!-- Item List (center) -->
-                        <controls:ItemListPanelControl IsVisible="{Binding !IsOverviewCategory}" />
-                        <!-- Overview Dashboard (spans center + detail columns) -->
-                        <views:OverviewView Grid.ColumnSpan="2"
+                        <!-- Item List (top) -->
+                        <controls:ItemListPanelControl Grid.Row="0"
+                                                       IsVisible="{Binding !IsOverviewCategory}" />
+
+                        <!-- Overview Dashboard (spans all rows when visible) -->
+                        <views:OverviewView Grid.Row="0" Grid.RowSpan="3"
                                             DataContext="{Binding Overview}"
                                             IsVisible="{Binding $parent[suki:SukiWindow].((vm:MainWindowViewModel)DataContext).IsOverviewCategory}" />
 
-                        <!-- Detail Pane (right) -->
-                        <DockPanel Grid.Column="1" Margin="16,8,8,8"
-                                   IsVisible="{Binding !IsOverviewCategory}">
+                        <!-- Draggable splitter between list and detail -->
+                        <GridSplitter Grid.Row="1"
+                                      Height="6"
+                                      ResizeDirection="Rows"
+                                      HorizontalAlignment="Stretch"
+                                      Background="Transparent"
+                                      Cursor="SizeNorthSouth">
+                            <GridSplitter.IsVisible>
+                                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                    <Binding Path="!IsOverviewCategory" />
+                                    <Binding Path="IsDetailPaneVisible" />
+                                </MultiBinding>
+                            </GridSplitter.IsVisible>
+                        </GridSplitter>
+
+                        <!-- Detail Pane (bottom) -->
+                        <DockPanel Grid.Row="2" Margin="8,4,8,8">
+                            <DockPanel.IsVisible>
+                                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                    <Binding Path="!IsOverviewCategory" />
+                                    <Binding Path="IsDetailPaneVisible" />
+                                </MultiBinding>
+                            </DockPanel.IsVisible>
                             <controls:DetailPaneHeaderControl DockPanel.Dock="Top" />
 
                             <!-- All detail panels share the same fill area; IsVisible picks the active one -->
