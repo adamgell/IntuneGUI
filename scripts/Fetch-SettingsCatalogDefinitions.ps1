@@ -10,13 +10,14 @@
       - GET /beta/deviceManagement/configurationSettings
       - GET /beta/deviceManagement/configurationCategories
 
-    Outputs two JSON files:
-      - settings-catalog-definitions.json  (setting definitions)
-      - settings-catalog-categories.json   (category tree)
+    Outputs two GZip-compressed JSON files:
+      - settings-catalog-definitions.json.gz  (setting definitions)
+      - settings-catalog-categories.json.gz   (category tree)
 
     These are committed to the repo and embedded in the .exe at build time,
     eliminating the need for runtime Graph calls to resolve setting display
-    names, descriptions, and allowed values.
+    names, descriptions, and allowed values. GZip reduces ~65 MB of JSON
+    to ~5-8 MB in the binary.
 
     The definitions are Microsoft's global schema and are identical across
     all cloud environments, so this always fetches from the Commercial endpoint.
@@ -59,8 +60,8 @@ if (-not (Test-Path $OutputDir)) {
     New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
 }
 
-$settingsFile   = Join-Path $OutputDir "settings-catalog-definitions.json"
-$categoriesFile = Join-Path $OutputDir "settings-catalog-categories.json"
+$settingsFile   = Join-Path $OutputDir "settings-catalog-definitions.json.gz"
+$categoriesFile = Join-Path $OutputDir "settings-catalog-categories.json.gz"
 
 # Settings Catalog definitions are Microsoft's global schema -- identical
 # across Commercial, GCC, GCC-High, and DoD. Always fetch from Commercial.
@@ -176,15 +177,28 @@ if ($orphanIds) {
     Write-Host "  Fetched $fetched/$(@($orphanIds).Count) orphan categories."
 }
 
-# ── Write output ──
+# ── Write compressed output ──
+
+function Write-GzipJson {
+    param(
+        [string]$Path,
+        [string]$Json
+    )
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($Json)
+    $fs = [System.IO.File]::Create($Path)
+    $gz = [System.IO.Compression.GZipStream]::new($fs, [System.IO.Compression.CompressionLevel]::Optimal)
+    $gz.Write($bytes, 0, $bytes.Length)
+    $gz.Dispose()
+    $fs.Dispose()
+}
 
 Write-Host ""
 $settingsJson = $settings | ConvertTo-Json -Depth 20 -Compress
-[System.IO.File]::WriteAllText($settingsFile, $settingsJson, [System.Text.Encoding]::UTF8)
+Write-GzipJson -Path $settingsFile -Json $settingsJson
 Write-Host "Wrote $($settings.Count) settings to $settingsFile"
 
 $categoriesJson = $categories | ConvertTo-Json -Depth 20 -Compress
-[System.IO.File]::WriteAllText($categoriesFile, $categoriesJson, [System.Text.Encoding]::UTF8)
+Write-GzipJson -Path $categoriesFile -Json $categoriesJson
 Write-Host "Wrote $($categories.Count) categories to $categoriesFile"
 
 # ── Summary ──
@@ -194,5 +208,5 @@ $categoriesSize = [math]::Round((Get-Item $categoriesFile).Length / 1MB, 2)
 
 Write-Host ""
 Write-Host "Done!"
-Write-Host "  Settings:   $settingsSize MB ($($settings.Count) definitions)"
-Write-Host "  Categories: $categoriesSize MB ($($categories.Count) categories)"
+Write-Host "  Settings:   $settingsSize MB ($($settings.Count) definitions, gzipped)"
+Write-Host "  Categories: $categoriesSize MB ($($categories.Count) categories, gzipped)"

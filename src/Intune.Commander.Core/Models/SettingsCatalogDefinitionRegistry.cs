@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -65,14 +66,8 @@ public static class SettingsCatalogDefinitionRegistry
 
     private static IReadOnlyDictionary<string, SettingDefinitionEntry> LoadDefinitions()
     {
-        var assembly = typeof(SettingsCatalogDefinitionRegistry).Assembly;
-        const string resourceName = "Intune.Commander.Core.Assets.settings-catalog-definitions.json";
-
-        using var stream = assembly.GetManifestResourceStream(resourceName);
-        if (stream == null)
-            return new Dictionary<string, SettingDefinitionEntry>(StringComparer.OrdinalIgnoreCase);
-
-        var entries = JsonSerializer.Deserialize<List<SettingDefinitionEntry>>(stream, JsonOptions) ?? [];
+        var entries = LoadGzipResource<SettingDefinitionEntry>(
+            "Intune.Commander.Core.Assets.settings-catalog-definitions.json.gz");
 
         var dict = new Dictionary<string, SettingDefinitionEntry>(entries.Count, StringComparer.OrdinalIgnoreCase);
         foreach (var entry in entries)
@@ -85,14 +80,8 @@ public static class SettingsCatalogDefinitionRegistry
 
     private static IReadOnlyDictionary<string, SettingCategoryEntry> LoadCategories()
     {
-        var assembly = typeof(SettingsCatalogDefinitionRegistry).Assembly;
-        const string resourceName = "Intune.Commander.Core.Assets.settings-catalog-categories.json";
-
-        using var stream = assembly.GetManifestResourceStream(resourceName);
-        if (stream == null)
-            return new Dictionary<string, SettingCategoryEntry>(StringComparer.OrdinalIgnoreCase);
-
-        var entries = JsonSerializer.Deserialize<List<SettingCategoryEntry>>(stream, JsonOptions) ?? [];
+        var entries = LoadGzipResource<SettingCategoryEntry>(
+            "Intune.Commander.Core.Assets.settings-catalog-categories.json.gz");
 
         var dict = new Dictionary<string, SettingCategoryEntry>(entries.Count, StringComparer.OrdinalIgnoreCase);
         foreach (var entry in entries)
@@ -101,6 +90,16 @@ public static class SettingsCatalogDefinitionRegistry
                 dict.TryAdd(entry.Id, entry);
         }
         return dict;
+    }
+
+    private static List<T> LoadGzipResource<T>(string resourceName)
+    {
+        var assembly = typeof(SettingsCatalogDefinitionRegistry).Assembly;
+        using var stream = assembly.GetManifestResourceStream(resourceName);
+        if (stream == null) return [];
+
+        using var gzip = new GZipStream(stream, CompressionMode.Decompress);
+        return JsonSerializer.Deserialize<List<T>>(gzip, JsonOptions) ?? [];
     }
 
     private static readonly JsonSerializerOptions JsonOptions = new()
