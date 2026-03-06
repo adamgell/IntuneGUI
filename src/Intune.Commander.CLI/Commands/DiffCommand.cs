@@ -15,11 +15,11 @@ public static class DiffCommand
 
         var baseline = new Option<string>("--baseline", "Path to the baseline export directory") { IsRequired = true };
         var current = new Option<string>("--current", "Path to the current export directory") { IsRequired = true };
-        var format = new Option<string>("--format", () => "json", "Output format: json, text, or markdown");
-        format.AddCompletions("json", "text", "markdown");
+        var format = new Option<string>("--format", () => "json", "Output format: json, text, or markdown")
+            .FromAmong("json", "text", "markdown");
         var output = new Option<string?>("--output", "Write report to a file instead of stdout");
-        var minSeverity = new Option<string>("--min-severity", () => "low", "Minimum severity to include: low, medium, high, or critical");
-        minSeverity.AddCompletions("low", "medium", "high", "critical");
+        var minSeverity = new Option<string>("--min-severity", () => "low", "Minimum severity to include: low, medium, high, or critical")
+            .FromAmong("low", "medium", "high", "critical");
         var failOnDrift = new Option<bool>("--fail-on-drift", "Exit with code 1 when drift is detected at or above min-severity");
 
         command.AddOption(baseline);
@@ -76,12 +76,24 @@ public static class DiffCommand
             return 1;
         }
 
-        var rendered = format.ToLowerInvariant() switch
+        var normalizedFormat = format.ToLowerInvariant();
+        string rendered;
+
+        switch (normalizedFormat)
         {
-            "text" => RenderText(report),
-            "markdown" => RenderMarkdown(report),
-            _ => OutputFormatter.SerializeJson(report)
-        };
+            case "text":
+                rendered = RenderText(report);
+                break;
+            case "markdown":
+                rendered = RenderMarkdown(report);
+                break;
+            case "json":
+                rendered = OutputFormatter.SerializeJson(report);
+                break;
+            default:
+                Console.Error.WriteLine($"Invalid --format value: {format}. Expected: json, text, markdown.");
+                return 1;
+        }
 
         if (!string.IsNullOrWhiteSpace(outputPath))
         {

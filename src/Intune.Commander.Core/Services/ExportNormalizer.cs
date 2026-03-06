@@ -27,6 +27,10 @@ public sealed class ExportNormalizer : IExportNormalizer
         foreach (var file in Directory.EnumerateFiles(directoryPath, "*.json", SearchOption.AllDirectories))
         {
             cancellationToken.ThrowIfCancellationRequested();
+
+            if (string.Equals(Path.GetFileName(file), "migration-table.json", StringComparison.OrdinalIgnoreCase))
+                continue;
+
             var content = await File.ReadAllTextAsync(file, cancellationToken);
             var normalized = NormalizeJson(content);
             await File.WriteAllTextAsync(file, normalized, cancellationToken);
@@ -55,10 +59,13 @@ public sealed class ExportNormalizer : IExportNormalizer
         var normalized = new JsonObject();
 
         foreach (var property in obj
-                     .Where(p => p.Value != null && !VolatileFields.Contains(p.Key))
+                     .Where(p => !VolatileFields.Contains(p.Key))
                      .OrderBy(p => p.Key, StringComparer.Ordinal))
         {
-            normalized[property.Key] = NormalizeNode(property.Value!);
+            if (property.Value is null)
+                normalized[property.Key] = null;
+            else
+                normalized[property.Key] = NormalizeNode(property.Value);
         }
 
         return normalized;
