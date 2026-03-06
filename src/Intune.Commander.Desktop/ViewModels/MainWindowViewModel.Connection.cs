@@ -195,7 +195,8 @@ public partial class MainWindowViewModel : ViewModelBase
                 _authenticationStrengthService,
                 _authenticationContextService,
                 _applicationService,
-                _directoryObjectResolver);
+                _directoryObjectResolver,
+                _termsOfUseService);
 
             ExportConditionalAccessPowerPointCommand.NotifyCanExecuteChanged();
 
@@ -438,6 +439,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private void DisconnectInternal()
 
     {
+        CleanupWrappedItems();
 
         IsConnected = false;
 

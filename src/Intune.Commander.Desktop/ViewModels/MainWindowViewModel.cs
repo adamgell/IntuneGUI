@@ -226,7 +226,7 @@ public partial class MainWindowViewModel : ViewModelBase
     /// human-readable display names for users, groups, apps, locations, etc.
     /// </summary>
     [ObservableProperty]
-    private bool _resolveGuidsInCaExport;
+    private bool _resolveGuidsInCaExport = true;
 
     [ObservableProperty]
 

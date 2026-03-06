@@ -88,7 +88,7 @@
                       AutoGenerateColumns="False"
                       IsReadOnly="True"
                       CanUserResizeColumns="True"
-                      FrozenColumnCount="1"
+                      FrozenColumnCount="2"
                       GridLinesVisibility="Horizontal"
                       FontSize="{StaticResource FontSizeBody}"
                       BorderThickness="1"
@@ -101,6 +101,9 @@
                         <Separator />
                         <MenuItem Header="Export Selected"
                                   Command="{Binding ExportSelectedCommand}" />
+                        <MenuItem Header="Export Checked"
+                                  Command="{Binding ExportCheckedCommand}"
+                                  IsEnabled="{Binding HasCheckedItems}" />
                         <MenuItem Header="Copy Details to Clipboard"
                                   Command="{Binding CopyDetailsToClipboardCommand}" />
                     </ContextMenu>

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using Intune.Commander.Core.Models;
+using Intune.Commander.Desktop.Models;
 using Microsoft.Graph.Beta.Models;
 
 namespace Intune.Commander.Desktop.ViewModels;
@@ -594,6 +595,186 @@ public partial class MainWindowViewModel : ViewModelBase
 
             await _exportService.SaveMigrationTableAsync(migrationTable, outputPath, cancellationToken);
             StatusText = $"Exported to {outputPath}";
+        }
+        catch (Exception ex)
+        {
+            SetError($"Export failed: {FormatGraphError(ex)}");
+            StatusText = "Export failed";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ExportCheckedAsync(CancellationToken cancellationToken)
+    {
+        ClearError();
+        IsBusy = true;
+
+        try
+        {
+            var checkedItems = _activeWrappedItems
+                .Where(w => w.IsSelected)
+                .Select(w => w.Item)
+                .ToList();
+
+            if (checkedItems.Count == 0)
+            {
+                StatusText = "No items checked for export";
+                return;
+            }
+
+            var outputPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+                "IntuneExport");
+            var migrationTable = new MigrationTable();
+            var count = 0;
+
+            StatusText = $"Exporting {checkedItems.Count} checked item(s)...";
+
+            // Resolve CA GUIDs once if needed
+            IReadOnlyDictionary<string, string>? caLookup = null;
+            if (IsConditionalAccessCategory && ResolveGuidsInCaExport && _directoryObjectResolver != null)
+            {
+                var caItems = checkedItems.OfType<ConditionalAccessPolicy>().ToList();
+                if (caItems.Count > 0)
+                {
+                    StatusText = "Resolving conditional access policy GUIDs...";
+                    caLookup = await BuildCaGuidLookupAsync(caItems, cancellationToken);
+                }
+            }
+
+            foreach (var item in checkedItems)
+            {
+                switch (item)
+                {
+                    case DeviceConfiguration config when _configProfileService != null:
+                        // Re-fetch full object — list uses $select and may have partial data
+                        var fullConfig = config.Id != null
+                            ? await _configProfileService.GetDeviceConfigurationAsync(config.Id, cancellationToken)
+                            : null;
+                        await _exportService.ExportDeviceConfigurationAsync(fullConfig ?? config, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case DeviceCompliancePolicy policy when _compliancePolicyService != null:
+                        var compAssignments = policy.Id != null
+                            ? await _compliancePolicyService.GetAssignmentsAsync(policy.Id, cancellationToken)
+                            : [];
+                        await _exportService.ExportCompliancePolicyAsync(policy, compAssignments, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case MobileApp app when _applicationService != null:
+                        // Re-fetch full object — list uses $select and may have partial data
+                        var fullApp = app.Id != null
+                            ? await _applicationService.GetApplicationAsync(app.Id, cancellationToken)
+                            : null;
+                        var appToExport = fullApp ?? app;
+                        var appAssignments = app.Id != null
+                            ? await _applicationService.GetAssignmentsAsync(app.Id, cancellationToken)
+                            : [];
+                        await _exportService.ExportApplicationAsync(appToExport, appAssignments, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case DeviceManagementConfigurationPolicy catalogPolicy when _settingsCatalogService != null:
+                        var settings = catalogPolicy.Id != null
+                            ? await _settingsCatalogService.GetPolicySettingsAsync(catalogPolicy.Id, cancellationToken)
+                            : [];
+                        var scAssignments = catalogPolicy.Id != null
+                            ? await _settingsCatalogService.GetAssignmentsAsync(catalogPolicy.Id, cancellationToken)
+                            : [];
+                        await _exportService.ExportSettingsCatalogPolicyAsync(catalogPolicy, settings, scAssignments, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case DeviceManagementIntent intent when _endpointSecurityService != null:
+                        var esAssignments = intent.Id != null
+                            ? await _endpointSecurityService.GetAssignmentsAsync(intent.Id, cancellationToken)
+                            : [];
+                        await _exportService.ExportEndpointSecurityIntentAsync(intent, esAssignments, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case GroupPolicyConfiguration template when _administrativeTemplateService != null:
+                        var atAssignments = template.Id != null
+                            ? await _administrativeTemplateService.GetAssignmentsAsync(template.Id, cancellationToken)
+                            : [];
+                        await _exportService.ExportAdministrativeTemplateAsync(template, atAssignments, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case DeviceEnrollmentConfiguration enrollConfig:
+                        await _exportService.ExportEnrollmentConfigurationAsync(enrollConfig, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case TargetedManagedAppConfiguration tmAppConfig:
+                        await _exportService.ExportTargetedManagedAppConfigurationAsync(tmAppConfig, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case ManagedAppPolicy appProtection:
+                        await _exportService.ExportAppProtectionPolicyAsync(appProtection, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case ManagedDeviceMobileAppConfiguration mdAppConfig:
+                        await _exportService.ExportManagedDeviceAppConfigurationAsync(mdAppConfig, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case TermsAndConditions terms:
+                        await _exportService.ExportTermsAndConditionsAsync(terms, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case RoleScopeTag scopeTag:
+                        await _exportService.ExportScopeTagAsync(scopeTag, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case RoleDefinition roleDef:
+                        await _exportService.ExportRoleDefinitionAsync(roleDef, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case IntuneBrandingProfile brandingProfile:
+                        await _exportService.ExportIntuneBrandingProfileAsync(brandingProfile, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case OrganizationalBrandingLocalization azBranding:
+                        await _exportService.ExportAzureBrandingLocalizationAsync(azBranding, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case ConditionalAccessPolicy caPolicy:
+                        if (caLookup != null)
+                            await _exportService.ExportConditionalAccessPolicyWithResolvedGuidsAsync(caPolicy, outputPath, migrationTable, caLookup, cancellationToken);
+                        else
+                            await _exportService.ExportConditionalAccessPolicyAsync(caPolicy, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case WindowsAutopilotDeploymentProfile autopilot:
+                        await _exportService.ExportAutopilotProfileAsync(autopilot, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case DeviceHealthScript healthScript:
+                        await _exportService.ExportDeviceHealthScriptAsync(healthScript, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case DeviceCustomAttributeShellScript macAttr:
+                        await _exportService.ExportMacCustomAttributeAsync(macAttr, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case WindowsFeatureUpdateProfile featureUpdate:
+                        await _exportService.ExportFeatureUpdateProfileAsync(featureUpdate, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case WindowsQualityUpdateProfile qualityUpdate:
+                        await _exportService.ExportQualityUpdateProfileAsync(qualityUpdate, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case WindowsDriverUpdateProfile driverUpdate:
+                        await _exportService.ExportDriverUpdateProfileAsync(driverUpdate, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case NamedLocation namedLoc:
+                        await _exportService.ExportNamedLocationAsync(namedLoc, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case AuthenticationStrengthPolicy authStrength:
+                        await _exportService.ExportAuthenticationStrengthPolicyAsync(authStrength, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case AuthenticationContextClassReference authContext:
+                        await _exportService.ExportAuthenticationContextAsync(authContext, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case Agreement termsOfUse:
+                        await _exportService.ExportTermsOfUseAgreementAsync(termsOfUse, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case DeviceManagementScript dmScript:
+                        await _exportService.ExportDeviceManagementScriptAsync(dmScript, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case DeviceShellScript shellScript:
+                        await _exportService.ExportDeviceShellScriptAsync(shellScript, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case DeviceComplianceScript compScript:
+                        await _exportService.ExportComplianceScriptAsync(compScript, outputPath, migrationTable, cancellationToken);
+                        break;
+                }
+
+                count++;
+                StatusText = $"Exported {count} of {checkedItems.Count} checked item(s)...";
+            }
+
+            await _exportService.SaveMigrationTableAsync(migrationTable, outputPath, cancellationToken);
+            StatusText = $"Exported {count} checked item(s) to {outputPath}";
         }
         catch (Exception ex)
         {
@@ -1324,24 +1505,40 @@ public partial class MainWindowViewModel : ViewModelBase
                 lookup[kvp.Key] = kvp.Value;
         }
 
-        // Supplement with named locations (not directory objects)
-        foreach (var loc in NamedLocations)
+        // Supplement with named locations (not directory objects).
+        // Fetch on demand if not already loaded by navigation.
+        IEnumerable<NamedLocation> namedLocations = _namedLocationsLoaded
+            ? NamedLocations
+            : _namedLocationService != null
+                ? await _namedLocationService.ListNamedLocationsAsync(cancellationToken)
+                : [];
+        foreach (var loc in namedLocations)
         {
-            var locId = TryReadStringProperty(loc, "Id");
-            var locName = TryReadStringProperty(loc, "DisplayName");
-            if (!string.IsNullOrEmpty(locId) && !string.IsNullOrEmpty(locName))
-                lookup.TryAdd(locId, locName);
+            if (!string.IsNullOrEmpty(loc.Id) && !string.IsNullOrEmpty(loc.DisplayName))
+                lookup.TryAdd(loc.Id, loc.DisplayName);
         }
 
-        // Supplement with authentication strength policies
-        foreach (var strength in AuthenticationStrengthPolicies)
+        // Supplement with authentication strength policies.
+        // Fetch on demand if not already loaded by navigation.
+        IEnumerable<AuthenticationStrengthPolicy> authStrengths = _authenticationStrengthPoliciesLoaded
+            ? AuthenticationStrengthPolicies
+            : _authenticationStrengthService != null
+                ? await _authenticationStrengthService.ListAuthenticationStrengthPoliciesAsync(cancellationToken)
+                : [];
+        foreach (var strength in authStrengths)
         {
             if (!string.IsNullOrEmpty(strength.Id) && !string.IsNullOrEmpty(strength.DisplayName))
                 lookup.TryAdd(strength.Id, strength.DisplayName);
         }
 
-        // Supplement with authentication context class references
-        foreach (var ctx in AuthenticationContextClassReferences)
+        // Supplement with authentication context class references.
+        // Fetch on demand if not already loaded by navigation.
+        IEnumerable<AuthenticationContextClassReference> authContexts = _authenticationContextClassReferencesLoaded
+            ? AuthenticationContextClassReferences
+            : _authenticationContextService != null
+                ? await _authenticationContextService.ListAuthenticationContextsAsync(cancellationToken)
+                : [];
+        foreach (var ctx in authContexts)
         {
             if (!string.IsNullOrEmpty(ctx.Id) && !string.IsNullOrEmpty(ctx.DisplayName))
                 lookup.TryAdd(ctx.Id, ctx.DisplayName);

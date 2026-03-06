@@ -13,6 +13,7 @@
                         <DropDownButton.Flyout>
                             <MenuFlyout Placement="BottomEdgeAlignedLeft">
                                 <MenuItem Header="Export Selected" Command="{Binding ExportSelectedCommand}" />
+                                <MenuItem Header="Export Checked" Command="{Binding ExportCheckedCommand}" IsEnabled="{Binding HasCheckedItems}" />
                                 <MenuItem Header="Export All" Command="{Binding ExportAllCommand}" />
                                 <Separator />
                                 <MenuItem Header="Import..." x:Name="ImportMenuItem" />

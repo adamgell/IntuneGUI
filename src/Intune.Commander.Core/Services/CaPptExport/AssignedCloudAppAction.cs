@@ -162,14 +162,14 @@ public class AssignedCloudAppAction
         return sb.ToString();
     }
 
-    private static string GetAuthContext(ConditionalAccessConditionSet conditions)
+    private string GetAuthContext(ConditionalAccessConditionSet conditions)
     {
         var sb = new StringBuilder();
         var refs = conditions.Applications?.IncludeAuthenticationContextClassReferences;
         if (refs?.Count > 0)
         {
             foreach (var val in refs)
-                sb.AppendLine($" - {val}");
+                sb.AppendLine($" - {ResolveName(val)}");
         }
         return sb.ToString();
     }
