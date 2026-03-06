@@ -4,9 +4,13 @@ using System.Collections.Generic;
 
 using System.Collections.ObjectModel;
 
+using System.ComponentModel;
+
 using System.Linq;
 
 using CommunityToolkit.Mvvm.Input;
+
+using Intune.Commander.Desktop.Models;
 
 using Microsoft.Graph.Beta.Models;
 
@@ -19,6 +23,9 @@ namespace Intune.Commander.Desktop.ViewModels;
 public partial class MainWindowViewModel : ViewModelBase
 
 {
+
+    private ObservableCollection<SelectableItem> _activeWrappedItems = [];
+    private Dictionary<object, SelectableItem> _wrappedItemLookup = [];
 
     public ObservableCollection<NavCategory> NavCategories { get; } = [];
 
@@ -476,54 +483,56 @@ public partial class MainWindowViewModel : ViewModelBase
         };
     }
 
-    /// <summary>Returns the filtered collection for the currently selected category, for direct AXAML binding.</summary>
-    public System.Collections.IEnumerable? ActiveItemsSource => SelectedCategory?.Name switch
+    /// <summary>Returns the filtered collection for the currently selected category.</summary>
+    private System.Collections.IEnumerable? GetRawActiveItems() => SelectedCategory?.Name switch
     {
-        "Device Configurations"                 => FilteredDeviceConfigurations,
-        "Compliance Policies"                   => FilteredCompliancePolicies,
-        "Applications"                          => FilteredApplications,
-        "Application Assignments"               => FilteredAppAssignmentRows,
-        "Dynamic Groups"                        => FilteredDynamicGroupRows,
-        "Assigned Groups"                       => FilteredAssignedGroupRows,
-        "Settings Catalog"                      => FilteredSettingsCatalogPolicies,
-        "Endpoint Security"                     => FilteredEndpointSecurityIntents,
-        "Administrative Templates"              => FilteredAdministrativeTemplates,
-        "Enrollment Configurations"             => FilteredEnrollmentConfigurations,
-        "App Protection Policies"               => FilteredAppProtectionPolicies,
-        "Managed Device App Configurations"     => FilteredManagedDeviceAppConfigurations,
-        "Targeted Managed App Configurations"   => FilteredTargetedManagedAppConfigurations,
-        "Terms and Conditions"                  => FilteredTermsAndConditionsCollection,
-        "Scope Tags"                            => FilteredScopeTags,
-        "Role Definitions"                      => FilteredRoleDefinitions,
-        "Intune Branding"                       => FilteredIntuneBrandingProfiles,
-        "Azure Branding"                        => FilteredAzureBrandingLocalizations,
-        "Conditional Access"                    => FilteredConditionalAccessPolicies,
-        "Assignment Filters"                    => FilteredAssignmentFilters,
-        "Policy Sets"                           => FilteredPolicySets,
-        "Autopilot Profiles"                    => FilteredAutopilotProfiles,
-        "Device Health Scripts"                 => FilteredDeviceHealthScripts,
-        "Mac Custom Attributes"                 => FilteredMacCustomAttributes,
-        "Feature Updates"                       => FilteredFeatureUpdateProfiles,
-        "Quality Updates"                       => FilteredQualityUpdateProfiles,
-        "Driver Updates"                        => FilteredDriverUpdateProfiles,
-        "Named Locations"                       => FilteredNamedLocations,
-        "Authentication Strengths"              => FilteredAuthenticationStrengthPolicies,
-        "Authentication Contexts"               => FilteredAuthenticationContextClassReferences,
-        "Terms of Use"                          => FilteredTermsOfUseAgreements,
-        "Device Management Scripts"             => FilteredDeviceManagementScripts,
-        "Device Shell Scripts"                  => FilteredDeviceShellScripts,
-        "Compliance Scripts"                    => FilteredComplianceScripts,
-        "Apple DEP"                             => FilteredAppleDepSettings,
-        "Device Categories"                     => FilteredDeviceCategories,
-        "Cloud PC Provisioning Policies"        => FilteredCloudPcProvisioningPolicies,
-        "Cloud PC User Settings"                => FilteredCloudPcUserSettings,
-        "VPP Tokens"                            => FilteredVppTokens,
-        "Role Assignments"                      => FilteredRoleAssignments,
-        "ADMX Files"                            => FilteredAdmxFiles,
-        "Reusable Policy Settings"              => FilteredReusablePolicySettings,
-        "Notification Templates"                => FilteredNotificationTemplates,
-        _                                       => null
+        "Device Configurations" => FilteredDeviceConfigurations,
+        "Compliance Policies" => FilteredCompliancePolicies,
+        "Applications" => FilteredApplications,
+        "Application Assignments" => FilteredAppAssignmentRows,
+        "Dynamic Groups" => FilteredDynamicGroupRows,
+        "Assigned Groups" => FilteredAssignedGroupRows,
+        "Settings Catalog" => FilteredSettingsCatalogPolicies,
+        "Endpoint Security" => FilteredEndpointSecurityIntents,
+        "Administrative Templates" => FilteredAdministrativeTemplates,
+        "Enrollment Configurations" => FilteredEnrollmentConfigurations,
+        "App Protection Policies" => FilteredAppProtectionPolicies,
+        "Managed Device App Configurations" => FilteredManagedDeviceAppConfigurations,
+        "Targeted Managed App Configurations" => FilteredTargetedManagedAppConfigurations,
+        "Terms and Conditions" => FilteredTermsAndConditionsCollection,
+        "Scope Tags" => FilteredScopeTags,
+        "Role Definitions" => FilteredRoleDefinitions,
+        "Intune Branding" => FilteredIntuneBrandingProfiles,
+        "Azure Branding" => FilteredAzureBrandingLocalizations,
+        "Conditional Access" => FilteredConditionalAccessPolicies,
+        "Assignment Filters" => FilteredAssignmentFilters,
+        "Policy Sets" => FilteredPolicySets,
+        "Autopilot Profiles" => FilteredAutopilotProfiles,
+        "Device Health Scripts" => FilteredDeviceHealthScripts,
+        "Mac Custom Attributes" => FilteredMacCustomAttributes,
+        "Feature Updates" => FilteredFeatureUpdateProfiles,
+        "Quality Updates" => FilteredQualityUpdateProfiles,
+        "Driver Updates" => FilteredDriverUpdateProfiles,
+        "Named Locations" => FilteredNamedLocations,
+        "Authentication Strengths" => FilteredAuthenticationStrengthPolicies,
+        "Authentication Contexts" => FilteredAuthenticationContextClassReferences,
+        "Terms of Use" => FilteredTermsOfUseAgreements,
+        "Device Management Scripts" => FilteredDeviceManagementScripts,
+        "Device Shell Scripts" => FilteredDeviceShellScripts,
+        "Compliance Scripts" => FilteredComplianceScripts,
+        "Apple DEP" => FilteredAppleDepSettings,
+        "Device Categories" => FilteredDeviceCategories,
+        "Cloud PC Provisioning Policies" => FilteredCloudPcProvisioningPolicies,
+        "Cloud PC User Settings" => FilteredCloudPcUserSettings,
+        "VPP Tokens" => FilteredVppTokens,
+        "Role Assignments" => FilteredRoleAssignments,
+        "ADMX Files" => FilteredAdmxFiles,
+        "Reusable Policy Settings" => FilteredReusablePolicySettings,
+        "Notification Templates" => FilteredNotificationTemplates,
+        _ => null
     };
+
+    public ObservableCollection<SelectableItem> ActiveItemsSource => _activeWrappedItems;
 
     /// <summary>
     /// Gets or sets the selected item in the currently active category.
@@ -531,100 +540,110 @@ public partial class MainWindowViewModel : ViewModelBase
     /// </summary>
     public object? ActiveSelectedItem
     {
-        get => SelectedCategory?.Name switch
+        get
         {
-            "Device Configurations"                 => SelectedConfiguration,
-            "Compliance Policies"                   => SelectedCompliancePolicy,
-            "Applications"                          => SelectedApplication,
-            "Application Assignments"               => SelectedAppAssignmentRow,
-            "Dynamic Groups"                        => SelectedDynamicGroupRow,
-            "Assigned Groups"                       => SelectedAssignedGroupRow,
-            "Settings Catalog"                      => SelectedSettingsCatalogPolicy,
-            "Endpoint Security"                     => SelectedEndpointSecurityIntent,
-            "Administrative Templates"              => SelectedAdministrativeTemplate,
-            "Enrollment Configurations"             => SelectedEnrollmentConfiguration,
-            "App Protection Policies"               => SelectedAppProtectionPolicy,
-            "Managed Device App Configurations"     => SelectedManagedDeviceAppConfiguration,
-            "Targeted Managed App Configurations"   => SelectedTargetedManagedAppConfiguration,
-            "Terms and Conditions"                  => SelectedTermsAndConditions,
-            "Scope Tags"                            => SelectedScopeTag,
-            "Role Definitions"                      => SelectedRoleDefinition,
-            "Intune Branding"                       => SelectedIntuneBrandingProfile,
-            "Azure Branding"                        => SelectedAzureBrandingLocalization,
-            "Conditional Access"                    => SelectedConditionalAccessPolicy,
-            "Assignment Filters"                    => SelectedAssignmentFilter,
-            "Policy Sets"                           => SelectedPolicySet,
-            "Autopilot Profiles"                    => SelectedAutopilotProfile,
-            "Device Health Scripts"                 => SelectedDeviceHealthScript,
-            "Mac Custom Attributes"                 => SelectedMacCustomAttribute,
-            "Feature Updates"                       => SelectedFeatureUpdateProfile,
-            "Quality Updates"                       => SelectedQualityUpdateProfile,
-            "Driver Updates"                        => SelectedDriverUpdateProfile,
-            "Named Locations"                       => SelectedNamedLocation,
-            "Authentication Strengths"              => SelectedAuthenticationStrengthPolicy,
-            "Authentication Contexts"               => SelectedAuthenticationContextClassReference,
-            "Terms of Use"                          => SelectedTermsOfUseAgreement,
-            "Device Management Scripts"             => SelectedDeviceManagementScript,
-            "Device Shell Scripts"                  => SelectedDeviceShellScript,
-            "Compliance Scripts"                    => SelectedComplianceScript,
-            "Apple DEP"                             => SelectedAppleDepSetting,
-            "Device Categories"                     => SelectedDeviceCategory,
-            "Cloud PC Provisioning Policies"        => SelectedCloudPcProvisioningPolicy,
-            "Cloud PC User Settings"                => SelectedCloudPcUserSetting,
-            "VPP Tokens"                            => SelectedVppToken,
-            "Role Assignments"                      => SelectedRoleAssignment,
-            "ADMX Files"                            => SelectedAdmxFile,
-            "Reusable Policy Settings"              => SelectedReusablePolicySetting,
-            "Notification Templates"                => SelectedNotificationTemplate,
-            _                                       => null
-        };
+            object? rawItem = SelectedCategory?.Name switch
+            {
+                "Device Configurations" => SelectedConfiguration,
+                "Compliance Policies" => SelectedCompliancePolicy,
+                "Applications" => SelectedApplication,
+                "Application Assignments" => SelectedAppAssignmentRow,
+                "Dynamic Groups" => SelectedDynamicGroupRow,
+                "Assigned Groups" => SelectedAssignedGroupRow,
+                "Settings Catalog" => SelectedSettingsCatalogPolicy,
+                "Endpoint Security" => SelectedEndpointSecurityIntent,
+                "Administrative Templates" => SelectedAdministrativeTemplate,
+                "Enrollment Configurations" => SelectedEnrollmentConfiguration,
+                "App Protection Policies" => SelectedAppProtectionPolicy,
+                "Managed Device App Configurations" => SelectedManagedDeviceAppConfiguration,
+                "Targeted Managed App Configurations" => SelectedTargetedManagedAppConfiguration,
+                "Terms and Conditions" => SelectedTermsAndConditions,
+                "Scope Tags" => SelectedScopeTag,
+                "Role Definitions" => SelectedRoleDefinition,
+                "Intune Branding" => SelectedIntuneBrandingProfile,
+                "Azure Branding" => SelectedAzureBrandingLocalization,
+                "Conditional Access" => SelectedConditionalAccessPolicy,
+                "Assignment Filters" => SelectedAssignmentFilter,
+                "Policy Sets" => SelectedPolicySet,
+                "Autopilot Profiles" => SelectedAutopilotProfile,
+                "Device Health Scripts" => SelectedDeviceHealthScript,
+                "Mac Custom Attributes" => SelectedMacCustomAttribute,
+                "Feature Updates" => SelectedFeatureUpdateProfile,
+                "Quality Updates" => SelectedQualityUpdateProfile,
+                "Driver Updates" => SelectedDriverUpdateProfile,
+                "Named Locations" => SelectedNamedLocation,
+                "Authentication Strengths" => SelectedAuthenticationStrengthPolicy,
+                "Authentication Contexts" => SelectedAuthenticationContextClassReference,
+                "Terms of Use" => SelectedTermsOfUseAgreement,
+                "Device Management Scripts" => SelectedDeviceManagementScript,
+                "Device Shell Scripts" => SelectedDeviceShellScript,
+                "Compliance Scripts" => SelectedComplianceScript,
+                "Apple DEP" => SelectedAppleDepSetting,
+                "Device Categories" => SelectedDeviceCategory,
+                "Cloud PC Provisioning Policies" => SelectedCloudPcProvisioningPolicy,
+                "Cloud PC User Settings" => SelectedCloudPcUserSetting,
+                "VPP Tokens" => SelectedVppToken,
+                "Role Assignments" => SelectedRoleAssignment,
+                "ADMX Files" => SelectedAdmxFile,
+                "Reusable Policy Settings" => SelectedReusablePolicySetting,
+                "Notification Templates" => SelectedNotificationTemplate,
+                _ => null
+            };
+
+            if (rawItem == null)
+                return null;
+
+            return _wrappedItemLookup.GetValueOrDefault(rawItem);
+        }
         set
         {
+            var rawItem = (value as SelectableItem)?.Item ?? value;
+
             switch (SelectedCategory?.Name)
             {
-                case "Device Configurations":                SelectedConfiguration = value as DeviceConfiguration; break;
-                case "Compliance Policies":                  SelectedCompliancePolicy = value as DeviceCompliancePolicy; break;
-                case "Applications":                         SelectedApplication = value as MobileApp; break;
-                case "Application Assignments":              SelectedAppAssignmentRow = value as AppAssignmentRow; break;
-                case "Dynamic Groups":                       SelectedDynamicGroupRow = value as GroupRow; break;
-                case "Assigned Groups":                      SelectedAssignedGroupRow = value as GroupRow; break;
-                case "Settings Catalog":                     SelectedSettingsCatalogPolicy = value as DeviceManagementConfigurationPolicy; break;
-                case "Endpoint Security":                    SelectedEndpointSecurityIntent = value as DeviceManagementIntent; break;
-                case "Administrative Templates":             SelectedAdministrativeTemplate = value as GroupPolicyConfiguration; break;
-                case "Enrollment Configurations":            SelectedEnrollmentConfiguration = value as DeviceEnrollmentConfiguration; break;
-                case "App Protection Policies":              SelectedAppProtectionPolicy = value as ManagedAppPolicy; break;
-                case "Managed Device App Configurations":    SelectedManagedDeviceAppConfiguration = value as ManagedDeviceMobileAppConfiguration; break;
-                case "Targeted Managed App Configurations":  SelectedTargetedManagedAppConfiguration = value as TargetedManagedAppConfiguration; break;
-                case "Terms and Conditions":                 SelectedTermsAndConditions = value as TermsAndConditions; break;
-                case "Scope Tags":                           SelectedScopeTag = value as RoleScopeTag; break;
-                case "Role Definitions":                     SelectedRoleDefinition = value as RoleDefinition; break;
-                case "Intune Branding":                      SelectedIntuneBrandingProfile = value as IntuneBrandingProfile; break;
-                case "Azure Branding":                       SelectedAzureBrandingLocalization = value as OrganizationalBrandingLocalization; break;
-                case "Conditional Access":                   SelectedConditionalAccessPolicy = value as ConditionalAccessPolicy; break;
-                case "Assignment Filters":                   SelectedAssignmentFilter = value as DeviceAndAppManagementAssignmentFilter; break;
-                case "Policy Sets":                          SelectedPolicySet = value as PolicySet; break;
-                case "Autopilot Profiles":                   SelectedAutopilotProfile = value as WindowsAutopilotDeploymentProfile; break;
-                case "Device Health Scripts":                SelectedDeviceHealthScript = value as DeviceHealthScript; break;
-                case "Mac Custom Attributes":                SelectedMacCustomAttribute = value as DeviceCustomAttributeShellScript; break;
-                case "Feature Updates":                      SelectedFeatureUpdateProfile = value as WindowsFeatureUpdateProfile; break;
-                case "Quality Updates":                      SelectedQualityUpdateProfile = value as WindowsQualityUpdateProfile; break;
-                case "Driver Updates":                       SelectedDriverUpdateProfile = value as WindowsDriverUpdateProfile; break;
-                case "Named Locations":                      SelectedNamedLocation = value as NamedLocation; break;
-                case "Authentication Strengths":             SelectedAuthenticationStrengthPolicy = value as AuthenticationStrengthPolicy; break;
-                case "Authentication Contexts":              SelectedAuthenticationContextClassReference = value as AuthenticationContextClassReference; break;
-                case "Terms of Use":                         SelectedTermsOfUseAgreement = value as Agreement; break;
-                case "Device Management Scripts":            SelectedDeviceManagementScript = value as DeviceManagementScript; break;
-                case "Device Shell Scripts":                 SelectedDeviceShellScript = value as DeviceShellScript; break;
-                case "Compliance Scripts":                   SelectedComplianceScript = value as DeviceComplianceScript; break;
-                case "Apple DEP":                            SelectedAppleDepSetting = value as DepOnboardingSetting; break;
-                case "Device Categories":                    SelectedDeviceCategory = value as DeviceCategory; break;
-                case "Cloud PC Provisioning Policies":       SelectedCloudPcProvisioningPolicy = value as CloudPcProvisioningPolicy; break;
-                case "Cloud PC User Settings":               SelectedCloudPcUserSetting = value as CloudPcUserSetting; break;
-                case "VPP Tokens":                           SelectedVppToken = value as VppToken; break;
-                case "Role Assignments":                     SelectedRoleAssignment = value as DeviceAndAppManagementRoleAssignment; break;
-                case "ADMX Files":                           SelectedAdmxFile = value as GroupPolicyUploadedDefinitionFile; break;
-                case "Reusable Policy Settings":             SelectedReusablePolicySetting = value as DeviceManagementReusablePolicySetting; break;
-                case "Notification Templates":               SelectedNotificationTemplate = value as NotificationMessageTemplate; break;
+                case "Device Configurations": SelectedConfiguration = rawItem as DeviceConfiguration; break;
+                case "Compliance Policies": SelectedCompliancePolicy = rawItem as DeviceCompliancePolicy; break;
+                case "Applications": SelectedApplication = rawItem as MobileApp; break;
+                case "Application Assignments": SelectedAppAssignmentRow = rawItem as AppAssignmentRow; break;
+                case "Dynamic Groups": SelectedDynamicGroupRow = rawItem as GroupRow; break;
+                case "Assigned Groups": SelectedAssignedGroupRow = rawItem as GroupRow; break;
+                case "Settings Catalog": SelectedSettingsCatalogPolicy = rawItem as DeviceManagementConfigurationPolicy; break;
+                case "Endpoint Security": SelectedEndpointSecurityIntent = rawItem as DeviceManagementIntent; break;
+                case "Administrative Templates": SelectedAdministrativeTemplate = rawItem as GroupPolicyConfiguration; break;
+                case "Enrollment Configurations": SelectedEnrollmentConfiguration = rawItem as DeviceEnrollmentConfiguration; break;
+                case "App Protection Policies": SelectedAppProtectionPolicy = rawItem as ManagedAppPolicy; break;
+                case "Managed Device App Configurations": SelectedManagedDeviceAppConfiguration = rawItem as ManagedDeviceMobileAppConfiguration; break;
+                case "Targeted Managed App Configurations": SelectedTargetedManagedAppConfiguration = rawItem as TargetedManagedAppConfiguration; break;
+                case "Terms and Conditions": SelectedTermsAndConditions = rawItem as TermsAndConditions; break;
+                case "Scope Tags": SelectedScopeTag = rawItem as RoleScopeTag; break;
+                case "Role Definitions": SelectedRoleDefinition = rawItem as RoleDefinition; break;
+                case "Intune Branding": SelectedIntuneBrandingProfile = rawItem as IntuneBrandingProfile; break;
+                case "Azure Branding": SelectedAzureBrandingLocalization = rawItem as OrganizationalBrandingLocalization; break;
+                case "Conditional Access": SelectedConditionalAccessPolicy = rawItem as ConditionalAccessPolicy; break;
+                case "Assignment Filters": SelectedAssignmentFilter = rawItem as DeviceAndAppManagementAssignmentFilter; break;
+                case "Policy Sets": SelectedPolicySet = rawItem as PolicySet; break;
+                case "Autopilot Profiles": SelectedAutopilotProfile = rawItem as WindowsAutopilotDeploymentProfile; break;
+                case "Device Health Scripts": SelectedDeviceHealthScript = rawItem as DeviceHealthScript; break;
+                case "Mac Custom Attributes": SelectedMacCustomAttribute = rawItem as DeviceCustomAttributeShellScript; break;
+                case "Feature Updates": SelectedFeatureUpdateProfile = rawItem as WindowsFeatureUpdateProfile; break;
+                case "Quality Updates": SelectedQualityUpdateProfile = rawItem as WindowsQualityUpdateProfile; break;
+                case "Driver Updates": SelectedDriverUpdateProfile = rawItem as WindowsDriverUpdateProfile; break;
+                case "Named Locations": SelectedNamedLocation = rawItem as NamedLocation; break;
+                case "Authentication Strengths": SelectedAuthenticationStrengthPolicy = rawItem as AuthenticationStrengthPolicy; break;
+                case "Authentication Contexts": SelectedAuthenticationContextClassReference = rawItem as AuthenticationContextClassReference; break;
+                case "Terms of Use": SelectedTermsOfUseAgreement = rawItem as Agreement; break;
+                case "Device Management Scripts": SelectedDeviceManagementScript = rawItem as DeviceManagementScript; break;
+                case "Device Shell Scripts": SelectedDeviceShellScript = rawItem as DeviceShellScript; break;
+                case "Compliance Scripts": SelectedComplianceScript = rawItem as DeviceComplianceScript; break;
+                case "Apple DEP": SelectedAppleDepSetting = rawItem as DepOnboardingSetting; break;
+                case "Device Categories": SelectedDeviceCategory = rawItem as DeviceCategory; break;
+                case "Cloud PC Provisioning Policies": SelectedCloudPcProvisioningPolicy = rawItem as CloudPcProvisioningPolicy; break;
+                case "Cloud PC User Settings": SelectedCloudPcUserSetting = rawItem as CloudPcUserSetting; break;
+                case "VPP Tokens": SelectedVppToken = rawItem as VppToken; break;
+                case "Role Assignments": SelectedRoleAssignment = rawItem as DeviceAndAppManagementRoleAssignment; break;
+                case "ADMX Files": SelectedAdmxFile = rawItem as GroupPolicyUploadedDefinitionFile; break;
+                case "Reusable Policy Settings": SelectedReusablePolicySetting = rawItem as DeviceManagementReusablePolicySetting; break;
+                case "Notification Templates": SelectedNotificationTemplate = rawItem as NotificationMessageTemplate; break;
             }
         }
     }
@@ -632,7 +651,69 @@ public partial class MainWindowViewModel : ViewModelBase
     /// <summary>Called when a Filtered* collection property is replaced to refresh the AXAML ItemsSource binding.</summary>
     internal void RefreshActiveItemsSource()
     {
+        foreach (var wrapper in _activeWrappedItems)
+            wrapper.PropertyChanged -= OnWrappedItemPropertyChanged;
+
+        var previouslyChecked = new HashSet<object>(
+            _activeWrappedItems.Where(w => w.IsSelected).Select(w => w.Item));
+
+        var rawItems = GetRawActiveItems();
+        _activeWrappedItems.Clear();
+        _wrappedItemLookup.Clear();
+
+        if (rawItems != null)
+        {
+            foreach (var item in rawItems)
+            {
+                var wrapper = new SelectableItem(item)
+                {
+                    IsSelected = previouslyChecked.Contains(item)
+                };
+                wrapper.PropertyChanged += OnWrappedItemPropertyChanged;
+                _activeWrappedItems.Add(wrapper);
+                _wrappedItemLookup[item] = wrapper;
+            }
+        }
+
         OnPropertyChanged(nameof(ActiveItemsSource));
+        OnPropertyChanged(nameof(CheckedItemCount));
+        OnPropertyChanged(nameof(HasCheckedItems));
+    }
+
+    /// <summary>Unsubscribes all wrapped item event handlers. Call on disconnect to prevent leaks.</summary>
+    internal void CleanupWrappedItems()
+    {
+        foreach (var wrapper in _activeWrappedItems)
+            wrapper.PropertyChanged -= OnWrappedItemPropertyChanged;
+        _activeWrappedItems.Clear();
+        _wrappedItemLookup.Clear();
+    }
+
+    public int CheckedItemCount => _activeWrappedItems.Count(w => w.IsSelected);
+
+    public bool HasCheckedItems => CheckedItemCount > 0;
+
+    [RelayCommand]
+    private void SelectAll()
+    {
+        foreach (var item in _activeWrappedItems)
+            item.IsSelected = true;
+    }
+
+    [RelayCommand]
+    private void DeselectAll()
+    {
+        foreach (var item in _activeWrappedItems)
+            item.IsSelected = false;
+    }
+
+    private void OnWrappedItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SelectableItem.IsSelected))
+        {
+            OnPropertyChanged(nameof(CheckedItemCount));
+            OnPropertyChanged(nameof(HasCheckedItems));
+        }
     }
 
     /// <summary>Navigates to the category with the given name. Used by OverviewViewModel card commands.</summary>
@@ -853,7 +934,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         OnPropertyChanged(nameof(CanRefreshSelectedItem));
 
-        OnPropertyChanged(nameof(ActiveItemsSource));
+        RefreshActiveItemsSource();
         OnPropertyChanged(nameof(ActiveSelectedItem));
 
         // Update IsSelected on all nav categories

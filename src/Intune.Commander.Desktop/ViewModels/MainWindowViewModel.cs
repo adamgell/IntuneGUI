@@ -222,7 +222,12 @@ public partial class MainWindowViewModel : ViewModelBase
     private IPermissionCheckService? _permissionCheckService;
     private IDirectoryObjectResolver? _directoryObjectResolver;
 
-
+    /// <summary>
+    /// When true, Conditional Access policy exports will replace GUIDs with
+    /// human-readable display names for users, groups, apps, locations, etc.
+    /// </summary>
+    [ObservableProperty]
+    private bool _resolveGuidsInCaExport = true;
 
     [ObservableProperty]
 
@@ -299,8 +304,14 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private NavCategory? _selectedCategory;
 
+    [ObservableProperty]
+    private bool _isDetailPaneVisible = true;
 
-
+    [RelayCommand]
+    private void ToggleDetailPane()
+    {
+        IsDetailPaneVisible = !IsDetailPaneVisible;
+    }
 
 
     // --- Overview dashboard ---

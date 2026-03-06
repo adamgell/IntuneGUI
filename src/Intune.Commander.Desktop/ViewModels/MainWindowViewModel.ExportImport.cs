@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using Intune.Commander.Core.Models;
+using Intune.Commander.Desktop.Models;
 using Microsoft.Graph.Beta.Models;
 
 namespace Intune.Commander.Desktop.ViewModels;
@@ -387,8 +388,12 @@ public partial class MainWindowViewModel : ViewModelBase
             if (IsDeviceConfigCategory && SelectedConfiguration != null)
             {
                 StatusText = $"Exporting {SelectedConfiguration.DisplayName}...";
+                // Re-fetch full object — list uses $select and may have partial data
+                var fullConfig = _configProfileService != null && SelectedConfiguration.Id != null
+                    ? await _configProfileService.GetDeviceConfigurationAsync(SelectedConfiguration.Id, cancellationToken)
+                    : null;
                 await _exportService.ExportDeviceConfigurationAsync(
-                    SelectedConfiguration, outputPath, migrationTable, cancellationToken);
+                    fullConfig ?? SelectedConfiguration, outputPath, migrationTable, cancellationToken);
             }
             else if (IsCompliancePolicyCategory && SelectedCompliancePolicy != null)
             {
@@ -402,11 +407,16 @@ public partial class MainWindowViewModel : ViewModelBase
             else if (IsApplicationCategory && SelectedApplication != null)
             {
                 StatusText = $"Exporting {SelectedApplication.DisplayName}...";
+                // Re-fetch full object — list uses $select and may have partial data
+                var fullApp = _applicationService != null && SelectedApplication.Id != null
+                    ? await _applicationService.GetApplicationAsync(SelectedApplication.Id, cancellationToken)
+                    : null;
+                var appToExport = fullApp ?? SelectedApplication;
                 var assignments = _applicationService != null && SelectedApplication.Id != null
                     ? await _applicationService.GetAssignmentsAsync(SelectedApplication.Id, cancellationToken)
                     : [];
                 await _exportService.ExportApplicationAsync(
-                    SelectedApplication, assignments, outputPath, migrationTable, cancellationToken);
+                    appToExport, assignments, outputPath, migrationTable, cancellationToken);
             }
             else if (IsEndpointSecurityCategory && SelectedEndpointSecurityIntent != null)
             {
@@ -528,6 +538,22 @@ public partial class MainWindowViewModel : ViewModelBase
                 await _exportService.ExportAuthenticationStrengthPolicyAsync(
                     SelectedAuthenticationStrengthPolicy, outputPath, migrationTable, cancellationToken);
             }
+            else if (IsConditionalAccessCategory && SelectedConditionalAccessPolicy != null)
+            {
+                StatusText = $"Exporting {SelectedConditionalAccessPolicy.DisplayName ?? "conditional access policy"}...";
+                if (ResolveGuidsInCaExport && _directoryObjectResolver != null)
+                {
+                    var lookup = await BuildCaGuidLookupAsync(
+                        [SelectedConditionalAccessPolicy], cancellationToken);
+                    await _exportService.ExportConditionalAccessPolicyWithResolvedGuidsAsync(
+                        SelectedConditionalAccessPolicy, outputPath, migrationTable, lookup, cancellationToken);
+                }
+                else
+                {
+                    await _exportService.ExportConditionalAccessPolicyAsync(
+                        SelectedConditionalAccessPolicy, outputPath, migrationTable, cancellationToken);
+                }
+            }
             else if (IsAuthenticationContextsCategory && SelectedAuthenticationContextClassReference != null)
             {
                 StatusText = $"Exporting {SelectedAuthenticationContextClassReference.DisplayName}...";
@@ -591,6 +617,186 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task ExportCheckedAsync(CancellationToken cancellationToken)
+    {
+        ClearError();
+        IsBusy = true;
+
+        try
+        {
+            var checkedItems = _activeWrappedItems
+                .Where(w => w.IsSelected)
+                .Select(w => w.Item)
+                .ToList();
+
+            if (checkedItems.Count == 0)
+            {
+                StatusText = "No items checked for export";
+                return;
+            }
+
+            var outputPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+                "IntuneExport");
+            var migrationTable = new MigrationTable();
+            var count = 0;
+
+            StatusText = $"Exporting {checkedItems.Count} checked item(s)...";
+
+            // Resolve CA GUIDs once if needed
+            IReadOnlyDictionary<string, string>? caLookup = null;
+            if (IsConditionalAccessCategory && ResolveGuidsInCaExport && _directoryObjectResolver != null)
+            {
+                var caItems = checkedItems.OfType<ConditionalAccessPolicy>().ToList();
+                if (caItems.Count > 0)
+                {
+                    StatusText = "Resolving conditional access policy GUIDs...";
+                    caLookup = await BuildCaGuidLookupAsync(caItems, cancellationToken);
+                }
+            }
+
+            foreach (var item in checkedItems)
+            {
+                switch (item)
+                {
+                    case DeviceConfiguration config when _configProfileService != null:
+                        // Re-fetch full object — list uses $select and may have partial data
+                        var fullConfig = config.Id != null
+                            ? await _configProfileService.GetDeviceConfigurationAsync(config.Id, cancellationToken)
+                            : null;
+                        await _exportService.ExportDeviceConfigurationAsync(fullConfig ?? config, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case DeviceCompliancePolicy policy when _compliancePolicyService != null:
+                        var compAssignments = policy.Id != null
+                            ? await _compliancePolicyService.GetAssignmentsAsync(policy.Id, cancellationToken)
+                            : [];
+                        await _exportService.ExportCompliancePolicyAsync(policy, compAssignments, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case MobileApp app when _applicationService != null:
+                        // Re-fetch full object — list uses $select and may have partial data
+                        var fullApp = app.Id != null
+                            ? await _applicationService.GetApplicationAsync(app.Id, cancellationToken)
+                            : null;
+                        var appToExport = fullApp ?? app;
+                        var appAssignments = app.Id != null
+                            ? await _applicationService.GetAssignmentsAsync(app.Id, cancellationToken)
+                            : [];
+                        await _exportService.ExportApplicationAsync(appToExport, appAssignments, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case DeviceManagementConfigurationPolicy catalogPolicy when _settingsCatalogService != null:
+                        var settings = catalogPolicy.Id != null
+                            ? await _settingsCatalogService.GetPolicySettingsAsync(catalogPolicy.Id, cancellationToken)
+                            : [];
+                        var scAssignments = catalogPolicy.Id != null
+                            ? await _settingsCatalogService.GetAssignmentsAsync(catalogPolicy.Id, cancellationToken)
+                            : [];
+                        await _exportService.ExportSettingsCatalogPolicyAsync(catalogPolicy, settings, scAssignments, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case DeviceManagementIntent intent when _endpointSecurityService != null:
+                        var esAssignments = intent.Id != null
+                            ? await _endpointSecurityService.GetAssignmentsAsync(intent.Id, cancellationToken)
+                            : [];
+                        await _exportService.ExportEndpointSecurityIntentAsync(intent, esAssignments, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case GroupPolicyConfiguration template when _administrativeTemplateService != null:
+                        var atAssignments = template.Id != null
+                            ? await _administrativeTemplateService.GetAssignmentsAsync(template.Id, cancellationToken)
+                            : [];
+                        await _exportService.ExportAdministrativeTemplateAsync(template, atAssignments, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case DeviceEnrollmentConfiguration enrollConfig:
+                        await _exportService.ExportEnrollmentConfigurationAsync(enrollConfig, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case TargetedManagedAppConfiguration tmAppConfig:
+                        await _exportService.ExportTargetedManagedAppConfigurationAsync(tmAppConfig, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case ManagedAppPolicy appProtection:
+                        await _exportService.ExportAppProtectionPolicyAsync(appProtection, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case ManagedDeviceMobileAppConfiguration mdAppConfig:
+                        await _exportService.ExportManagedDeviceAppConfigurationAsync(mdAppConfig, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case TermsAndConditions terms:
+                        await _exportService.ExportTermsAndConditionsAsync(terms, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case RoleScopeTag scopeTag:
+                        await _exportService.ExportScopeTagAsync(scopeTag, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case RoleDefinition roleDef:
+                        await _exportService.ExportRoleDefinitionAsync(roleDef, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case IntuneBrandingProfile brandingProfile:
+                        await _exportService.ExportIntuneBrandingProfileAsync(brandingProfile, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case OrganizationalBrandingLocalization azBranding:
+                        await _exportService.ExportAzureBrandingLocalizationAsync(azBranding, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case ConditionalAccessPolicy caPolicy:
+                        if (caLookup != null)
+                            await _exportService.ExportConditionalAccessPolicyWithResolvedGuidsAsync(caPolicy, outputPath, migrationTable, caLookup, cancellationToken);
+                        else
+                            await _exportService.ExportConditionalAccessPolicyAsync(caPolicy, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case WindowsAutopilotDeploymentProfile autopilot:
+                        await _exportService.ExportAutopilotProfileAsync(autopilot, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case DeviceHealthScript healthScript:
+                        await _exportService.ExportDeviceHealthScriptAsync(healthScript, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case DeviceCustomAttributeShellScript macAttr:
+                        await _exportService.ExportMacCustomAttributeAsync(macAttr, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case WindowsFeatureUpdateProfile featureUpdate:
+                        await _exportService.ExportFeatureUpdateProfileAsync(featureUpdate, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case WindowsQualityUpdateProfile qualityUpdate:
+                        await _exportService.ExportQualityUpdateProfileAsync(qualityUpdate, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case WindowsDriverUpdateProfile driverUpdate:
+                        await _exportService.ExportDriverUpdateProfileAsync(driverUpdate, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case NamedLocation namedLoc:
+                        await _exportService.ExportNamedLocationAsync(namedLoc, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case AuthenticationStrengthPolicy authStrength:
+                        await _exportService.ExportAuthenticationStrengthPolicyAsync(authStrength, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case AuthenticationContextClassReference authContext:
+                        await _exportService.ExportAuthenticationContextAsync(authContext, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case Agreement termsOfUse:
+                        await _exportService.ExportTermsOfUseAgreementAsync(termsOfUse, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case DeviceManagementScript dmScript:
+                        await _exportService.ExportDeviceManagementScriptAsync(dmScript, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case DeviceShellScript shellScript:
+                        await _exportService.ExportDeviceShellScriptAsync(shellScript, outputPath, migrationTable, cancellationToken);
+                        break;
+                    case DeviceComplianceScript compScript:
+                        await _exportService.ExportComplianceScriptAsync(compScript, outputPath, migrationTable, cancellationToken);
+                        break;
+                }
+
+                count++;
+                StatusText = $"Exported {count} of {checkedItems.Count} checked item(s)...";
+            }
+
+            await _exportService.SaveMigrationTableAsync(migrationTable, outputPath, cancellationToken);
+            StatusText = $"Exported {count} checked item(s) to {outputPath}";
+        }
+        catch (Exception ex)
+        {
+            SetError($"Export failed: {FormatGraphError(ex)}");
+            StatusText = "Export failed";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
     private async Task ExportAllAsync(CancellationToken cancellationToken)
     {
         ClearError();
@@ -605,13 +811,16 @@ public partial class MainWindowViewModel : ViewModelBase
             var migrationTable = new MigrationTable();
             var count = 0;
 
-            // Export device configs
-            if (DeviceConfigurations.Any())
+            // Export device configs (re-fetch full objects — list uses $select)
+            if (DeviceConfigurations.Any() && _configProfileService != null)
             {
                 StatusText = "Exporting device configurations...";
                 foreach (var config in DeviceConfigurations)
                 {
-                    await _exportService.ExportDeviceConfigurationAsync(config, outputPath, migrationTable, cancellationToken);
+                    var fullConfig = config.Id != null
+                        ? await _configProfileService.GetDeviceConfigurationAsync(config.Id, cancellationToken)
+                        : null;
+                    await _exportService.ExportDeviceConfigurationAsync(fullConfig ?? config, outputPath, migrationTable, cancellationToken);
                     count++;
                 }
             }
@@ -630,16 +839,20 @@ public partial class MainWindowViewModel : ViewModelBase
                 }
             }
 
-            // Export applications with assignments
+            // Export applications with assignments (re-fetch full objects — list uses $select)
             if (Applications.Any() && _applicationService != null)
             {
                 StatusText = "Exporting applications...";
                 foreach (var app in Applications)
                 {
+                    var fullApp = app.Id != null
+                        ? await _applicationService.GetApplicationAsync(app.Id, cancellationToken)
+                        : null;
+                    var appToExport = fullApp ?? app;
                     var assignments = app.Id != null
                         ? await _applicationService.GetAssignmentsAsync(app.Id, cancellationToken)
                         : [];
-                    await _exportService.ExportApplicationAsync(app, assignments, outputPath, migrationTable, cancellationToken);
+                    await _exportService.ExportApplicationAsync(appToExport, assignments, outputPath, migrationTable, cancellationToken);
                     count++;
                 }
             }
@@ -868,6 +1081,34 @@ public partial class MainWindowViewModel : ViewModelBase
                 foreach (var policy in AuthenticationStrengthPolicies)
                 {
                     await _exportService.ExportAuthenticationStrengthPolicyAsync(policy, outputPath, migrationTable, cancellationToken);
+                    count++;
+                }
+            }
+
+            // Export conditional access policies
+            if (ConditionalAccessPolicies.Any())
+            {
+                StatusText = "Exporting conditional access policies...";
+                IReadOnlyDictionary<string, string>? caLookup = null;
+                if (ResolveGuidsInCaExport && _directoryObjectResolver != null)
+                {
+                    StatusText = "Resolving conditional access policy GUIDs...";
+                    caLookup = await BuildCaGuidLookupAsync(
+                        ConditionalAccessPolicies, cancellationToken);
+                }
+
+                foreach (var policy in ConditionalAccessPolicies)
+                {
+                    if (caLookup != null)
+                    {
+                        await _exportService.ExportConditionalAccessPolicyWithResolvedGuidsAsync(
+                            policy, outputPath, migrationTable, caLookup, cancellationToken);
+                    }
+                    else
+                    {
+                        await _exportService.ExportConditionalAccessPolicyAsync(
+                            policy, outputPath, migrationTable, cancellationToken);
+                    }
                     count++;
                 }
             }
@@ -1237,5 +1478,96 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             IsBusy = false;
         }
+    }
+
+    /// <summary>
+    /// Builds a comprehensive GUID → display-name lookup for Conditional Access
+    /// policy exports. Combines DirectoryObjectResolver results (users, groups,
+    /// roles, apps) with local collection lookups (named locations, auth strengths,
+    /// auth contexts).
+    /// </summary>
+    private async Task<IReadOnlyDictionary<string, string>> BuildCaGuidLookupAsync(
+        IEnumerable<ConditionalAccessPolicy> policies,
+        CancellationToken cancellationToken)
+    {
+        var allGuids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        void AddGuids(IReadOnlyList<string>? ids)
+        {
+            if (ids == null) return;
+            foreach (var id in ids)
+                if (!string.IsNullOrWhiteSpace(id) && !IsSpecialCaValue(id))
+                    allGuids.Add(id);
+        }
+
+        foreach (var policy in policies)
+        {
+            AddGuids(policy.Conditions?.Users?.IncludeUsers);
+            AddGuids(policy.Conditions?.Users?.ExcludeUsers);
+            AddGuids(policy.Conditions?.Users?.IncludeGroups);
+            AddGuids(policy.Conditions?.Users?.ExcludeGroups);
+            AddGuids(policy.Conditions?.Users?.IncludeRoles);
+            AddGuids(policy.Conditions?.Users?.ExcludeRoles);
+            AddGuids(policy.Conditions?.Applications?.IncludeApplications);
+            AddGuids(policy.Conditions?.Applications?.ExcludeApplications);
+        }
+
+        // Resolve directory objects (users, groups, roles, apps, service principals)
+        var lookup = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (allGuids.Count > 0 && _directoryObjectResolver != null)
+        {
+            var resolved = await _directoryObjectResolver.ResolveAsync(allGuids, cancellationToken);
+            foreach (var kvp in resolved)
+                lookup[kvp.Key] = kvp.Value;
+        }
+
+        // Supplement with named locations (not directory objects).
+        // Fetch on demand if not already loaded by navigation.
+        IEnumerable<NamedLocation> namedLocations = _namedLocationsLoaded
+            ? NamedLocations
+            : _namedLocationService != null
+                ? await _namedLocationService.ListNamedLocationsAsync(cancellationToken)
+                : [];
+        foreach (var loc in namedLocations)
+        {
+            if (!string.IsNullOrEmpty(loc.Id) && !string.IsNullOrEmpty(loc.DisplayName))
+                lookup.TryAdd(loc.Id, loc.DisplayName);
+        }
+
+        // Supplement with authentication strength policies.
+        // Fetch on demand if not already loaded by navigation.
+        IEnumerable<AuthenticationStrengthPolicy> authStrengths = _authenticationStrengthPoliciesLoaded
+            ? AuthenticationStrengthPolicies
+            : _authenticationStrengthService != null
+                ? await _authenticationStrengthService.ListAuthenticationStrengthPoliciesAsync(cancellationToken)
+                : [];
+        foreach (var strength in authStrengths)
+        {
+            if (!string.IsNullOrEmpty(strength.Id) && !string.IsNullOrEmpty(strength.DisplayName))
+                lookup.TryAdd(strength.Id, strength.DisplayName);
+        }
+
+        // Supplement with authentication context class references.
+        // Fetch on demand if not already loaded by navigation.
+        IEnumerable<AuthenticationContextClassReference> authContexts = _authenticationContextClassReferencesLoaded
+            ? AuthenticationContextClassReferences
+            : _authenticationContextService != null
+                ? await _authenticationContextService.ListAuthenticationContextsAsync(cancellationToken)
+                : [];
+        foreach (var ctx in authContexts)
+        {
+            if (!string.IsNullOrEmpty(ctx.Id) && !string.IsNullOrEmpty(ctx.DisplayName))
+                lookup.TryAdd(ctx.Id, ctx.DisplayName);
+        }
+
+        // Add human-readable labels for common special values
+        lookup.TryAdd("All", "All");
+        lookup.TryAdd("None", "None");
+        lookup.TryAdd("AllTrusted", "All Trusted Locations");
+        lookup.TryAdd("GuestsOrExternalUsers", "Guests or External Users");
+        lookup.TryAdd("Office365", "Office 365");
+        lookup.TryAdd("MicrosoftAdminPortals", "Microsoft Admin Portals");
+
+        return lookup;
     }
 }

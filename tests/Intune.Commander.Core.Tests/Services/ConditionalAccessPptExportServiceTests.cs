@@ -284,6 +284,116 @@ public class ConditionalAccessPptExportServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ExportAsync_ResolvesNamedLocations_WhenPoliciesReferenceLocations()
+    {
+        // Arrange
+        var policies = new List<ConditionalAccessPolicy>
+        {
+            new()
+            {
+                Id = "policy-loc",
+                DisplayName = "Location Policy",
+                State = ConditionalAccessPolicyState.Enabled,
+                Conditions = new ConditionalAccessConditionSet
+                {
+                    Users = new ConditionalAccessUsers { IncludeUsers = ["All"] },
+                    Applications = new ConditionalAccessApplications
+                    {
+                        IncludeApplications = ["All"]
+                    },
+                    Locations = new ConditionalAccessLocations
+                    {
+                        IncludeLocations = ["loc-guid-1"],
+                        ExcludeLocations = ["loc-guid-2"]
+                    }
+                },
+                GrantControls = new ConditionalAccessGrantControls
+                {
+                    Operator = "OR",
+                    BuiltInControls = [ConditionalAccessGrantControl.Mfa]
+                }
+            }
+        };
+
+        var namedLocSvc = Substitute.For<INamedLocationService>();
+        namedLocSvc.ListNamedLocationsAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new List<NamedLocation>
+            {
+                new IpNamedLocation { Id = "loc-guid-1", DisplayName = "Corporate Network" },
+                new IpNamedLocation { Id = "loc-guid-2", DisplayName = "Blocked Countries" }
+            }));
+
+        var service = new ConditionalAccessPptExportService(
+            PolicyServiceReturning(policies),
+            namedLocSvc,
+            Substitute.For<IAuthenticationStrengthService>(),
+            Substitute.For<IAuthenticationContextService>(),
+            Substitute.For<IApplicationService>());
+
+        var outputPath = Path.Combine(_tempDir, "loc-resolve-export.pptx");
+
+        // Act
+        await service.ExportAsync(outputPath, "Test Tenant");
+
+        // Assert
+        Assert.True(File.Exists(outputPath));
+        await namedLocSvc.Received(1).ListNamedLocationsAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ExportAsync_ResolvesAuthContexts_WhenPoliciesReferenceAuthContexts()
+    {
+        // Arrange
+        var policies = new List<ConditionalAccessPolicy>
+        {
+            new()
+            {
+                Id = "policy-ctx",
+                DisplayName = "Auth Context Policy",
+                State = ConditionalAccessPolicyState.Enabled,
+                Conditions = new ConditionalAccessConditionSet
+                {
+                    Users = new ConditionalAccessUsers { IncludeUsers = ["All"] },
+                    Applications = new ConditionalAccessApplications
+                    {
+                        IncludeApplications = [],
+                        IncludeAuthenticationContextClassReferences = ["c1", "c2"]
+                    }
+                },
+                GrantControls = new ConditionalAccessGrantControls
+                {
+                    Operator = "OR",
+                    BuiltInControls = [ConditionalAccessGrantControl.Mfa]
+                }
+            }
+        };
+
+        var authCtxSvc = Substitute.For<IAuthenticationContextService>();
+        authCtxSvc.ListAuthenticationContextsAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new List<AuthenticationContextClassReference>
+            {
+                new() { Id = "c1", DisplayName = "Require MFA" },
+                new() { Id = "c2", DisplayName = "Require Compliant Device" }
+            }));
+
+        var service = new ConditionalAccessPptExportService(
+            PolicyServiceReturning(policies),
+            Substitute.For<INamedLocationService>(),
+            Substitute.For<IAuthenticationStrengthService>(),
+            authCtxSvc,
+            Substitute.For<IApplicationService>());
+
+        var outputPath = Path.Combine(_tempDir, "ctx-resolve-export.pptx");
+
+        // Act
+        await service.ExportAsync(outputPath, "Test Tenant");
+
+        // Assert
+        Assert.True(File.Exists(outputPath));
+        await authCtxSvc.Received(1).ListAuthenticationContextsAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task ExportAsync_WithPreCancelledToken_ThrowsOperationCanceledException()
     {
         // Arrange

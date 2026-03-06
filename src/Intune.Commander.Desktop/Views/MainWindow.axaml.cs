@@ -15,10 +15,12 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Platform.Storage;
+using Avalonia.Controls.Templates;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Intune.Commander.Core.Models;
 using Intune.Commander.Desktop.Converters;
+using Intune.Commander.Desktop.Models;
 
 using Intune.Commander.Desktop.ViewModels;
 using SukiUI.MessageBox;
@@ -31,6 +33,8 @@ public partial class MainWindow : SukiWindow
     private DataGrid? _mainDataGrid;
     private MainWindowViewModel? _vm;
     private bool _pendingGridRebuild;
+    private CheckBox? _headerCheckBox;
+    private bool _suppressHeaderCheckBoxSync;
 
     /// <summary>
     /// Returns the DataGrid, performing a lazy visual-tree search on first
@@ -208,6 +212,14 @@ public partial class MainWindow : SukiWindow
                 }, DispatcherPriority.Render);
             }
         }
+        else if (e.PropertyName == nameof(MainWindowViewModel.CheckedItemCount))
+        {
+            SyncHeaderCheckBox();
+        }
+        else if (e.PropertyName == nameof(MainWindowViewModel.IsDetailPaneVisible))
+        {
+            UpdateDetailPaneRowHeight();
+        }
         else if (e.PropertyName?.StartsWith("Filtered") == true)
         {
             _vm?.RefreshActiveItemsSource();
@@ -223,6 +235,44 @@ public partial class MainWindow : SukiWindow
         var columns = _vm.ActiveColumns;
         if (columns == null) return;
 
+        // Add checkbox column for multi-select (skip for Overview)
+        if (!_vm.IsOverviewCategory)
+        {
+            _headerCheckBox = new CheckBox
+            {
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            _headerCheckBox.IsCheckedChanged += (_, _) =>
+            {
+                if (_suppressHeaderCheckBoxSync) return;
+                if (_headerCheckBox.IsChecked == true)
+                    _vm.SelectAllCommand.Execute(null);
+                else
+                    _vm.DeselectAllCommand.Execute(null);
+            };
+
+            var checkColumn = new DataGridTemplateColumn
+            {
+                Header = _headerCheckBox,
+                Width = new DataGridLength(40),
+                CanUserResize = false,
+                CanUserSort = false,
+                CanUserReorder = false,
+                CellTemplate = new FuncDataTemplate<SelectableItem>((_, _) =>
+                {
+                    var cb = new CheckBox
+                    {
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center,
+                    };
+                    cb.Bind(CheckBox.IsCheckedProperty, new Binding("IsSelected") { Mode = BindingMode.TwoWay });
+                    return cb;
+                })
+            };
+            grid.Columns.Add(checkColumn);
+        }
+
         foreach (var col in columns)
         {
             if (!col.IsVisible) continue;
@@ -231,19 +281,19 @@ public partial class MainWindow : SukiWindow
 
             if (col.BindingPath == "Computed:ODataType")
             {
-                binding = new Binding("OdataType") { Converter = ODataTypeConverter.Instance };
+                binding = new Binding("Item.OdataType") { Converter = ODataTypeConverter.Instance };
             }
             else if (col.BindingPath == "Computed:Platform")
             {
-                binding = new Binding("OdataType") { Converter = PlatformConverter.Instance };
+                binding = new Binding("Item.OdataType") { Converter = PlatformConverter.Instance };
             }
             else if (col.BindingPath == "Computed:RoleScopeTags")
             {
-                binding = new Binding("RoleScopeTagIds") { Converter = StringListConverter.Instance };
+                binding = new Binding("Item.RoleScopeTagIds") { Converter = StringListConverter.Instance };
             }
             else
             {
-                binding = new Binding(col.BindingPath);
+                binding = new Binding($"Item.{col.BindingPath}");
             }
 
             var dgCol = new DataGridTextColumn
@@ -256,6 +306,71 @@ public partial class MainWindow : SukiWindow
             };
 
             grid.Columns.Add(dgCol);
+        }
+    }
+
+    /// <summary>
+    /// Syncs the header checkbox state with the current checked item count.
+    /// Uses a guard flag to prevent feedback loops.
+    /// </summary>
+    private void SyncHeaderCheckBox()
+    {
+        if (_headerCheckBox == null || _vm == null) return;
+
+        _suppressHeaderCheckBoxSync = true;
+        try
+        {
+            var total = _vm.ActiveItemsSource.Count;
+            var checkedCount = _vm.CheckedItemCount;
+
+            if (checkedCount == 0)
+            {
+                _headerCheckBox.IsThreeState = false;
+                _headerCheckBox.IsChecked = false;
+            }
+            else if (checkedCount == total)
+            {
+                _headerCheckBox.IsThreeState = false;
+                _headerCheckBox.IsChecked = true;
+            }
+            else
+            {
+                // Temporarily enable three-state to allow indeterminate,
+                // then disable so user clicks only toggle between checked/unchecked
+                _headerCheckBox.IsThreeState = true;
+                _headerCheckBox.IsChecked = null;
+                _headerCheckBox.IsThreeState = false;
+            }
+        }
+        finally
+        {
+            _suppressHeaderCheckBoxSync = false;
+        }
+    }
+
+    private void UpdateDetailPaneRowHeight()
+    {
+        if (_vm == null) return;
+
+        // Find the content Grid that has 3 RowDefinitions (ItemList, Splitter, DetailPane)
+        var contentGrid = this.GetVisualDescendants()
+            .OfType<Grid>()
+            .FirstOrDefault(g => g.RowDefinitions.Count == 3);
+
+        if (contentGrid == null) return;
+
+        // The detail pane row is the third one (index 2), named "DetailPaneRow"
+        var detailRow = contentGrid.RowDefinitions[2];
+
+        if (_vm.IsDetailPaneVisible)
+        {
+            detailRow.Height = new GridLength(2, GridUnitType.Star);
+            detailRow.MinHeight = 100;
+        }
+        else
+        {
+            detailRow.Height = new GridLength(0);
+            detailRow.MinHeight = 0;
         }
     }
 
@@ -499,7 +614,7 @@ public partial class MainWindow : SukiWindow
         {
             Title = "Save File",
             SuggestedFileName = defaultFileName,
-            FileTypeChoices = filter.Contains("pptx") 
+            FileTypeChoices = filter.Contains("pptx")
                 ? new[] { new FilePickerFileType("PowerPoint Presentation") { Patterns = new[] { "*.pptx" } } }
                 : null
         });

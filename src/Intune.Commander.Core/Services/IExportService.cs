@@ -68,6 +68,10 @@ public interface IExportService
     Task ExportAuthenticationStrengthPolicyAsync(AuthenticationStrengthPolicy policy, string outputPath, MigrationTable migrationTable, CancellationToken cancellationToken = default);
     Task ExportAuthenticationStrengthPoliciesAsync(IEnumerable<AuthenticationStrengthPolicy> policies, string outputPath, CancellationToken cancellationToken = default);
 
+    Task ExportConditionalAccessPolicyAsync(ConditionalAccessPolicy policy, string outputPath, MigrationTable migrationTable, CancellationToken cancellationToken = default);
+    Task ExportConditionalAccessPoliciesAsync(IEnumerable<ConditionalAccessPolicy> policies, string outputPath, CancellationToken cancellationToken = default);
+    Task ExportConditionalAccessPolicyWithResolvedGuidsAsync(ConditionalAccessPolicy policy, string outputPath, MigrationTable migrationTable, IReadOnlyDictionary<string, string> nameLookup, CancellationToken cancellationToken = default);
+
     Task ExportAuthenticationContextAsync(AuthenticationContextClassReference contextClassReference, string outputPath, MigrationTable migrationTable, CancellationToken cancellationToken = default);
     Task ExportAuthenticationContextsAsync(IEnumerable<AuthenticationContextClassReference> contextClassReferences, string outputPath, CancellationToken cancellationToken = default);
 

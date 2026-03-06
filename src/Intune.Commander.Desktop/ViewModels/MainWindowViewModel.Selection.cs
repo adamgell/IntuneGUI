@@ -1076,37 +1076,21 @@ public partial class MainWindowViewModel : ViewModelBase
 
         SelectedItemTypeName = FriendlyODataType(value?.OdataType);
 
-        
-        // Common properties
+
+        // Common properties (available from $select metadata)
         SelectedItemDescription = value?.Description ?? "";
         SelectedItemRoleScopeTags = value?.RoleScopeTagIds != null
             ? new ObservableCollection<string>((IEnumerable<string>)value.RoleScopeTagIds.Cast<string>())
             : [];
-        // OmaSettings is a typed property on subclasses (e.g. Windows10CustomConfiguration),
-        // NOT stored in AdditionalData. Use reflection to find it generically.
-        var omaSettingsList = value?.GetType()
-            .GetProperty("OmaSettings",
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-            ?.GetValue(value) as System.Collections.IList;
-        SelectedItemOmaSettingsCount = omaSettingsList?.Count ?? 0;
 
-        // Extract all typed settings from the derived Device Configuration type
-        if (value != null)
-        {
-            var settings = ExtractGraphObjectSettings(value);
-            SelectedItemConfigurationSettings = new ObservableCollection<Models.SettingItem>(
-                settings.Select(s => new Models.SettingItem(s.Label, s.Value)));
-        }
-        else
-        {
-            SelectedItemConfigurationSettings = [];
-        }
+        // Clear settings immediately; they'll be populated after the full fetch
+        SelectedItemOmaSettingsCount = 0;
+        SelectedItemConfigurationSettings = [];
 
         OnPropertyChanged(nameof(CanRefreshSelectedItem));
 
         if (value?.Id != null)
-
-            _ = LoadConfigAssignmentsAsync(value.Id);
+            _ = LoadConfigurationDetailsAsync(value.Id);
 
     }
 
@@ -2220,40 +2204,50 @@ public partial class MainWindowViewModel : ViewModelBase
 
 
 
-    private async Task LoadConfigAssignmentsAsync(string configId)
-
+    private async Task LoadConfigurationDetailsAsync(string configId)
     {
-
         if (_configProfileService == null) return;
 
         IsLoadingDetails = true;
 
         try
-
         {
+            // Fetch full object (with derived-type settings) + assignments in parallel
+            var fullConfigTask = _configProfileService.GetDeviceConfigurationAsync(configId);
+            var assignmentsTask = _configProfileService.GetAssignmentsAsync(configId);
 
-            var assignments = await _configProfileService.GetAssignmentsAsync(configId);
+            await Task.WhenAll(fullConfigTask, assignmentsTask);
 
+            var fullConfig = await fullConfigTask;
+
+            // Populate settings from the full object
+            if (fullConfig != null && SelectedConfiguration?.Id == configId)
+            {
+                var omaSettingsList = fullConfig.GetType()
+                    .GetProperty("OmaSettings",
+                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+                    ?.GetValue(fullConfig) as System.Collections.IList;
+                SelectedItemOmaSettingsCount = omaSettingsList?.Count ?? 0;
+
+                var settings = ExtractGraphObjectSettings(fullConfig);
+                SelectedItemConfigurationSettings = new ObservableCollection<Models.SettingItem>(
+                    settings.Select(s => new Models.SettingItem(s.Label, s.Value)));
+            }
+
+            // Populate assignments
+            var assignments = await assignmentsTask;
             var items = new List<AssignmentDisplayItem>();
-
             foreach (var a in assignments)
-
                 items.Add(await MapAssignmentAsync(a.Target));
 
-            SelectedItemAssignments = new ObservableCollection<AssignmentDisplayItem>(items);
-
+            if (SelectedConfiguration?.Id == configId)
+                SelectedItemAssignments = new ObservableCollection<AssignmentDisplayItem>(items);
         }
-
         catch (Exception ex)
-
         {
-
-            DebugLog.LogError($"Failed to load configuration assignments: {FormatGraphError(ex)}", ex);
-
+            DebugLog.LogError($"Failed to load configuration details: {FormatGraphError(ex)}", ex);
         }
-
         finally { IsLoadingDetails = false; }
-
     }
 
 
@@ -3228,6 +3222,11 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         if (string.IsNullOrEmpty(id)) return "";
 
+        // Try the embedded definitions first — gives real display names from Graph schema
+        var displayName = Intune.Commander.Core.Models.SettingsCatalogDefinitionRegistry.ResolveDisplayName(id);
+        if (displayName != null) return displayName;
+
+        // Fallback: parse the definition ID into a readable label
         // Strip known vendor path prefixes
         foreach (var prefix in new[] {
             "device_vendor_msft_policy_config_",

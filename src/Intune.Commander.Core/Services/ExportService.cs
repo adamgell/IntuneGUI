@@ -947,6 +947,149 @@ public class ExportService : IExportService
         await SaveMigrationTableAsync(migrationTable, outputPath, cancellationToken);
     }
 
+    public async Task ExportConditionalAccessPolicyAsync(
+        ConditionalAccessPolicy policy,
+        string outputPath,
+        MigrationTable migrationTable,
+        CancellationToken cancellationToken = default)
+    {
+        var folderPath = Path.Combine(outputPath, "ConditionalAccessPolicies");
+        Directory.CreateDirectory(folderPath);
+
+        var filePath = GetUniqueFilePath(folderPath, policy.DisplayName ?? policy.Id ?? "unknown", policy.Id);
+
+        var json = JsonSerializer.Serialize(policy, policy.GetType(), JsonOptions);
+        await File.WriteAllTextAsync(filePath, json, cancellationToken);
+
+        if (policy.Id != null)
+        {
+            migrationTable.AddOrUpdate(new MigrationEntry
+            {
+                ObjectType = "ConditionalAccessPolicy",
+                OriginalId = policy.Id,
+                Name = policy.DisplayName ?? "Unknown"
+            });
+        }
+    }
+
+    public async Task ExportConditionalAccessPoliciesAsync(
+        IEnumerable<ConditionalAccessPolicy> policies,
+        string outputPath,
+        CancellationToken cancellationToken = default)
+    {
+        var migrationTable = new MigrationTable();
+
+        foreach (var policy in policies)
+        {
+            await ExportConditionalAccessPolicyAsync(policy, outputPath, migrationTable, cancellationToken);
+        }
+
+        await SaveMigrationTableAsync(migrationTable, outputPath, cancellationToken);
+    }
+
+    public async Task ExportConditionalAccessPolicyWithResolvedGuidsAsync(
+        ConditionalAccessPolicy policy,
+        string outputPath,
+        MigrationTable migrationTable,
+        IReadOnlyDictionary<string, string> nameLookup,
+        CancellationToken cancellationToken = default)
+    {
+        var folderPath = Path.Combine(outputPath, "ConditionalAccessPolicies");
+        Directory.CreateDirectory(folderPath);
+
+        // Serialize the original policy to JSON
+        var json = JsonSerializer.Serialize(policy, policy.GetType(), JsonOptions);
+
+        // Parse as a mutable JSON DOM and walk all string values, replacing
+        // any that match the lookup. This avoids the BackingStore hydration
+        // problem with Graph SDK model deserialization.
+        var node = System.Text.Json.Nodes.JsonNode.Parse(json);
+        if (node != null)
+        {
+            ReplaceGuidsInJsonNode(node, nameLookup);
+            json = node.ToJsonString(JsonOptions);
+        }
+
+        var filePath = GetUniqueFilePath(folderPath, policy.DisplayName ?? policy.Id ?? "unknown", policy.Id);
+        await File.WriteAllTextAsync(filePath, json, cancellationToken);
+
+        if (policy.Id != null)
+        {
+            migrationTable.AddOrUpdate(new MigrationEntry
+            {
+                ObjectType = "ConditionalAccessPolicy",
+                OriginalId = policy.Id,
+                Name = policy.DisplayName ?? "Unknown"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Recursively walks a JSON node tree and replaces any string values
+    /// that match keys in the lookup dictionary with their resolved names.
+    /// Skips well-known property names that should never be resolved
+    /// (e.g., displayName, id, odataType, operator, state).
+    /// </summary>
+    private static void ReplaceGuidsInJsonNode(
+        System.Text.Json.Nodes.JsonNode node,
+        IReadOnlyDictionary<string, string> nameLookup)
+    {
+        if (node is System.Text.Json.Nodes.JsonObject obj)
+        {
+            foreach (var prop in obj.ToList())
+            {
+                if (prop.Value == null) continue;
+
+                if (prop.Value is System.Text.Json.Nodes.JsonArray arr)
+                {
+                    // Only replace strings in arrays whose property names contain
+                    // known GUID-bearing field patterns
+                    if (IsGuidBearingArrayProperty(prop.Key))
+                    {
+                        for (var i = 0; i < arr.Count; i++)
+                        {
+                            if (arr[i] is System.Text.Json.Nodes.JsonValue val &&
+                                val.TryGetValue<string>(out var str) &&
+                                !string.IsNullOrEmpty(str) &&
+                                nameLookup.TryGetValue(str, out var resolved))
+                            {
+                                arr[i] = System.Text.Json.Nodes.JsonValue.Create(resolved);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Recurse into arrays of objects
+                        foreach (var item in arr)
+                        {
+                            if (item != null)
+                                ReplaceGuidsInJsonNode(item, nameLookup);
+                        }
+                    }
+                }
+                else if (prop.Value is System.Text.Json.Nodes.JsonObject)
+                {
+                    ReplaceGuidsInJsonNode(prop.Value, nameLookup);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Returns true if the JSON property name is one that typically contains
+    /// GUID values that should be resolved to display names in CA policies.
+    /// </summary>
+    private static bool IsGuidBearingArrayProperty(string propertyName)
+    {
+        return propertyName is
+            "includeUsers" or "excludeUsers" or
+            "includeGroups" or "excludeGroups" or
+            "includeRoles" or "excludeRoles" or
+            "includeApplications" or "excludeApplications" or
+            "includeLocations" or "excludeLocations" or
+            "includeAuthenticationContextClassReferences";
+    }
+
     public async Task ExportAuthenticationContextAsync(
         AuthenticationContextClassReference contextClassReference,
         string outputPath,

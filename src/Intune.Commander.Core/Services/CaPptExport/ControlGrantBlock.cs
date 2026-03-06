@@ -27,16 +27,16 @@ public class ControlGrantBlock
     public string? TermsOfUseName { get; set; }
     public string? AuthenticationStrengthName { get; set; }
 
-    public ControlGrantBlock(ConditionalAccessPolicy policy)
+    public ControlGrantBlock(ConditionalAccessPolicy policy, IReadOnlyDictionary<string, string>? nameLookup = null)
     {
         var grantControls = policy.GrantControls;
         if (grantControls == null) return;
 
         IsGrant = !grantControls.BuiltInControls?.Contains(ConditionalAccessGrantControl.Block) ?? true;
-        IncludeExclude = GetIncludes(grantControls, policy);
+        IncludeExclude = GetIncludes(grantControls, policy, nameLookup);
     }
 
-    private string GetIncludes(ConditionalAccessGrantControls grantControls, ConditionalAccessPolicy policy)
+    private string GetIncludes(ConditionalAccessGrantControls grantControls, ConditionalAccessPolicy policy, IReadOnlyDictionary<string, string>? nameLookup)
     {
         var sb = new StringBuilder();
         IsGrantRequireAll = grantControls.Operator == "AND";
@@ -105,7 +105,10 @@ public class ControlGrantBlock
             var names = new List<string>();
             foreach (var tou in grantControls.TermsOfUse)
             {
-                names.Add(tou);
+                var resolved = (nameLookup != null && nameLookup.TryGetValue(tou, out var displayName))
+                    ? displayName
+                    : tou;
+                names.Add(resolved);
                 GrantControlsCount++;
             }
             TermsOfUseName = string.Join(", ", names);
