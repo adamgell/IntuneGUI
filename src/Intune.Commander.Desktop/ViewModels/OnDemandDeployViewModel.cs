@@ -70,6 +70,11 @@ public partial class OnDemandDeployViewModel : ViewModelBase
                 ? "No devices found"
                 : $"Found {devices.Count} device(s)";
         }
+        catch (OperationCanceledException)
+        {
+            ClearError();
+            StatusText = "Search cancelled";
+        }
         catch (Exception ex)
         {
             SetError($"Search failed: {ex.Message}");
@@ -142,6 +147,8 @@ public partial class OnDemandDeployViewModel : ViewModelBase
             }
 
             StatusText = $"Deployment complete: {SucceededCount}/{total} succeeded";
+            // Auto-start monitoring after successful deployment
+            _ = StartMonitoringAsync();
         }
         catch (OperationCanceledException)
         {
@@ -154,9 +161,6 @@ public partial class OnDemandDeployViewModel : ViewModelBase
             DeployProgressText = "";
             OnPropertyChanged(nameof(CanDeploy));
         }
-
-        // Auto-start monitoring after deployment
-        _ = StartMonitoringAsync();
     }
 
     [RelayCommand]

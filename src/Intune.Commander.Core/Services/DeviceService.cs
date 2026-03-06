@@ -18,19 +18,30 @@ public class DeviceService(GraphServiceClient graphClient) : IDeviceService
         var result = new List<ManagedDevice>();
         var trimmed = (query ?? "").Trim();
 
-        // Empty query → list all Windows devices
+        // Empty query → list all Windows devices (full pagination)
         if (string.IsNullOrEmpty(trimmed))
         {
-            var all = await _graphClient.DeviceManagement.ManagedDevices.GetAsync(req =>
+            var response = await _graphClient.DeviceManagement.ManagedDevices.GetAsync(req =>
             {
                 req.QueryParameters.Filter = WindowsFilter;
                 req.QueryParameters.Select = DeviceSelect;
-                req.QueryParameters.Top = 50;
+                req.QueryParameters.Top = 999;
                 req.QueryParameters.Orderby = ["deviceName"];
             }, cancellationToken);
 
-            if (all?.Value != null)
-                result.AddRange(all.Value);
+            while (response != null)
+            {
+                if (response.Value != null)
+                    result.AddRange(response.Value);
+
+                if (!string.IsNullOrEmpty(response.OdataNextLink))
+                    response = await _graphClient.DeviceManagement.ManagedDevices
+                        .WithUrl(response.OdataNextLink)
+                        .GetAsync(cancellationToken: cancellationToken);
+                else
+                    break;
+            }
+
             return result;
         }
 
@@ -55,7 +66,7 @@ public class DeviceService(GraphServiceClient graphClient) : IDeviceService
             if (response?.Value != null)
                 result.AddRange(response.Value);
         }
-        catch
+        catch (ApiException)
         {
             // $search may not be available; fall back to contains $filter
             var escapedFilter = trimmed.Replace("'", "''");
@@ -73,7 +84,7 @@ public class DeviceService(GraphServiceClient graphClient) : IDeviceService
                 if (containsFallback?.Value != null)
                     result.AddRange(containsFallback.Value);
             }
-            catch
+            catch (ApiException)
             {
                 // contains not supported; last resort startsWith
                 var startsWith = await _graphClient.DeviceManagement.ManagedDevices.GetAsync(req =>
