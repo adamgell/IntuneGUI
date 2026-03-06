@@ -157,6 +157,30 @@ public class ExportNormalizerTests : IDisposable
     }
 
     [Fact]
+    public void NormalizeJson_StripsExportedAt()
+    {
+        var json = """{ "displayName": "Policy A", "exportedAt": "2026-03-01T00:00:00Z", "settings": {} }""";
+
+        var result = _sut.NormalizeJson(json);
+
+        Assert.DoesNotContain("exportedAt", result);
+        Assert.Contains("displayName", result);
+    }
+
+    [Fact]
+    public async Task NormalizeDirectoryAsync_SkipsMigrationTable()
+    {
+        var migrationTable = Path.Combine(_tempDir, "migration-table.json");
+        var originalContent = """{ "exportedAt": "2026-03-01T00:00:00Z", "entries": [] }""";
+        await File.WriteAllTextAsync(migrationTable, originalContent);
+
+        await _sut.NormalizeDirectoryAsync(_tempDir);
+
+        var content = await File.ReadAllTextAsync(migrationTable);
+        Assert.Equal(originalContent, content);
+    }
+
+    [Fact]
     public void NormalizeJson_ArrayWithNullElements_HandledGracefully()
     {
         var json = """{ "items": [null, { "name": "a" }, null] }""";

@@ -9,6 +9,7 @@ public sealed class ExportNormalizer : IExportNormalizer
     {
         "id",
         "createdDateTime",
+        "exportedAt",
         "lastModifiedDateTime",
         "version"
     };
