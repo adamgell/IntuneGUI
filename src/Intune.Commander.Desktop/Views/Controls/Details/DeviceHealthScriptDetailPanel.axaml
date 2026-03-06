@@ -3,7 +3,6 @@
              xmlns:vm="using:Intune.Commander.Desktop.ViewModels"
              xmlns:conv="using:Intune.Commander.Desktop.Converters"
              xmlns:controls="using:Intune.Commander.Desktop.Views.Controls"
-             xmlns:details="using:Intune.Commander.Desktop.Views.Controls.Details"
              x:Class="Intune.Commander.Desktop.Views.Controls.Details.DeviceHealthScriptDetailPanel"
              x:DataType="vm:MainWindowViewModel">
     <ScrollViewer HorizontalScrollBarVisibility="Disabled">
