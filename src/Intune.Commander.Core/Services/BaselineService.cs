@@ -80,6 +80,7 @@ public sealed class BaselineService : IBaselineService
             .ToList();
     }
 
+    // TODO: Implement ES/Compliance comparison
     public BaselineComparisonResult CompareSettingsCatalog(
         BaselinePolicy baseline,
         IReadOnlyList<DeviceManagementConfigurationSetting> tenantSettings,

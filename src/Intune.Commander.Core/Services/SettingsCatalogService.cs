@@ -157,6 +157,7 @@ public class SettingsCatalogService : ISettingsCatalogService
             .DeleteAsync(cancellationToken: cancellationToken);
     }
 
+    // TODO: Consider $batch optimization (20 requests/batch)
     public async Task UpdatePolicySettingsAsync(string policyId, List<DeviceManagementConfigurationSetting> settings, CancellationToken cancellationToken = default)
     {
         // Step 1: Capture original settings for rollback
