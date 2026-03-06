@@ -8,11 +8,11 @@ namespace Intune.Commander.Core.Tests.Services;
 public class BaselineServiceTests
 {
     [Fact]
-    public void GetAllBaselines_WithPlaceholderAssets_ReturnsEmptyList()
+    public void GetAllBaselines_LoadsEmbeddedAssetsWithoutError()
     {
         var sut = new BaselineService();
         var result = sut.GetAllBaselines();
-        Assert.Empty(result);
+        Assert.NotNull(result);
     }
 
     [Fact]

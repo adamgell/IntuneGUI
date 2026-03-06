@@ -112,7 +112,10 @@ public static class SettingViewModelFactory
             DeviceManagementConfigurationStringSettingValue strVal =>
                 new SimpleStringSettingViewModel { Value = strVal.Value },
 
-            _ => new SimpleStringSettingViewModel { Value = null }
+            _ => new UnknownSettingViewModel(new DeviceManagementConfigurationSetting
+            {
+                SettingInstance = simple
+            })
         };
     }
 
