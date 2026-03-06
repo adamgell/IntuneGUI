@@ -278,7 +278,7 @@ start_claude_subagent() {
     printf '%s' "$prompt" > "$prompt_file"
 
     # Run claude in background, capture output to log file
-    (cd "$REPO_ROOT" && "$CLAUDE_BIN" -p "$(cat "$prompt_file")" > "$log_file" 2>&1) &
+    (cd "$REPO_ROOT" && "$CLAUDE_BIN" -p "$(cat "$prompt_file")" --dangerously-skip-permissions > "$log_file" 2>&1) &
     local pid=$!
     CLAUDE_PIDS[$issue]=$pid
     CLAUDE_LOGS[$issue]=$log_file
@@ -375,7 +375,7 @@ if [[ -n "$ISSUE" ]]; then
     prompt_file="${TMPDIR}/claude-prompt-${ISSUE}.txt"
     printf '%s' "$prompt" > "$prompt_file"
     cd "$REPO_ROOT"
-    "$CLAUDE_BIN" -p "$(cat "$prompt_file")"
+    "$CLAUDE_BIN" -p "$(cat "$prompt_file")" --dangerously-skip-permissions
     rm -f "$prompt_file"
     exit 0
 fi
