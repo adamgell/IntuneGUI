@@ -25,7 +25,7 @@ public class DeviceService(GraphServiceClient graphClient) : IDeviceService
             {
                 req.QueryParameters.Filter = WindowsFilter;
                 req.QueryParameters.Select = DeviceSelect;
-                req.QueryParameters.Top = 999;
+                req.QueryParameters.Top = 200;
                 req.QueryParameters.Orderby = ["deviceName"];
             }, cancellationToken);
 
