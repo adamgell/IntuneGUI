@@ -114,6 +114,21 @@ public partial class MainWindowViewModel : ViewModelBase
             // Fire-and-forget — log result; does not block connect flow
             _ = CheckAndLogPermissionsAsync();
 
+            // Pre-warm the Settings Catalog definition registry off the UI thread
+            // so the first policy click doesn't stall deserializing the embedded JSON.
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    // Trigger lazy initialization of the settings catalog definition registry.
+                    var _ = Intune.Commander.Core.Models.SettingsCatalogDefinitionRegistry.HasDefinitions;
+                }
+                catch (Exception ex)
+                {
+                    DebugLog.LogError("SettingsCatalog", $"Failed to warm SettingsCatalogDefinitionRegistry: {ex}");
+                }
+            });
+
             _configProfileService = new ConfigurationProfileService(_graphClient);
 
             _compliancePolicyService = new CompliancePolicyService(_graphClient);
