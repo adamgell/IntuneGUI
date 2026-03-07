@@ -187,7 +187,12 @@ public partial class BaselineViewModel : ViewModelBase
         var created = await _settingsCatalogService.CreateSettingsCatalogPolicyAsync(export.Policy, ct);
 
         if (created.Id is not null && export.Settings.Count > 0)
-            await _settingsCatalogService.UpdatePolicySettingsAsync(created.Id, export.Settings, ct);
+        {
+            // Use CancellationToken.None: once the policy is created, we must finish
+            // adding settings to avoid leaving an orphaned empty policy in the tenant
+            await _settingsCatalogService.UpdatePolicySettingsAsync(
+                created.Id, export.Settings, CancellationToken.None);
+        }
     }
 
     private async Task DeployEndpointSecurityAsync(BaselinePolicy baseline, CancellationToken ct)

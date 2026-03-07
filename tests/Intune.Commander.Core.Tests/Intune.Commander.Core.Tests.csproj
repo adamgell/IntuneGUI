@@ -30,6 +30,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Intune.Commander.Core\Intune.Commander.Core.csproj" />
+    <!-- TODO: Move SettingViewModelFactoryTests to a dedicated Desktop test project to fix layering -->
     <ProjectReference Include="..\..\src\Intune.Commander.Desktop\Intune.Commander.Desktop.csproj" />
   </ItemGroup>
 

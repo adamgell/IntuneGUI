@@ -33,8 +33,10 @@ public partial class GroupPickerViewModel : ViewModelBase
     partial void OnSearchTextChanged(string value)
     {
         _debounceCts?.Cancel();
+        _debounceCts?.Dispose();
         if (string.IsNullOrWhiteSpace(value))
         {
+            _debounceCts = null;
             Groups.Clear();
             return;
         }
@@ -56,6 +58,8 @@ public partial class GroupPickerViewModel : ViewModelBase
     private async Task SearchGroupsAsync(CancellationToken ct)
     {
         _debounceCts?.Cancel();
+        _debounceCts?.Dispose();
+        _debounceCts = null;
         await SearchGroupsCoreAsync(ct);
     }
 

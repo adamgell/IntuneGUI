@@ -151,12 +151,20 @@ public static class SettingViewModelFactory
         return vm;
     }
 
-    private static GroupSettingViewModel BuildGroupCollectionVm(
+    private static SettingViewModelBase BuildGroupCollectionVm(
         DeviceManagementConfigurationGroupSettingCollectionInstance groupCollection)
     {
+        // Multi-value group collections can't be round-tripped safely; fall back to read-only
+        if (groupCollection.GroupSettingCollectionValue is { Count: > 1 })
+        {
+            return new UnknownSettingViewModel(new DeviceManagementConfigurationSetting
+            {
+                SettingInstance = groupCollection
+            });
+        }
+
         var vm = new GroupSettingViewModel { IsCollection = true };
 
-        // Flatten the first group value's children into the VM
         if (groupCollection.GroupSettingCollectionValue is { Count: > 0 } values)
         {
             var first = values[0];

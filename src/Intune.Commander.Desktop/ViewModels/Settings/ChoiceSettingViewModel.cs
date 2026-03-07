@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -26,7 +27,9 @@ public partial class ChoiceSettingViewModel : SettingViewModelBase
         if (Children.Count > 0)
         {
             choiceValue.Children = Children
-                .Select(c => c.ToGraphSetting().SettingInstance!)
+                .Select(c => c.ToGraphSetting().SettingInstance
+                    ?? throw new InvalidOperationException(
+                        $"Child setting '{c.SettingDefinitionId}' produced null SettingInstance"))
                 .ToList();
         }
 

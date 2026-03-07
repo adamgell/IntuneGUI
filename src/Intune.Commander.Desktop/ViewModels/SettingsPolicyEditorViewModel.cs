@@ -56,6 +56,9 @@ public partial class SettingsPolicyEditorViewModel : ViewModelBase
 
         try
         {
+            // Unsubscribe from old VMs before loading new ones
+            UnsubscribeFromSettings();
+
             var settings = await _settingsCatalogService.GetPolicySettingsAsync(_policy.Id, ct);
             _originalSettings = settings;
 
@@ -226,6 +229,12 @@ public partial class SettingsPolicyEditorViewModel : ViewModelBase
             foreach (var s in GetAllSettings(child))
                 yield return s;
         }
+    }
+
+    private void UnsubscribeFromSettings()
+    {
+        foreach (var vm in CategoryTree.SelectMany(GetAllSettings))
+            vm.PropertyChanged -= OnSettingPropertyChanged;
     }
 
     private void OnSettingPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Microsoft.Graph.Beta.Models;
@@ -13,7 +14,9 @@ public partial class GroupSettingViewModel : SettingViewModelBase
     public override DeviceManagementConfigurationSetting ToGraphSetting()
     {
         var childInstances = Children
-            .Select(c => c.ToGraphSetting().SettingInstance!)
+            .Select(c => c.ToGraphSetting().SettingInstance
+                ?? throw new InvalidOperationException(
+                    $"Child setting '{c.SettingDefinitionId}' produced null SettingInstance"))
             .ToList();
 
         if (IsCollection)

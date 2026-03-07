@@ -164,19 +164,19 @@ public class SettingsCatalogService : ISettingsCatalogService
         var originalSettings = await GetPolicySettingsAsync(policyId, cancellationToken);
 
         // Step 2: Delete all existing settings
+        foreach (var existing in originalSettings)
+        {
+            if (existing.Id is not null)
+            {
+                await _graphClient.DeviceManagement.ConfigurationPolicies[policyId]
+                    .Settings[existing.Id]
+                    .DeleteAsync(cancellationToken: cancellationToken);
+            }
+        }
+
+        // Step 3: POST each new setting (create copies to avoid mutating the caller's list)
         try
         {
-            foreach (var existing in originalSettings)
-            {
-                if (existing.Id is not null)
-                {
-                    await _graphClient.DeviceManagement.ConfigurationPolicies[policyId]
-                        .Settings[existing.Id]
-                        .DeleteAsync(cancellationToken: cancellationToken);
-                }
-            }
-
-            // Step 3: POST each new setting (create copies to avoid mutating the caller's list)
             foreach (var setting in settings)
             {
                 var toPost = new DeviceManagementConfigurationSetting
@@ -193,9 +193,20 @@ public class SettingsCatalogService : ISettingsCatalogService
         }
         catch (Exception ex)
         {
-            // Best-effort rollback: re-POST original settings
+            // Best-effort rollback: clear whatever partial state exists, re-POST originals.
+            // Use CancellationToken.None — rollback must complete regardless.
             try
             {
+                var current = await GetPolicySettingsAsync(policyId);
+                foreach (var c in current)
+                {
+                    if (c.Id is not null)
+                    {
+                        await _graphClient.DeviceManagement.ConfigurationPolicies[policyId]
+                            .Settings[c.Id].DeleteAsync();
+                    }
+                }
+
                 foreach (var original in originalSettings)
                 {
                     var toPost = new DeviceManagementConfigurationSetting
@@ -203,7 +214,7 @@ public class SettingsCatalogService : ISettingsCatalogService
                         SettingInstance = original.SettingInstance
                     };
                     await _graphClient.DeviceManagement.ConfigurationPolicies[policyId]
-                        .Settings.PostAsync(toPost, cancellationToken: cancellationToken);
+                        .Settings.PostAsync(toPost);
                 }
             }
             catch (Exception rollbackEx)
