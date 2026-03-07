@@ -418,6 +418,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void CloseSettingsEditor()
     {
+        ActiveSettingsEditor?.UnsubscribeFromSettings();
         ActiveSettingsEditor = null;
     }
 

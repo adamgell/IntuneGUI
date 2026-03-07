@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +12,7 @@ using CommunityToolkit.Mvvm.Input;
 using Intune.Commander.Core.Models;
 using Intune.Commander.Core.Services;
 using Microsoft.Graph.Beta.Models;
+using Microsoft.Kiota.Serialization.Json;
 
 namespace Intune.Commander.Desktop.ViewModels;
 
@@ -45,6 +49,10 @@ public partial class BaselineViewModel : ViewModelBase
     // TODO: Deploy to Existing for ES/Compliance types
     public bool IsCompareAvailable => ActiveBaselineType == BaselinePolicyType.SettingsCatalog;
 
+    public bool IsSettingsCatalogSelected => ActiveBaselineType == BaselinePolicyType.SettingsCatalog;
+    public bool IsEndpointSecuritySelected => ActiveBaselineType == BaselinePolicyType.EndpointSecurity;
+    public bool IsComplianceSelected => ActiveBaselineType == BaselinePolicyType.Compliance;
+
     public BaselineViewModel(
         IBaselineService baselineService,
         ISettingsCatalogService settingsCatalogService,
@@ -66,7 +74,13 @@ public partial class BaselineViewModel : ViewModelBase
         LoadBaselines();
         ComparisonResult = null;
         OnPropertyChanged(nameof(IsCompareAvailable));
+        OnPropertyChanged(nameof(IsSettingsCatalogSelected));
+        OnPropertyChanged(nameof(IsEndpointSecuritySelected));
+        OnPropertyChanged(nameof(IsComplianceSelected));
     }
+
+    [RelayCommand]
+    private void SetBaselineType(BaselinePolicyType type) => ActiveBaselineType = type;
 
     partial void OnCategoryFilterChanged(string value)
     {
@@ -173,52 +187,115 @@ public partial class BaselineViewModel : ViewModelBase
 
     private async Task DeploySettingsCatalogAsync(BaselinePolicy baseline, CancellationToken ct)
     {
-        var export = JsonSerializer.Deserialize<SettingsCatalogExport>(
-            baseline.RawJson.GetRawText(), JsonOptions);
+        DeviceManagementConfigurationPolicy policy;
+        List<DeviceManagementConfigurationSetting> settings;
 
-        if (export is null)
-            throw new InvalidOperationException("Failed to deserialize Settings Catalog baseline");
+        if (baseline.RawJson.TryGetProperty("policy", out _))
+        {
+            // Export wrapper format: { "policy": {...}, "settings": [...] }
+            var export = JsonSerializer.Deserialize<SettingsCatalogExport>(
+                baseline.RawJson.GetRawText(), JsonOptions)
+                ?? throw new InvalidOperationException("Failed to deserialize Settings Catalog baseline");
+            policy = export.Policy;
+            settings = export.Settings;
+        }
+        else
+        {
+            // OIB raw format: policy fields at top level with embedded settings
+            (policy, settings) = await ParseOibSettingsCatalogBaselineAsync(baseline.RawJson);
+        }
 
-        // Clear IDs for creation
-        export.Policy.Id = null;
-        export.Policy.CreatedDateTime = null;
-        export.Policy.LastModifiedDateTime = null;
+        policy.Id = null;
+        policy.CreatedDateTime = null;
+        policy.LastModifiedDateTime = null;
 
-        var created = await _settingsCatalogService.CreateSettingsCatalogPolicyAsync(export.Policy, ct);
+        var created = await _settingsCatalogService.CreateSettingsCatalogPolicyAsync(policy, ct);
 
-        if (created.Id is not null && export.Settings.Count > 0)
+        if (created.Id is not null && settings.Count > 0)
         {
             // Use CancellationToken.None: once the policy is created, we must finish
             // adding settings to avoid leaving an orphaned empty policy in the tenant
             await _settingsCatalogService.UpdatePolicySettingsAsync(
-                created.Id, export.Settings, CancellationToken.None);
+                created.Id, settings, CancellationToken.None);
         }
     }
 
     private async Task DeployEndpointSecurityAsync(BaselinePolicy baseline, CancellationToken ct)
     {
-        var export = JsonSerializer.Deserialize<EndpointSecurityExport>(
-            baseline.RawJson.GetRawText(), JsonOptions);
-
-        if (export is null)
-            throw new InvalidOperationException("Failed to deserialize Endpoint Security baseline");
-
-        export.Intent.Id = null;
-        await _endpointSecurityService.CreateEndpointSecurityIntentAsync(export.Intent, ct);
+        if (baseline.RawJson.TryGetProperty("intent", out _))
+        {
+            // Export wrapper format
+            var export = JsonSerializer.Deserialize<EndpointSecurityExport>(
+                baseline.RawJson.GetRawText(), JsonOptions)
+                ?? throw new InvalidOperationException("Failed to deserialize Endpoint Security baseline");
+            export.Intent.Id = null;
+            await _endpointSecurityService.CreateEndpointSecurityIntentAsync(export.Intent, ct);
+        }
+        else
+        {
+            // OIB ES baselines are Settings Catalog policies — deploy via SC API
+            await DeploySettingsCatalogAsync(baseline, ct);
+        }
     }
 
     private async Task DeployComplianceAsync(BaselinePolicy baseline, CancellationToken ct)
     {
-        var export = JsonSerializer.Deserialize<CompliancePolicyExport>(
-            baseline.RawJson.GetRawText(), JsonOptions);
+        DeviceCompliancePolicy policy;
 
-        if (export is null)
-            throw new InvalidOperationException("Failed to deserialize Compliance baseline");
+        if (baseline.RawJson.TryGetProperty("policy", out _))
+        {
+            // Export wrapper format
+            var export = JsonSerializer.Deserialize<CompliancePolicyExport>(
+                baseline.RawJson.GetRawText(), JsonOptions)
+                ?? throw new InvalidOperationException("Failed to deserialize Compliance baseline");
+            policy = export.Policy;
+        }
+        else
+        {
+            // OIB raw format — use Kiota parser for proper polymorphic deserialization
+            policy = await ParseOibModelAsync<DeviceCompliancePolicy>(
+                baseline.RawJson, DeviceCompliancePolicy.CreateFromDiscriminatorValue);
+        }
 
-        export.Policy.Id = null;
-        export.Policy.CreatedDateTime = null;
-        export.Policy.LastModifiedDateTime = null;
-        export.Policy.Version = null;
-        await _compliancePolicyService.CreateCompliancePolicyAsync(export.Policy, ct);
+        policy.Id = null;
+        policy.CreatedDateTime = null;
+        policy.LastModifiedDateTime = null;
+        policy.Version = null;
+        await _compliancePolicyService.CreateCompliancePolicyAsync(policy, ct);
+    }
+
+    private static async Task<(DeviceManagementConfigurationPolicy Policy, List<DeviceManagementConfigurationSetting> Settings)>
+        ParseOibSettingsCatalogBaselineAsync(JsonElement rawJson)
+    {
+        var policy = await ParseOibModelAsync<DeviceManagementConfigurationPolicy>(
+            rawJson, DeviceManagementConfigurationPolicy.CreateFromDiscriminatorValue);
+
+        // Extract settings — they may be populated via Kiota or need separate parsing
+        var settings = policy.Settings?.ToList() ?? [];
+        if (settings.Count == 0
+            && rawJson.TryGetProperty("settings", out var settingsJson)
+            && settingsJson.ValueKind == JsonValueKind.Array
+            && settingsJson.GetArrayLength() > 0)
+        {
+            using var stream = new MemoryStream(Encoding.UTF8.GetBytes(settingsJson.GetRawText()));
+            var node = await new JsonParseNodeFactory()
+                .GetRootParseNodeAsync("application/json", stream);
+            settings = node.GetCollectionOfObjectValues(
+                DeviceManagementConfigurationSetting.CreateFromDiscriminatorValue)?.ToList() ?? [];
+        }
+
+        policy.Settings = null;
+        return (policy, settings);
+    }
+
+    private static async Task<T> ParseOibModelAsync<T>(
+        JsonElement rawJson, Microsoft.Kiota.Abstractions.Serialization.ParsableFactory<T> factory)
+        where T : Microsoft.Kiota.Abstractions.Serialization.IParsable
+    {
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(rawJson.GetRawText()));
+        var node = await new JsonParseNodeFactory()
+            .GetRootParseNodeAsync("application/json", stream);
+        return node.GetObjectValue(factory)
+            ?? throw new InvalidOperationException($"Failed to deserialize OIB baseline as {typeof(T).Name}");
     }
 }

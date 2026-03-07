@@ -6,13 +6,13 @@ namespace Intune.Commander.Desktop.ViewModels.Settings;
 public partial class SimpleIntegerSettingViewModel : SettingViewModelBase
 {
     [ObservableProperty]
-    private long? _value;
+    private int? _value;
 
-    public long? Minimum { get; init; }
+    public int? Minimum { get; init; }
 
-    public long? Maximum { get; init; }
+    public int? Maximum { get; init; }
 
-    partial void OnValueChanged(long? value) => IsModified = true;
+    partial void OnValueChanged(int? value) => IsModified = true;
 
     public override DeviceManagementConfigurationSetting ToGraphSetting()
     {
@@ -21,7 +21,7 @@ public partial class SimpleIntegerSettingViewModel : SettingViewModelBase
             SettingDefinitionId = SettingDefinitionId,
             SimpleSettingValue = new DeviceManagementConfigurationIntegerSettingValue
             {
-                Value = (int?)Value
+                Value = Value
             }
         });
     }

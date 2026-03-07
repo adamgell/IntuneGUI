@@ -50,6 +50,7 @@ public static class SettingViewModelFactory
         vm.SettingDefinitionId = defId;
         vm.DisplayName = displayName;
         vm.Description = description;
+        vm.IsModified = false;
 
         return vm;
     }
@@ -107,7 +108,7 @@ public static class SettingViewModelFactory
         return simple.SimpleSettingValue switch
         {
             DeviceManagementConfigurationIntegerSettingValue intVal =>
-                new SimpleIntegerSettingViewModel { Value = intVal.Value },
+                new SimpleIntegerSettingViewModel { Value = (int?)intVal.Value },
 
             DeviceManagementConfigurationStringSettingValue strVal =>
                 new SimpleStringSettingViewModel { Value = strVal.Value },

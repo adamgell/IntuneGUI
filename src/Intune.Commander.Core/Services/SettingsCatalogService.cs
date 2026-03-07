@@ -163,20 +163,22 @@ public class SettingsCatalogService : ISettingsCatalogService
         // Step 1: Capture original settings for rollback
         var originalSettings = await GetPolicySettingsAsync(policyId, cancellationToken);
 
-        // Step 2: Delete all existing settings
-        foreach (var existing in originalSettings)
-        {
-            if (existing.Id is not null)
-            {
-                await _graphClient.DeviceManagement.ConfigurationPolicies[policyId]
-                    .Settings[existing.Id]
-                    .DeleteAsync(cancellationToken: cancellationToken);
-            }
-        }
-
-        // Step 3: POST each new setting (create copies to avoid mutating the caller's list)
+        // Steps 2+3 are wrapped in try so that any failure (including cancellation)
+        // triggers a best-effort rollback to the original settings.
         try
         {
+            // Step 2: Delete all existing settings
+            foreach (var existing in originalSettings)
+            {
+                if (existing.Id is not null)
+                {
+                    await _graphClient.DeviceManagement.ConfigurationPolicies[policyId]
+                        .Settings[existing.Id]
+                        .DeleteAsync(cancellationToken: cancellationToken);
+                }
+            }
+
+            // Step 3: POST each new setting (create copies to avoid mutating the caller's list)
             foreach (var setting in settings)
             {
                 var toPost = new DeviceManagementConfigurationSetting
@@ -186,10 +188,6 @@ public class SettingsCatalogService : ISettingsCatalogService
                 await _graphClient.DeviceManagement.ConfigurationPolicies[policyId]
                     .Settings.PostAsync(toPost, cancellationToken: cancellationToken);
             }
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
         }
         catch (Exception ex)
         {

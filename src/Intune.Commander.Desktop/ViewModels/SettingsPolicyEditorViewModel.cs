@@ -231,7 +231,7 @@ public partial class SettingsPolicyEditorViewModel : ViewModelBase
         }
     }
 
-    private void UnsubscribeFromSettings()
+    public void UnsubscribeFromSettings()
     {
         foreach (var vm in CategoryTree.SelectMany(GetAllSettings))
             vm.PropertyChanged -= OnSettingPropertyChanged;

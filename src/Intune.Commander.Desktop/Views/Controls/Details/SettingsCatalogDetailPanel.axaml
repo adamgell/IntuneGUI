@@ -5,6 +5,7 @@
              xmlns:controls="using:Intune.Commander.Desktop.Views.Controls"
              xmlns:models="using:Intune.Commander.Desktop.Models"
              xmlns:coreModels="using:Intune.Commander.Core.Models"
+             xmlns:graphModels="using:Microsoft.Graph.Beta.Models"
              x:Class="Intune.Commander.Desktop.Views.Controls.Details.SettingsCatalogDetailPanel"
              x:DataType="vm:MainWindowViewModel">
 
@@ -168,12 +169,17 @@
                 <!-- Sub-tab selector: SC / ES / Compliance -->
                 <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
                     <RadioButton Content="Settings Catalog" GroupName="BaselineType"
-                                 IsChecked="{Binding ActiveBaselineType, Converter={x:Static ObjectConverters.IsNotNull}, Mode=OneWay}"
-                                 x:Name="RadioSC" />
+                                 IsChecked="{Binding IsSettingsCatalogSelected, Mode=OneWay}"
+                                 Command="{Binding SetBaselineTypeCommand}"
+                                 CommandParameter="{x:Static coreModels:BaselinePolicyType.SettingsCatalog}" />
                     <RadioButton Content="Endpoint Security" GroupName="BaselineType"
-                                 x:Name="RadioES" />
+                                 IsChecked="{Binding IsEndpointSecuritySelected, Mode=OneWay}"
+                                 Command="{Binding SetBaselineTypeCommand}"
+                                 CommandParameter="{x:Static coreModels:BaselinePolicyType.EndpointSecurity}" />
                     <RadioButton Content="Compliance" GroupName="BaselineType"
-                                 x:Name="RadioCompliance" />
+                                 IsChecked="{Binding IsComplianceSelected, Mode=OneWay}"
+                                 Command="{Binding SetBaselineTypeCommand}"
+                                 CommandParameter="{x:Static coreModels:BaselinePolicyType.Compliance}" />
                 </StackPanel>
 
                 <!-- Category filter -->
@@ -224,7 +230,7 @@
                                           MinWidth="300"
                                           PlaceholderText="Select a tenant policy to compare...">
                                     <ComboBox.ItemTemplate>
-                                        <DataTemplate>
+                                        <DataTemplate x:DataType="graphModels:DeviceManagementConfigurationPolicy">
                                             <TextBlock Text="{Binding Name}" />
                                         </DataTemplate>
                                     </ComboBox.ItemTemplate>

@@ -182,6 +182,66 @@ public class SettingViewModelFactoryTests
     }
 
     [Fact]
+    public void Create_IsModified_IsFalseAfterConstruction()
+    {
+        var setting = new DeviceManagementConfigurationSetting
+        {
+            SettingInstance = new DeviceManagementConfigurationChoiceSettingInstance
+            {
+                SettingDefinitionId = "modified_test",
+                ChoiceSettingValue = new DeviceManagementConfigurationChoiceSettingValue
+                {
+                    Value = "option_1"
+                }
+            }
+        };
+
+        var vm = SettingViewModelFactory.Create(setting);
+
+        Assert.False(vm.IsModified);
+    }
+
+    [Fact]
+    public void Create_SimpleInteger_IsModifiedFalseAfterConstruction()
+    {
+        var setting = new DeviceManagementConfigurationSetting
+        {
+            SettingInstance = new DeviceManagementConfigurationSimpleSettingInstance
+            {
+                SettingDefinitionId = "int_modified_test",
+                SimpleSettingValue = new DeviceManagementConfigurationIntegerSettingValue
+                {
+                    Value = 42
+                }
+            }
+        };
+
+        var vm = SettingViewModelFactory.Create(setting);
+
+        Assert.False(vm.IsModified);
+    }
+
+    [Fact]
+    public void Create_SimpleString_IsModifiedFalseAfterConstruction()
+    {
+        var setting = new DeviceManagementConfigurationSetting
+        {
+            SettingInstance = new DeviceManagementConfigurationSimpleSettingInstance
+            {
+                SettingDefinitionId = "str_modified_test",
+                SimpleSettingValue = new DeviceManagementConfigurationStringSettingValue
+                {
+                    Value = "hello"
+                }
+            }
+        };
+
+        var vm = SettingViewModelFactory.Create(setting);
+
+        Assert.False(vm.IsModified);
+    }
+
+    [Fact]
     public void Create_NullSettingInstance_ReturnsUnknownSettingViewModel()
     {
         var setting = new DeviceManagementConfigurationSetting { SettingInstance = null };
