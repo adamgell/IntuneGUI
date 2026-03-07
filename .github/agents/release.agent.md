@@ -1,7 +1,6 @@
 ---
 name: Release
 description: Creates a versioned Intune Commander release. Use when the user asks to release, version bump, ship, tag, publish, or cut a new version. Validates the repo state, updates changelog and csproj versions, runs release validation, commits, pushes, tags, and summarizes the release.
-model: Claude Opus 4.6 (copilot)
 tools: [vscode/getProjectSetupInfo, vscode/installExtension, vscode/newWorkspace, vscode/openSimpleBrowser, vscode/runCommand, vscode/askQuestions, vscode/vscodeAPI, vscode/extensions, execute/getTerminalOutput, execute/awaitTerminal, execute/killTerminal, execute/runTask, execute/createAndRunTask, execute/runInTerminal, execute/runTests, read/getTaskOutput, read/problems, read/readFile, read/terminalSelection, read/terminalLastCommand, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, edit/createDirectory, edit/createFile, edit/editFiles, web/fetch, web/githubRepo, context7/get-library-docs, context7/resolve-library-id, github.vscode-pull-request-github/notification_fetch, github.vscode-pull-request-github/doSearch, github.vscode-pull-request-github/openPullRequest, todo]
 ---
 ---
