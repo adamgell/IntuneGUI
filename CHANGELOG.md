@@ -4,8 +4,6 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
----
-
 ## [0.5.0] — 2026-03-07
 
 ### Added
@@ -26,17 +24,6 @@ All notable changes to this project are documented in this file.
   - `ConditionLocations`: resolves named location GUIDs; sentinel values (`All` → "Any location", `AllTrusted` → "All trusted locations") preserved
   - `ConditionalAccessPptExportService`: collects all GUIDs across all policies, performs a single batch resolution, and passes the lookup to all helper constructors
   - 24 new unit tests covering name resolution across all helper classes, `WellKnownAppRegistry`, and `DirectoryObjectResolver` contract
-
-### Changed
-
-- `ConditionalAccessPptExportService` constructor now accepts an optional `IDirectoryObjectResolver` for batch GUID resolution
-- `AssignedUserWorkload`, `AssignedCloudAppAction`, and `ConditionLocations` constructors accept an optional `IReadOnlyDictionary<string, string>` name lookup
-- Desktop `MainWindowViewModel.Detail.cs` now delegates app-ID resolution to the shared `WellKnownAppRegistry` instead of a local dictionary
-
----
-
-### Added
-
 - **Permission Check Service** — new `IPermissionCheckService` / `PermissionCheckService` in Core
   - Acquires the current token via `TokenCredential`, base64url-decodes the JWT payload, and compares granted permissions against the 14 known-required Graph scopes
   - Supports both application tokens (`roles` claim) and delegated tokens (`scp` claim)
@@ -56,9 +43,28 @@ All notable changes to this project are documented in this file.
   - `PermissionSummaryBrushConverter` — `bool → SolidColorBrush` (green / red)
   - `PermissionSummaryTextConverter` — `PermissionCheckResult → "All N/N Granted"` summary string
   - `CountGreaterThanZeroConverter` — `int → bool` for conditional visibility bindings
+- **Conditional Access PowerPoint Export** (Phase 1-5 complete)
+  - New service: `IConditionalAccessPptExportService` / `ConditionalAccessPptExportService`
+  - Generates comprehensive PowerPoint presentations with:
+    - Cover slide with tenant name and timestamp
+    - Tenant summary with policy counts
+    - Policy inventory table (all policies)
+    - Per-policy detail slides (conditions, grant controls, assignments)
+  - UI integration: Export button visible in Conditional Access category
+  - File save dialog with timestamped default filename
+  - Async export with cancellation support and progress feedback
+  - 11 comprehensive unit tests (parameter validation, file creation, PPTX structure)
+  - Commercial cloud support (v1); GCC/GCC-High/DoD deferred to future release
+- Added Syncfusion.Presentation.Net.Core v28.1.33 dependency for PowerPoint generation
+- Added Syncfusion license initialization via `SYNCFUSION_LICENSE_KEY` environment variable
+- Updated SERVICE-IMPLEMENTATION-PLAN.md with Wave 6 (CA PowerPoint Export Integration)
+- Documented Syncfusion licensing requirements in README.md
 
 ### Changed
 
+- `ConditionalAccessPptExportService` constructor now accepts an optional `IDirectoryObjectResolver` for batch GUID resolution
+- `AssignedUserWorkload`, `AssignedCloudAppAction`, and `ConditionLocations` constructors accept an optional `IReadOnlyDictionary<string, string>` name lookup
+- Desktop `MainWindowViewModel.Detail.cs` now delegates app-ID resolution to the shared `WellKnownAppRegistry` instead of a local dictionary
 - Moved **Permissions** toolbar button into the **Help** menu as "🔑 Permissions..." to reduce toolbar clutter; item is disabled when not connected
 
 ### Fixed
@@ -77,27 +83,6 @@ All notable changes to this project are documented in this file.
   - Added 9 previously missing service rows to the endpoint permission table (QualityUpdate, DriverUpdate, DeviceShellScript, ComplianceScript, AdmxFile, AppleDep, DeviceCategory, CloudPcProvisioning, CloudPcUserSettings)
   - Expanded existing permission rows to document all services that rely on each scope
 - Updated `scripts/Setup-IntegrationTestApp.ps1`: added `CloudPC.ReadWrite.All` to `$requiredPermissions`
-
----
-
-### Added
-
-- **Conditional Access PowerPoint Export** (Phase 1-5 complete)
-  - New service: `IConditionalAccessPptExportService` / `ConditionalAccessPptExportService`
-  - Generates comprehensive PowerPoint presentations with:
-    - Cover slide with tenant name and timestamp
-    - Tenant summary with policy counts
-    - Policy inventory table (all policies)
-    - Per-policy detail slides (conditions, grant controls, assignments)
-  - UI integration: Export button visible in Conditional Access category
-  - File save dialog with timestamped default filename
-  - Async export with cancellation support and progress feedback
-  - 11 comprehensive unit tests (parameter validation, file creation, PPTX structure)
-  - Commercial cloud support (v1); GCC/GCC-High/DoD deferred to future release
-- Added Syncfusion.Presentation.Net.Core v28.1.33 dependency for PowerPoint generation
-- Added Syncfusion license initialization via `SYNCFUSION_LICENSE_KEY` environment variable
-- Updated SERVICE-IMPLEMENTATION-PLAN.md with Wave 6 (CA PowerPoint Export Integration)
-- Documented Syncfusion licensing requirements in README.md
 
 ## [2026-02-18 Release]
 
