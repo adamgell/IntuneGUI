@@ -82,6 +82,10 @@ tests/Intune.Commander.Core.Tests/coverage.json
 website/docs/
 .vscode/mcp.json
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+.github/agents/
+>>>>>>> Stashed changes
 !.github/agents/
 !.github/agents/*.agent.md
 /artifacts
