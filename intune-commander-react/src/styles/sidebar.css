@@ -46,13 +46,13 @@
   color: var(--text-muted);
 }
 
-/* Nav groups */
-.nav-group {
+/* Nav groups — scoped to .sidebar to avoid collisions with nav.css */
+.sidebar .nav-group {
   display: grid;
   gap: 4px;
 }
 
-.nav-label {
+.sidebar .nav-label {
   color: var(--text-muted);
   font-size: 11px;
   font-weight: 600;
@@ -61,7 +61,7 @@
   padding: 0 6px;
 }
 
-.nav-item {
+.sidebar .nav-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -78,26 +78,26 @@
   text-align: left;
 }
 
-.nav-item:hover {
+.sidebar .nav-item:hover {
   background: rgba(255, 255, 255, 0.03);
   color: var(--text);
 }
 
-.nav-item.active {
+.sidebar .nav-item.active {
   background: rgba(127, 86, 217, 0.1);
   color: #e2e8f0;
   border-color: rgba(127, 86, 217, 0.12);
   font-weight: 600;
 }
 
-.nav-item-label {
+.sidebar .nav-item-label {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.nav-item-count {
+.sidebar .nav-item-count {
   color: var(--text-muted);
   font-size: 11px;
   padding: 2px 7px;
@@ -106,7 +106,7 @@
   border: 1px solid rgba(148, 163, 184, 0.12);
 }
 
-.nav-item.active .nav-item-count {
+.sidebar .nav-item.active .nav-item-count {
   color: #d6bbfb;
   border-color: rgba(127, 86, 217, 0.14);
   background: rgba(127, 86, 217, 0.08);

@@ -8,6 +8,7 @@ interface SettingsCatalogState {
   policyDetail: PolicyDetail | null;
   isLoadingList: boolean;
   isLoadingDetail: boolean;
+  hasAttemptedLoad: boolean;
   error: string | null;
 
   loadPolicies: () => Promise<void>;
@@ -21,10 +22,11 @@ export const useSettingsCatalogStore = create<SettingsCatalogState>((set, get) =
   policyDetail: null,
   isLoadingList: false,
   isLoadingDetail: false,
+  hasAttemptedLoad: false,
   error: null,
 
   loadPolicies: async () => {
-    set({ isLoadingList: true, error: null });
+    set({ isLoadingList: true, hasAttemptedLoad: true, error: null });
     try {
       const policies = await sendCommand<PolicyListItem[]>('settingsCatalog.list');
       set({ policies, isLoadingList: false });

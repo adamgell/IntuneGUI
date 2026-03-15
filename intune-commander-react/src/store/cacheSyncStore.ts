@@ -77,8 +77,15 @@ export const useCacheSyncStore = create<CacheSyncState>((set) => ({
   },
 }));
 
-// Subscribe to sync progress events
-onEvent('cache.syncProgress', (payload) => {
+// Subscribe to sync progress events (with HMR-safe guard)
+const unsubscribeSyncProgress = onEvent('cache.syncProgress', (payload) => {
   const progress = payload as SyncProgress;
   useCacheSyncStore.setState({ progress });
 });
+
+// Clean up on HMR to prevent duplicate subscriptions
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    unsubscribeSyncProgress();
+  });
+}

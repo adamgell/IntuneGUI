@@ -8,14 +8,15 @@ export function SettingsCatalogWorkspace() {
   const policies = useSettingsCatalogStore((s) => s.policies);
   const selectedPolicyId = useSettingsCatalogStore((s) => s.selectedPolicyId);
   const isLoadingList = useSettingsCatalogStore((s) => s.isLoadingList);
+  const hasAttemptedLoad = useSettingsCatalogStore((s) => s.hasAttemptedLoad);
   const error = useSettingsCatalogStore((s) => s.error);
   const loadPolicies = useSettingsCatalogStore((s) => s.loadPolicies);
 
   useEffect(() => {
-    if (policies.length === 0 && !isLoadingList) {
+    if (!hasAttemptedLoad && !isLoadingList) {
       void loadPolicies();
     }
-  }, [policies.length, isLoadingList, loadPolicies]);
+  }, [hasAttemptedLoad, isLoadingList, loadPolicies]);
 
   return (
     <div className="workspace">

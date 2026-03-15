@@ -22,6 +22,7 @@ interface DetectionRemediationState {
   scriptDetail: HealthScriptDetail | null;
   isLoadingList: boolean;
   isLoadingDetail: boolean;
+  hasAttemptedLoad: boolean;
   isSaving: boolean;
   error: string | null;
 
@@ -59,6 +60,7 @@ export const useDetectionRemediationStore = create<DetectionRemediationState>((s
   scriptDetail: null,
   isLoadingList: false,
   isLoadingDetail: false,
+  hasAttemptedLoad: false,
   isSaving: false,
   error: null,
 
@@ -74,7 +76,7 @@ export const useDetectionRemediationStore = create<DetectionRemediationState>((s
   lastMonitorRefresh: null,
 
   loadScripts: async () => {
-    set({ isLoadingList: true, error: null });
+    set({ isLoadingList: true, hasAttemptedLoad: true, error: null });
     try {
       const scripts = await sendCommand<HealthScriptListItem[]>('healthScripts.list');
       set({ scripts, isLoadingList: false });

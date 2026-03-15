@@ -8,14 +8,15 @@ export function DetectionRemediationWorkspace() {
   const scripts = useDetectionRemediationStore((s) => s.scripts);
   const selectedScriptId = useDetectionRemediationStore((s) => s.selectedScriptId);
   const isLoadingList = useDetectionRemediationStore((s) => s.isLoadingList);
+  const hasAttemptedLoad = useDetectionRemediationStore((s) => s.hasAttemptedLoad);
   const error = useDetectionRemediationStore((s) => s.error);
   const loadScripts = useDetectionRemediationStore((s) => s.loadScripts);
 
   useEffect(() => {
-    if (scripts.length === 0 && !isLoadingList) {
+    if (!hasAttemptedLoad && !isLoadingList) {
       void loadScripts();
     }
-  }, [scripts.length, isLoadingList, loadScripts]);
+  }, [hasAttemptedLoad, isLoadingList, loadScripts]);
 
   return (
     <div className="workspace">
