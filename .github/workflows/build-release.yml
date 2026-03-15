@@ -34,6 +34,12 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
+      - name: Setup Node.js
+        if: steps.check-solution.outputs.exists == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
       - name: Restore dependencies
         if: steps.check-solution.outputs.exists == 'true'
         run: dotnet restore Intune.Commander.sln
@@ -42,26 +48,30 @@ jobs:
         if: steps.check-solution.outputs.exists == 'true'
         run: dotnet build Intune.Commander.sln --configuration Release --no-restore
 
+      - name: Build React frontend
+        if: steps.check-solution.outputs.exists == 'true'
+        working-directory: intune-commander-react
+        run: |
+          npm ci
+          npm run build
+
       - name: Publish Windows x64 executable
         if: steps.check-solution.outputs.exists == 'true'
-        env:
-          SYNCFUSION_LICENSE_KEY: ${{ secrets.SYNCFUSION_LICENSE_KEY }}
         run: |
-          dotnet publish src/Intune.Commander.Desktop/Intune.Commander.Desktop.csproj `
+          dotnet publish src/Intune.Commander.DesktopReact/Intune.Commander.DesktopReact.csproj `
             --configuration Release `
             --runtime win-x64 `
             --self-contained true `
             --output ./publish `
             -p:PublishSingleFile=true `
-            -p:IncludeNativeLibrariesForSelfExtract=true `
-            -p:SyncfusionLicenseKey="$env:SYNCFUSION_LICENSE_KEY"
+            -p:IncludeNativeLibrariesForSelfExtract=true
 
       - name: Upload artifact
         if: steps.check-solution.outputs.exists == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: Intune.Commander-win-x64
-          path: ./publish/Intune.Commander.Desktop.exe
+          path: ./publish/IntuneCommander.exe
           retention-days: 30
 
   publish-cli:
