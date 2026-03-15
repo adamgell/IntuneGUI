@@ -36,7 +36,7 @@
             Message="Microsoft Edge WebView2 Runtime is required. Please install it from https://developer.microsoft.com/en-us/microsoft-edge/webview2/ and try again." />
 
     <!-- Directories -->
-    <StandardDirectory Id="ProgramFiles6432Folder">
+    <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="INSTALLFOLDER" Name="Intune Commander" />
     </StandardDirectory>
 
@@ -57,7 +57,7 @@
                 WorkingDirectory="INSTALLFOLDER"
                 Icon="AppIcon" />
       <RemoveFolder Id="RemoveShortcutDir" On="uninstall" />
-      <RegistryValue Root="HKCU"
+      <RegistryValue Root="HKLM"
                      Key="Software\IntuneCommander"
                      Name="ShortcutInstalled"
                      Type="integer"

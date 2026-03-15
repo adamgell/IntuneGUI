@@ -69,14 +69,14 @@ jobs:
             echo "prerelease=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # Create and push tag when triggered manually
-      - name: Create tag (manual dispatch only)
+      # Create local tag for manual dispatch (gh release create will push it to remote,
+      # avoiding a duplicate workflow run from the push:tags trigger)
+      - name: Create local tag (manual dispatch only)
         if: github.event_name == 'workflow_dispatch'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag -a ${{ steps.version.outputs.tag }} -m "Release ${{ steps.version.outputs.tag }}"
-          git push origin ${{ steps.version.outputs.tag }}
 
       # ── Build React frontend ──
       - name: Build React frontend
@@ -221,6 +221,7 @@ jobs:
 
           gh release create "${{ steps.version.outputs.tag }}" \
             -R "${{ env.GH_REPO }}" \
+            --target "${{ github.sha }}" \
             "${{ env.INSTALLER_OUTPUT_DIR }}/IntuneCommander-${{ steps.version.outputs.version }}-x64.msi" \
             "${{ env.CLI_PUBLISH_DIR }}/ic.exe" \
             --title "${{ steps.version.outputs.tag }}" \
