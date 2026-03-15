@@ -1,0 +1,28 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+
+  <PropertyGroup>
+    <!-- Pass these from CI via -p: flags -->
+    <!-- ProductVersion: numeric only (X.Y.Z) for MSI; DisplayVersion: full semver for filenames -->
+    <ProductVersion Condition="'$(ProductVersion)' == ''">0.4.5</ProductVersion>
+    <DisplayVersion Condition="'$(DisplayVersion)' == ''">$(ProductVersion)</DisplayVersion>
+    <DesktopPublishDir Condition="'$(DesktopPublishDir)' == ''">$(MSBuildThisFileDirectory)..\..\publish\desktop</DesktopPublishDir>
+    <CliPublishDir Condition="'$(CliPublishDir)' == ''">$(MSBuildThisFileDirectory)..\..\publish\cli</CliPublishDir>
+    <InstallerOutputDir Condition="'$(InstallerOutputDir)' == ''">$(MSBuildThisFileDirectory)..\..\publish\installer</InstallerOutputDir>
+    <InstallerPlatform>x64</InstallerPlatform>
+    <OutputPath>$(InstallerOutputDir)</OutputPath>
+    <OutputName>IntuneCommander-$(DisplayVersion)-x64</OutputName>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <DefineConstants>
+      ProductVersion=$(ProductVersion);
+      DesktopPublishDir=$(DesktopPublishDir);
+      CliPublishDir=$(CliPublishDir)
+    </DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WixToolset.UI.wixext" Version="5.0.2" />
+  </ItemGroup>
+
+</Project>

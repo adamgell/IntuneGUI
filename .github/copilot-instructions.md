@@ -1,24 +1,22 @@
 # Copilot Instructions
 
 ## Project Overview
-Intune Commander is a .NET 10 / Avalonia UI desktop app for managing Microsoft Intune configurations across Commercial, GCC, GCC-High, and DoD clouds. It's a ground-up remake of a PowerShell/WPF tool — the migration to compiled .NET specifically targets UI deadlocks and threading issues.
+Intune Commander is a .NET 10 / React 19 / WPF+WebView2 Windows desktop app for managing Microsoft Intune configurations across Commercial, GCC, GCC-High, and DoD clouds. It's a ground-up remake of a PowerShell/WPF tool — the migration to compiled .NET specifically targets UI deadlocks and threading issues.
 
 ## External Documentation
 - Use Context7 first for external frameworks, libraries, SDKs, GitHub Actions, and APIs whenever current behavior matters.
-- Prefer Context7 for .NET, Avalonia, CommunityToolkit.Mvvm, Microsoft.Graph.Beta, Azure.Identity, LiteDB, PowerShell modules, and GitHub Actions before relying on memory.
+- Prefer Context7 for .NET, React, Zustand, Microsoft.Graph.Beta, Azure.Identity, LiteDB, PowerShell modules, and GitHub Actions before relying on memory.
 - Skip Context7 only for purely repository-local code or when no relevant library entry exists.
 
-## Critical: Async-First UI Rule
-- The UI startup must NEVER block or wait on any async operation. All data loading (profiles, services, etc.) must happen asynchronously after the window is already visible.
-- **No `.GetAwaiter().GetResult()`, `.Wait()`, or `.Result` calls on the UI thread — ever.**
-- Fire-and-forget pattern for non-blocking loads: `_ = LoadProfilesAsync();` (see `MainWindowViewModel` constructor).
-- All `[RelayCommand]` methods returning `Task` get automatic `CancellationToken` support from CommunityToolkit.Mvvm.
+## Critical: Async-First Rule
+- **No `.GetAwaiter().GetResult()`, `.Wait()`, or `.Result` calls — ever.** Always `await`.
+- All async methods must accept `CancellationToken`.
 
 ## Architecture
-- **Two-project solution**: `Intune.Commander.Core` (class library: auth, services, models) and `Intune.Commander.Desktop` (Avalonia UI app).
-- **MVVM with CommunityToolkit.Mvvm**: Use `[ObservableProperty]`, `[RelayCommand]`, and `partial` classes. ViewModels extend `ViewModelBase` which provides `IsBusy`/`ErrorMessage`.
-- **DI setup**: Services registered in `ServiceCollectionExtensions.AddIntuneCommanderCore()`. Desktop-layer ViewModels registered in `App.axaml.cs`. Graph-dependent services (e.g., `ConfigurationProfileService`) are created manually after auth, not via DI.
-- **ViewLocator pattern**: Avalonia resolves Views from ViewModels by naming convention (`FooViewModel` → `FooView`).
+- **Three-project solution**: `Intune.Commander.Core` (class library: auth, services, models), `Intune.Commander.DesktopReact` (WPF + WebView2 host), and `intune-commander-react` (React 19 + TypeScript frontend).
+- **Bridge pattern**: React frontend communicates with .NET via the `ic/1` protocol through `window.chrome.webview.postMessage`. The WPF host's `BridgeRouter` dispatches messages to `IBridgeService` implementations.
+- **State management**: Zustand stores in `intune-commander-react/src/store/` — one store per domain.
+- **DI setup**: Services registered in `ServiceCollectionExtensions.AddIntuneCommanderCore()`. Bridge services registered in `App.xaml.cs`. Graph-dependent services (e.g., `ConfigurationProfileService`) are created manually after auth, not via DI.
 
 ## Service-per-Type Pattern
 Each Intune object type gets its own interface + implementation:
@@ -78,7 +76,7 @@ Key rules:
 ```bash
 dotnet build                                    # Build all projects
 dotnet test                                     # Run xUnit tests
-dotnet run --project src/Intune.Commander.Desktop  # Launch the app
+dotnet run --project src/Intune.Commander.DesktopReact  # Launch the app
 ```
 Tests live in `tests/Intune.Commander.Core.Tests/` — xUnit with `[Fact]`/`[Theory]`, temp directories for file I/O tests, `IDisposable` cleanup. Tests cover models and services in Core only (no UI tests).
 
@@ -89,5 +87,10 @@ Tests live in `tests/Intune.Commander.Core.Tests/` — xUnit with `[Fact]`/`[The
 2. Create `{Type}Service` implementation taking `GraphServiceClient`, using manual `@odata.nextLink` pagination for listing (see pagination section above).
 3. If assignments are needed, create `{Type}Export` model in `Core/Models/` bundling object + assignments.
 4. Add export/import methods to `ExportService`/`ImportService`.
-5. Wire into `MainWindowViewModel`: add collection, selection property, column configs, nav category, and load logic.
-6. Add tests in `tests/Intune.Commander.Core.Tests/`.
+5. Add tests in `tests/Intune.Commander.Core.Tests/`.
+
+## Adding a New Desktop UI Workspace
+1. **React side**: Create a component in `intune-commander-react/src/components/workspace/`, a Zustand store in `src/store/`, and TypeScript types.
+2. **Bridge side**: Add a bridge service in `src/Intune.Commander.DesktopReact/Services/` implementing `IBridgeService`.
+3. **Register**: Wire the bridge service into `BridgeRouter` and add navigation in the React shell.
+See existing workspaces (Settings Catalog, Detection & Remediation) for the full pattern.
