@@ -30,7 +30,7 @@ export function StatusBar() {
       {isConnected && (
         <button
           className="status-bar-sync-btn"
-          onClick={syncAll}
+          onClick={() => void syncAll()}
           disabled={isSyncing}
           title="Fetch all Intune data types and populate the cache"
         >

@@ -39,7 +39,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
       return;
     }
 
-    // Navigate to search workspace as soon as the user starts typing
+    // Navigate to search workspace only if not already there
     const { activeSidebarItem, setSidebarItem } = useAppStore.getState();
     if (activeSidebarItem !== 'global-search') {
       setSidebarItem('global-search');
@@ -71,3 +71,13 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     set({ query: '', results: [], isSearching: false });
   },
 }));
+
+// Clean up debounce timer on HMR to prevent stale callbacks
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+      debounceTimer = null;
+    }
+  });
+}

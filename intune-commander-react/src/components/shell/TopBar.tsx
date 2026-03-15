@@ -45,6 +45,7 @@ export function TopBar() {
             className="topbar-search"
             type="text"
             placeholder="Search cached policies, scripts, configs..."
+            aria-label="Global search"
             value={searchQuery}
             onChange={(e) => search(e.target.value)}
             onKeyDown={handleKeyDown}

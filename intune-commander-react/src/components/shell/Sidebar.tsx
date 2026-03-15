@@ -52,6 +52,7 @@ export function Sidebar() {
           <input
             type="text"
             placeholder="Search..."
+            aria-label="Filter sidebar navigation"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />

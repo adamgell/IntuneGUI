@@ -156,6 +156,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // Bridge actions
   loadProfiles: async () => {
+    // Guard against StrictMode double-mount causing concurrent auto-connects
+    if (get().isAutoConnecting || get().profiles.length > 0) return;
     try {
       const result = await sendCommand<ProfilesPayload>('profiles.load');
       set({ profiles: result.profiles, activeProfileId: result.activeProfileId });
