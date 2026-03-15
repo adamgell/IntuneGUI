@@ -8,6 +8,7 @@
     <DesktopPublishDir Condition="'$(DesktopPublishDir)' == ''">$(MSBuildThisFileDirectory)..\..\publish\desktop</DesktopPublishDir>
     <CliPublishDir Condition="'$(CliPublishDir)' == ''">$(MSBuildThisFileDirectory)..\..\publish\cli</CliPublishDir>
     <InstallerOutputDir Condition="'$(InstallerOutputDir)' == ''">$(MSBuildThisFileDirectory)..\..\publish\installer</InstallerOutputDir>
+    <InstallerPlatform>x64</InstallerPlatform>
     <OutputPath>$(InstallerOutputDir)</OutputPath>
     <OutputName>IntuneCommander-$(DisplayVersion)-x64</OutputName>
   </PropertyGroup>
