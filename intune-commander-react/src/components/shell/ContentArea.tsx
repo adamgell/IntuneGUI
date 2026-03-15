@@ -11,6 +11,10 @@ import { SecurityPostureWorkspace } from '../workspace/SecurityPostureWorkspace'
 import { AssignmentExplorerWorkspace } from '../workspace/AssignmentExplorerWorkspace';
 import { ScriptsHubWorkspace } from '../workspace/ScriptsHubWorkspace';
 import { PolicyComparisonWorkspace } from '../workspace/PolicyComparisonWorkspace';
+import { DeviceConfigWorkspace } from '../workspace/DeviceConfigWorkspace';
+import { CompliancePolicyWorkspace } from '../workspace/CompliancePolicyWorkspace';
+import { EndpointSecurityWorkspace } from '../workspace/EndpointSecurityWorkspace';
+import { EnrollmentWorkspace } from '../workspace/EnrollmentWorkspace';
 
 const workspaceMap: Record<string, ComponentType> = {
   'global-search': GlobalSearchResultsWorkspace,
@@ -24,6 +28,10 @@ const workspaceMap: Record<string, ComponentType> = {
   'assignment-explorer': AssignmentExplorerWorkspace,
   'scripts-hub': ScriptsHubWorkspace,
   'policy-comparison': PolicyComparisonWorkspace,
+  'device-config': DeviceConfigWorkspace,
+  'compliance-policy': CompliancePolicyWorkspace,
+  'endpoint-security': EndpointSecurityWorkspace,
+  'enrollment': EnrollmentWorkspace,
 };
 
 export function ContentArea() {

@@ -26,6 +26,10 @@ public class BridgeRouter : IBridgeService
     private readonly AssignmentExplorerBridgeService _assignmentExplorerBridge;
     private readonly ScriptsHubBridgeService _scriptsHubBridge;
     private readonly PolicyComparisonBridgeService _policyComparisonBridge;
+    private readonly DeviceConfigBridgeService _deviceConfigBridge;
+    private readonly CompliancePolicyBridgeService _compliancePolicyBridge;
+    private readonly EndpointSecurityBridgeService _endpointSecurityBridge;
+    private readonly EnrollmentBridgeService _enrollmentBridge;
 
     internal static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -50,7 +54,11 @@ public class BridgeRouter : IBridgeService
         SecurityPostureBridgeService securityPostureBridge,
         AssignmentExplorerBridgeService assignmentExplorerBridge,
         ScriptsHubBridgeService scriptsHubBridge,
-        PolicyComparisonBridgeService policyComparisonBridge)
+        PolicyComparisonBridgeService policyComparisonBridge,
+        DeviceConfigBridgeService deviceConfigBridge,
+        CompliancePolicyBridgeService compliancePolicyBridge,
+        EndpointSecurityBridgeService endpointSecurityBridge,
+        EnrollmentBridgeService enrollmentBridge)
     {
         _profileBridge = profileBridge;
         _authBridge = authBridge;
@@ -68,6 +76,10 @@ public class BridgeRouter : IBridgeService
         _assignmentExplorerBridge = assignmentExplorerBridge;
         _scriptsHubBridge = scriptsHubBridge;
         _policyComparisonBridge = policyComparisonBridge;
+        _deviceConfigBridge = deviceConfigBridge;
+        _compliancePolicyBridge = compliancePolicyBridge;
+        _endpointSecurityBridge = endpointSecurityBridge;
+        _enrollmentBridge = enrollmentBridge;
     }
 
     public void Initialize(CoreWebView2 webView)
@@ -139,6 +151,14 @@ public class BridgeRouter : IBridgeService
             "scripts.getDetail" => await _scriptsHubBridge.GetDetailAsync(command.Payload),
             "policyComparison.list" => await _policyComparisonBridge.ListPoliciesAsync(command.Payload),
             "policyComparison.compare" => await _policyComparisonBridge.CompareAsync(command.Payload),
+            "deviceConfig.list" => await _deviceConfigBridge.ListAsync(),
+            "deviceConfig.getDetail" => await _deviceConfigBridge.GetDetailAsync(command.Payload),
+            "compliance.list" => await _compliancePolicyBridge.ListAsync(),
+            "compliance.getDetail" => await _compliancePolicyBridge.GetDetailAsync(command.Payload),
+            "endpointSecurity.list" => await _endpointSecurityBridge.ListAsync(),
+            "endpointSecurity.getDetail" => await _endpointSecurityBridge.GetDetailAsync(command.Payload),
+            "enrollment.list" => await _enrollmentBridge.ListAsync(),
+            "enrollment.getDetail" => await _enrollmentBridge.GetDetailAsync(command.Payload),
             _ => throw new NotSupportedException($"Unknown command: {command.Command}")
         };
     }

@@ -34,6 +34,10 @@ public partial class App : Application
         services.AddSingleton<AssignmentExplorerBridgeService>();
         services.AddSingleton<ScriptsHubBridgeService>();
         services.AddSingleton<PolicyComparisonBridgeService>();
+        services.AddSingleton<DeviceConfigBridgeService>();
+        services.AddSingleton<CompliancePolicyBridgeService>();
+        services.AddSingleton<EndpointSecurityBridgeService>();
+        services.AddSingleton<EnrollmentBridgeService>();
         services.AddSingleton<BridgeRouter>();
 
         Services = services.BuildServiceProvider();

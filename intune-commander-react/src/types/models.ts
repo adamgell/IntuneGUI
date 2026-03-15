@@ -126,6 +126,8 @@ export const sidebarByTab: Record<string, SidebarSection[]> = {
       items: [
         { id: 'overview', label: 'Overview' },
         { id: 'settings-catalog', label: 'Settings Catalog' },
+        { id: 'device-config', label: 'Device Configurations' },
+        { id: 'compliance-policy', label: 'Compliance Policies' },
       ],
     },
   ],
@@ -143,6 +145,7 @@ export const sidebarByTab: Record<string, SidebarSection[]> = {
       items: [
         { id: 'security-posture', label: 'Security Posture' },
         { id: 'conditional-access', label: 'Conditional Access' },
+        { id: 'endpoint-security', label: 'Endpoint Security' },
       ],
     },
   ],
@@ -152,6 +155,7 @@ export const sidebarByTab: Record<string, SidebarSection[]> = {
       items: [
         { id: 'detection-remediation', label: 'Detection & Remediation' },
         { id: 'scripts-hub', label: 'Scripts Hub' },
+        { id: 'enrollment', label: 'Enrollment & Autopilot' },
       ],
     },
   ],
