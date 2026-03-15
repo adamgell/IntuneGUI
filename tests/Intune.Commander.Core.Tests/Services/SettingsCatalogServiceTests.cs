@@ -98,10 +98,10 @@ public class SettingsCatalogServiceTests
     }
 
     [Fact]
-    public void Interface_HasSixMethods()
+    public void Interface_HasNineMethods()
     {
         var methods = typeof(ISettingsCatalogService).GetMethods();
-        Assert.Equal(6, methods.Length);
+        Assert.Equal(9, methods.Length);
     }
 
     // The configurationPolicies endpoint returns HTTP 500 on certain Cosmos DB skip-token

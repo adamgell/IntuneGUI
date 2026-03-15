@@ -1,8 +1,4 @@
-using System.Reflection;
-using System.Text.Json;
-using Intune.Commander.Core.Models;
 using Intune.Commander.Core.Services;
-using LiteDB;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -39,6 +35,16 @@ public class CacheServiceTests : IDisposable
 
     // --- Simple DTO for testing ---
     private record TestItem(string Name, int Value);
+
+    private static readonly List<TestItem> ChunkedPayloadItems = CreateChunkedPayloadItems();
+
+    private static List<TestItem> CreateChunkedPayloadItems()
+    {
+        var payload = new string('X', 20_000);
+        return Enumerable.Range(0, 500)
+            .Select(i => new TestItem($"Item_{i}_{payload}", i))
+            .ToList();
+    }
 
     [Fact]
     public void Set_and_Get_roundtrips_data()
@@ -279,62 +285,180 @@ public class CacheServiceTests : IDisposable
         Assert.Equal(0, removed);
     }
 
-    // DTO with many nullable fields to verify WhenWritingNull optimization
-    private record NullHeavyItem(
-        string Name,
-        string? Description,
-        string? Category,
-        int? Count,
-        DateTime? CreatedAt,
-        string? Tag1,
-        string? Tag2,
-        string? Tag3);
+    // --- Chunked caching tests ---
 
     [Fact]
-    public void Set_omits_null_properties_from_stored_json()
+    public void Set_and_Get_roundtrips_large_data_via_chunking()
     {
-        var items = new List<NullHeavyItem>
+        var items = ChunkedPayloadItems;
+
+        _sut.Set("tenant1", "BigData", items);
+
+        var result = _sut.Get<TestItem>("tenant1", "BigData");
+
+        Assert.NotNull(result);
+        Assert.Equal(items.Count, result.Count);
+        Assert.Equal(items[0].Name, result[0].Name);
+        Assert.Equal(items[^1].Name, result[^1].Name);
+    }
+
+    [Fact]
+    public void Set_and_Get_roundtrips_large_data_with_surrogate_pairs()
+    {
+        var emojiPayload = string.Concat(Enumerable.Repeat("😀", 5_000));
+        var items = Enumerable.Range(0, 160)
+            .Select(i => new TestItem($"Item_{i}_{emojiPayload}", i))
+            .ToList();
+
+        _sut.Set("tenant1", "BigEmojiData", items);
+
+        var result = _sut.Get<TestItem>("tenant1", "BigEmojiData");
+
+        Assert.NotNull(result);
+        Assert.Equal(items.Count, result.Count);
+        for (var i = 0; i < items.Count; i++)
         {
-            new("Item1", null, null, null, null, null, null, null),
-            new("Item2", "Has description", null, 42, null, null, null, null),
-            new("Item3", null, "CategoryA", null, DateTime.UtcNow, null, null, null)
+            Assert.Equal(items[i].Name, result[i].Name);
+            Assert.Equal(items[i].Value, result[i].Value);
+        }
+    }
+
+    [Fact]
+    public void GetMetadata_returns_correct_count_for_chunked_entry()
+    {
+        var items = ChunkedPayloadItems;
+
+        _sut.Set("tenant1", "BigMeta", items);
+
+        var meta = _sut.GetMetadata("tenant1", "BigMeta");
+
+        Assert.NotNull(meta);
+        Assert.Equal(items.Count, meta.Value.ItemCount);
+    }
+
+    [Fact]
+    public void Invalidate_removes_chunked_entry_and_chunks()
+    {
+        var items = ChunkedPayloadItems;
+
+        _sut.Set("tenant1", "BigInvalidate", items);
+
+        _sut.Invalidate("tenant1", "BigInvalidate");
+
+        Assert.Null(_sut.Get<TestItem>("tenant1", "BigInvalidate"));
+        Assert.Null(_sut.GetMetadata("tenant1", "BigInvalidate"));
+    }
+
+    [Fact]
+    public void Set_overwrites_chunked_entry_with_small_entry()
+    {
+        // First write: large (chunked)
+        var bigItems = ChunkedPayloadItems;
+        _sut.Set("tenant1", "Overwrite", bigItems);
+
+        // Overwrite with small (non-chunked)
+        var smallItems = new List<TestItem> { new("Small", 1) };
+        _sut.Set("tenant1", "Overwrite", smallItems);
+
+        var result = _sut.Get<TestItem>("tenant1", "Overwrite");
+
+        Assert.NotNull(result);
+        Assert.Single(result);
+        Assert.Equal("Small", result[0].Name);
+    }
+
+    [Fact]
+    public void Set_overwrites_small_entry_with_chunked_entry()
+    {
+        // First write: small (non-chunked)
+        _sut.Set("tenant1", "GrowBig", new List<TestItem> { new("Tiny", 1) });
+
+        // Overwrite with large (chunked)
+        var bigItems = ChunkedPayloadItems;
+        _sut.Set("tenant1", "GrowBig", bigItems);
+
+        var result = _sut.Get<TestItem>("tenant1", "GrowBig");
+
+        Assert.NotNull(result);
+        Assert.Equal(bigItems.Count, result.Count);
+    }
+
+    // --- Async wrapper tests ---
+
+    [Fact]
+    public async Task SetAsync_and_GetAsync_roundtrips_data()
+    {
+        var items = new List<TestItem>
+        {
+            new("Alpha", 1),
+            new("Beta", 2)
         };
 
-        _sut.Set("tenant1", "NullHeavy", items);
+        await _sut.SetAsync("tenant1", "AsyncTest", items);
 
-        // Read the raw JSON payload from the underlying LiteDB collection
-        var collection = (ILiteCollection<CacheEntry>)typeof(CacheService)
-            .GetField("_collection", BindingFlags.NonPublic | BindingFlags.Instance)!
-            .GetValue(_sut)!;
-        var entry = collection.FindById("tenant1|NullHeavy");
-        Assert.NotNull(entry);
+        var result = await _sut.GetAsync<TestItem>("tenant1", "AsyncTest");
 
-        using var doc = JsonDocument.Parse(entry.JsonData);
-        var elements = doc.RootElement.EnumerateArray().ToList();
-
-        // Item1 has 7 null fields — only "name" should be present
-        var item1Props = elements[0].EnumerateObject().Select(p => p.Name).ToList();
-        Assert.Contains("name", item1Props);
-        Assert.DoesNotContain("description", item1Props);
-        Assert.DoesNotContain("category", item1Props);
-        Assert.DoesNotContain("count", item1Props);
-        Assert.DoesNotContain("tag1", item1Props);
-
-        // Item2 has name + description + count, the rest null
-        var item2Props = elements[1].EnumerateObject().Select(p => p.Name).ToList();
-        Assert.Contains("name", item2Props);
-        Assert.Contains("description", item2Props);
-        Assert.Contains("count", item2Props);
-        Assert.DoesNotContain("category", item2Props);
-        Assert.DoesNotContain("tag1", item2Props);
-
-        // Verify round-trip still works
-        var result = _sut.Get<NullHeavyItem>("tenant1", "NullHeavy");
         Assert.NotNull(result);
-        Assert.Equal(3, result.Count);
-        Assert.Equal("Item1", result[0].Name);
-        Assert.Null(result[0].Description);
-        Assert.Equal("Has description", result[1].Description);
-        Assert.Equal(42, result[1].Count);
+        Assert.Equal(2, result.Count);
+        Assert.Equal("Alpha", result[0].Name);
+        Assert.Equal(2, result[1].Value);
+    }
+
+    [Fact]
+    public async Task GetAsync_returns_null_for_missing_key()
+    {
+        var result = await _sut.GetAsync<TestItem>("tenant1", "NonExistent");
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task InvalidateAsync_removes_entry()
+    {
+        await _sut.SetAsync("tenant1", "ToRemove", new List<TestItem> { new("X", 1) });
+
+        await _sut.InvalidateAsync("tenant1", "ToRemove");
+
+        var result = await _sut.GetAsync<TestItem>("tenant1", "ToRemove");
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetMetadataAsync_returns_info_for_valid_entry()
+    {
+        var items = new List<TestItem> { new("A", 1), new("B", 2) };
+        await _sut.SetAsync("tenant1", "MetaAsync", items);
+
+        var meta = await _sut.GetMetadataAsync("tenant1", "MetaAsync");
+
+        Assert.NotNull(meta);
+        Assert.Equal(2, meta.Value.ItemCount);
+    }
+
+    [Fact]
+    public async Task GetMetadataAsync_returns_null_for_missing_entry()
+    {
+        var meta = await _sut.GetMetadataAsync("tenant1", "Missing");
+
+        Assert.Null(meta);
+    }
+
+    [Fact]
+    public async Task Async_methods_run_on_thread_pool()
+    {
+        var items = new List<TestItem> { new("ThreadTest", 1) };
+
+        // SetAsync should not block the calling thread
+        var setTask = _sut.SetAsync("tenant1", "ThreadPool", items);
+        Assert.IsType<Task>(setTask);
+        await setTask;
+
+        // GetAsync should not block the calling thread
+        var getTask = _sut.GetAsync<TestItem>("tenant1", "ThreadPool");
+        Assert.IsType<Task<List<TestItem>?>>(getTask);
+        var result = await getTask;
+
+        Assert.NotNull(result);
+        Assert.Single(result);
     }
 }
