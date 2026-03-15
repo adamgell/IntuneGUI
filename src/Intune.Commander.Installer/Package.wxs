@@ -39,7 +39,7 @@
                       Name="pv"
                       Type="raw" />
     </Property>
-    <Launch Condition="(WEBVIEW2PERMACHINE AND WEBVIEW2PERMACHINE &lt;&gt; &quot;0.0.0.0&quot;) OR (WEBVIEW2PERUSER AND WEBVIEW2PERUSER &lt;&gt; &quot;0.0.0.0&quot;)"
+    <Launch Condition="(WEBVIEW2PERMACHINE AND WEBVIEW2PERMACHINE &lt;&gt; &quot;&quot; AND WEBVIEW2PERMACHINE &lt;&gt; &quot;0.0.0.0&quot;) OR (WEBVIEW2PERUSER AND WEBVIEW2PERUSER &lt;&gt; &quot;&quot; AND WEBVIEW2PERUSER &lt;&gt; &quot;0.0.0.0&quot;)"
             Message="Microsoft Edge WebView2 Runtime is required. Please install it from https://developer.microsoft.com/en-us/microsoft-edge/webview2/ and try again." />
 
     <!-- Directories -->

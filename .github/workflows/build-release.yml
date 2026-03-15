@@ -120,7 +120,7 @@ jobs:
           MSI="${{ env.INSTALLER_OUTPUT_DIR }}/IntuneCommander-${{ steps.version.outputs.version }}-x64.msi"
           if [ ! -f "$MSI" ]; then
             echo "::error::MSI not found at $MSI"
-            ls -la "${{ env.INSTALLER_OUTPUT_DIR }}/" || true
+            ls -la "${{ env.INSTALLER_OUTPUT_DIR }}/"
             exit 1
           fi
 
