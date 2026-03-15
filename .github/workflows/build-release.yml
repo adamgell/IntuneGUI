@@ -38,12 +38,15 @@ jobs:
         id: version
         shell: bash
         run: |
-          # MSI version fields must stay numeric and within 0-65535.
-          # Use yy+Julian day for the middle field and clamp the build field to 1-65535.
-          DATE_CODE="$(date -u +%y%j)"
-          BUILD_NUMBER="$(( (GITHUB_RUN_NUMBER % 65534) + 1 ))"
-          VERSION="0.${DATE_CODE}.${BUILD_NUMBER}"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          # MSI ProductVersion fields must satisfy major < 256, minor < 256, build < 65536.
+          YEAR="$((10#$(date -u +%y)))"
+          MONTH="$((10#$(date -u +%m)))"
+          DAY="$((10#$(date -u +%d)))"
+          BUILD_NUMBER="$(( DAY * 1000 + (GITHUB_RUN_NUMBER % 1000) ))"
+          PRODUCT_VERSION="${YEAR}.${MONTH}.${BUILD_NUMBER}"
+          DISPLAY_VERSION="${YEAR}.${MONTH}.${DAY}-run${GITHUB_RUN_NUMBER}"
+          echo "product_version=$PRODUCT_VERSION" >> "$GITHUB_OUTPUT"
+          echo "display_version=$DISPLAY_VERSION" >> "$GITHUB_OUTPUT"
 
       # Build React first so wwwroot is available for dotnet publish
       - name: Build React frontend
@@ -110,8 +113,8 @@ jobs:
         run: |
           dotnet build ${{ env.INSTALLER_PROJECT }} `
             -c Release `
-            -p:ProductVersion=${{ steps.version.outputs.version }} `
-            -p:DisplayVersion=${{ steps.version.outputs.version }} `
+            -p:ProductVersion=${{ steps.version.outputs.product_version }} `
+            -p:DisplayVersion=${{ steps.version.outputs.display_version }} `
             -p:DesktopPublishDir="${{ github.workspace }}\\publish\\desktop" `
             -p:CliPublishDir="${{ github.workspace }}\\publish\\cli" `
             -p:InstallerOutputDir="${{ github.workspace }}\\publish\\installer"
@@ -119,7 +122,7 @@ jobs:
       - name: Verify MSI output
         shell: bash
         run: |
-          MSI="${{ env.INSTALLER_OUTPUT_DIR }}/IntuneCommander-${{ steps.version.outputs.version }}-x64.msi"
+          MSI="${{ env.INSTALLER_OUTPUT_DIR }}/IntuneCommander-${{ steps.version.outputs.display_version }}-x64.msi"
           if [ ! -f "$MSI" ]; then
             echo "::error::MSI not found at $MSI"
             ls -la "${{ env.INSTALLER_OUTPUT_DIR }}/"
@@ -137,7 +140,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: IntuneCommander-test-msi
-          path: ${{ env.INSTALLER_OUTPUT_DIR }}/IntuneCommander-${{ steps.version.outputs.version }}-x64.msi
+          path: ${{ env.INSTALLER_OUTPUT_DIR }}/IntuneCommander-${{ steps.version.outputs.display_version }}-x64.msi
           retention-days: 30
 
   publish-cli:
