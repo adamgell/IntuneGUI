@@ -30,6 +30,7 @@ public class ApplicationService : IApplicationService
                     "informationUrl", "privacyInformationUrl",
                     "createdDateTime", "lastModifiedDateTime", "publishingState",
                     "roleScopeTagIds", "categories",
+                    // Superseded/dependent counts surfaced in the Application Details section
                     "supersededAppCount", "supersedingAppCount", "dependentAppCount",
                     // Subtype: Win32LobApp
                     "microsoft.graph.win32LobApp/installCommandLine",
