@@ -104,9 +104,9 @@ public class ApplicationBridgeService
             Assignments: assignmentData);
     }
 
-    private static AppListItem[] MapApps(List<MobileApp> apps)
+    private static AppListItemDto[] MapApps(List<MobileApp> apps)
     {
-        return apps.Select(a => new AppListItem(
+        return apps.Select(a => new AppListItemDto(
             Id: a.Id ?? "",
             DisplayName: a.DisplayName ?? "",
             Description: a.Description,

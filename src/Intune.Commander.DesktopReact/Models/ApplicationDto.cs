@@ -1,6 +1,6 @@
 namespace Intune.Commander.DesktopReact.Models;
 
-public sealed record AppListItem(
+public sealed record AppListItemDto(
     string Id,
     string DisplayName,
     string? Description,
