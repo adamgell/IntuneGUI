@@ -89,3 +89,10 @@ website/docs/
 intune-commander-react/node_modules/
 intune-commander-react/dist/
 src/Intune.Commander.DesktopReact/wwwroot/
+intune-commander-react/tsconfig.tsbuildinfo
+publish-cli/linux-x64/ic
+publish-cli/linux-x64/ic.pdb
+publish-cli/linux-x64/Intune.Commander.Core.pdb
+publish-cli/win-x64/ic.exe
+publish-cli/win-x64/ic.pdb
+publish-cli/win-x64/Intune.Commander.Core.pdb
