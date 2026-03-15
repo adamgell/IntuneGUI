@@ -20,6 +20,18 @@ public class BridgeRouter : IBridgeService
     private readonly SearchBridgeService _searchBridge;
     private readonly CacheSyncBridgeService _cacheSyncBridge;
     private readonly DashboardBridgeService _dashboardBridge;
+    private readonly ApplicationBridgeService _applicationBridge;
+    private readonly ConditionalAccessBridgeService _conditionalAccessBridge;
+    private readonly SecurityPostureBridgeService _securityPostureBridge;
+    private readonly AssignmentExplorerBridgeService _assignmentExplorerBridge;
+    private readonly ScriptsHubBridgeService _scriptsHubBridge;
+    private readonly PolicyComparisonBridgeService _policyComparisonBridge;
+    private readonly DeviceConfigBridgeService _deviceConfigBridge;
+    private readonly CompliancePolicyBridgeService _compliancePolicyBridge;
+    private readonly EndpointSecurityBridgeService _endpointSecurityBridge;
+    private readonly EnrollmentBridgeService _enrollmentBridge;
+    private readonly DialogBridgeService _dialogBridge;
+    private readonly GroupBridgeService _groupBridge;
 
     internal static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -38,7 +50,19 @@ public class BridgeRouter : IBridgeService
         DeviceBridgeService deviceBridge,
         SearchBridgeService searchBridge,
         CacheSyncBridgeService cacheSyncBridge,
-        DashboardBridgeService dashboardBridge)
+        DashboardBridgeService dashboardBridge,
+        ApplicationBridgeService applicationBridge,
+        ConditionalAccessBridgeService conditionalAccessBridge,
+        SecurityPostureBridgeService securityPostureBridge,
+        AssignmentExplorerBridgeService assignmentExplorerBridge,
+        ScriptsHubBridgeService scriptsHubBridge,
+        PolicyComparisonBridgeService policyComparisonBridge,
+        DeviceConfigBridgeService deviceConfigBridge,
+        CompliancePolicyBridgeService compliancePolicyBridge,
+        EndpointSecurityBridgeService endpointSecurityBridge,
+        EnrollmentBridgeService enrollmentBridge,
+        DialogBridgeService dialogBridge,
+        GroupBridgeService groupBridge)
     {
         _profileBridge = profileBridge;
         _authBridge = authBridge;
@@ -50,6 +74,18 @@ public class BridgeRouter : IBridgeService
         _searchBridge = searchBridge;
         _cacheSyncBridge = cacheSyncBridge;
         _dashboardBridge = dashboardBridge;
+        _applicationBridge = applicationBridge;
+        _conditionalAccessBridge = conditionalAccessBridge;
+        _securityPostureBridge = securityPostureBridge;
+        _assignmentExplorerBridge = assignmentExplorerBridge;
+        _scriptsHubBridge = scriptsHubBridge;
+        _policyComparisonBridge = policyComparisonBridge;
+        _deviceConfigBridge = deviceConfigBridge;
+        _compliancePolicyBridge = compliancePolicyBridge;
+        _endpointSecurityBridge = endpointSecurityBridge;
+        _enrollmentBridge = enrollmentBridge;
+        _dialogBridge = dialogBridge;
+        _groupBridge = groupBridge;
     }
 
     public void Initialize(CoreWebView2 webView)
@@ -109,6 +145,37 @@ public class BridgeRouter : IBridgeService
             "cache.status" => await _cacheSyncBridge.GetStatusAsync(command.Payload),
             "cache.invalidate" => await _cacheSyncBridge.InvalidateAsync(command.Payload),
             "dashboard.complianceSummary" => await _dashboardBridge.GetComplianceSummaryAsync(command.Payload),
+            "apps.list" => await _applicationBridge.ListAsync(),
+            "apps.getDetail" => await _applicationBridge.GetDetailAsync(command.Payload),
+            "conditionalAccess.list" => await _conditionalAccessBridge.ListAsync(),
+            "conditionalAccess.getDetail" => await _conditionalAccessBridge.GetDetailAsync(command.Payload),
+            "securityPosture.summary" => await _securityPostureBridge.GetSummaryAsync(),
+            "securityPosture.detail" => await _securityPostureBridge.GetDetailAsync(),
+            "assignments.searchGroups" => await _assignmentExplorerBridge.SearchGroupsAsync(command.Payload),
+            "assignments.runReport" => await _assignmentExplorerBridge.RunReportAsync(command.Payload),
+            "scripts.listAll" => await _scriptsHubBridge.ListAllAsync(),
+            "scripts.getDetail" => await _scriptsHubBridge.GetDetailAsync(command.Payload),
+            "policyComparison.list" => await _policyComparisonBridge.ListPoliciesAsync(command.Payload),
+            "policyComparison.compare" => await _policyComparisonBridge.CompareAsync(command.Payload),
+            "deviceConfig.list" => await _deviceConfigBridge.ListAsync(),
+            "deviceConfig.getDetail" => await _deviceConfigBridge.GetDetailAsync(command.Payload),
+            "compliance.list" => await _compliancePolicyBridge.ListAsync(),
+            "compliance.getDetail" => await _compliancePolicyBridge.GetDetailAsync(command.Payload),
+            "endpointSecurity.list" => await _endpointSecurityBridge.ListAsync(),
+            "endpointSecurity.getDetail" => await _endpointSecurityBridge.GetDetailAsync(command.Payload),
+            "enrollment.list" => await _enrollmentBridge.ListAsync(),
+            "enrollment.getDetail" => await _enrollmentBridge.GetDetailAsync(command.Payload),
+            "groups.list" => await _groupBridge.ListAsync(),
+            "groups.search" => await _groupBridge.SearchAsync(command.Payload),
+            "groups.getDetail" => await _groupBridge.GetDetailAsync(command.Payload),
+            "dialog.pickFolder" => await _dialogBridge.PickFolderAsync(),
+            "dialog.pickFile" => await _dialogBridge.PickFileAsync(
+                GetStringProp(command.Payload, "filter"),
+                GetStringProp(command.Payload, "title")),
+            "dialog.saveFile" => await _dialogBridge.SaveFileAsync(
+                GetStringProp(command.Payload, "filter"),
+                GetStringProp(command.Payload, "title"),
+                GetStringProp(command.Payload, "defaultFileName")),
             _ => throw new NotSupportedException($"Unknown command: {command.Command}")
         };
     }
@@ -170,5 +237,13 @@ public class BridgeRouter : IBridgeService
 
         Application.Current.Dispatcher.Invoke(() => _webView.PostWebMessageAsJson(json));
         return Task.CompletedTask;
+    }
+
+    private static string? GetStringProp(JsonElement? payload, string propertyName)
+    {
+        if (payload is null) return null;
+        return payload.Value.TryGetProperty(propertyName, out var prop) && prop.ValueKind == JsonValueKind.String
+            ? prop.GetString()
+            : null;
     }
 }
