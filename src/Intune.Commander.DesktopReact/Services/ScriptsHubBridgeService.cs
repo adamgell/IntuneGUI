@@ -247,7 +247,7 @@ public class ScriptsHubBridgeService
         var assignments = await _healthService.GetAssignmentsAsync(id);
 
         // Resolve group names for health script assignments
-        var targets = assignments.Select(a => a.Target).OfType<DeviceAndAppManagementAssignmentTarget>().Cast<DeviceAndAppManagementAssignmentTarget?>().ToList();
+        var targets = assignments.Select(a => a.Target).ToList();
         var groupNames = await GroupResolutionHelper.ResolveGroupNamesAsync(targets, client);
 
         return new ScriptDetailDto(

@@ -112,21 +112,8 @@ public class DeviceConfigBridgeService
             CreatedDateTime: config.CreatedDateTime?.ToString("o") ?? "",
             LastModifiedDateTime: config.LastModifiedDateTime?.ToString("o") ?? "",
             RoleScopeTagIds: (config.RoleScopeTagIds ?? []).ToArray(),
-            Assignments: MapAssignments(targets, groupNames),
+            Assignments: GroupResolutionHelper.MapAssignments(targets, groupNames),
             RawJson: JsonSerializer.Serialize(config, jsonOptions));
     }
 
-    private static AssignmentDto[] MapAssignments(List<DeviceAndAppManagementAssignmentTarget?> targets, Dictionary<string, string> groupNames)
-    {
-        return targets.Where(t => t is not null).Select(t => t switch
-        {
-            AllDevicesAssignmentTarget => new AssignmentDto("All Devices", "Include"),
-            AllLicensedUsersAssignmentTarget => new AssignmentDto("All Users", "Include"),
-            ExclusionGroupAssignmentTarget excl => new AssignmentDto(
-                groupNames.GetValueOrDefault(excl.GroupId ?? "") ?? excl.GroupId ?? "Unknown", "Exclude"),
-            GroupAssignmentTarget grp => new AssignmentDto(
-                groupNames.GetValueOrDefault(grp.GroupId ?? "") ?? grp.GroupId ?? "Unknown", "Include"),
-            _ => new AssignmentDto("Unknown", "Unknown")
-        }).ToArray();
-    }
 }

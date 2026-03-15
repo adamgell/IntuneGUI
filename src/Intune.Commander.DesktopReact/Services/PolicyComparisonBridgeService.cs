@@ -50,6 +50,7 @@ public class PolicyComparisonBridgeService
         _caService = null;
         _appProtectionService = null;
         _endpointSecurityService = null;
+        _normalizer = null;
     }
 
     /// <summary>
@@ -208,7 +209,7 @@ public class PolicyComparisonBridgeService
                 {
                     CompareElements(valA, valB, ref total, ref differing);
                 }
-                else if (valA.ToString() != valB.ToString())
+                else if (valA.GetRawText() != valB.GetRawText())
                 {
                     differing++;
                 }
@@ -229,7 +230,7 @@ public class PolicyComparisonBridgeService
         else
         {
             total++;
-            if (a.ToString() != b.ToString())
+            if (a.GetRawText() != b.GetRawText())
                 differing++;
         }
     }

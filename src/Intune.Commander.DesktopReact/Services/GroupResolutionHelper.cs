@@ -1,4 +1,5 @@
 using Intune.Commander.Core.Services;
+using Intune.Commander.DesktopReact.Models;
 using Microsoft.Graph.Beta.Models;
 
 namespace Intune.Commander.DesktopReact.Services;
@@ -44,7 +45,27 @@ public static class GroupResolutionHelper
     }
 
     /// <summary>
+    /// Maps assignment targets to DTOs with resolved group names.
+    /// </summary>
+    public static AssignmentDto[] MapAssignments(
+        List<DeviceAndAppManagementAssignmentTarget?> targets,
+        Dictionary<string, string> groupNames)
+    {
+        return targets.Where(t => t is not null).Select(t => t switch
+        {
+            AllDevicesAssignmentTarget => new AssignmentDto("All Devices", "Include"),
+            AllLicensedUsersAssignmentTarget => new AssignmentDto("All Users", "Include"),
+            ExclusionGroupAssignmentTarget excl => new AssignmentDto(
+                groupNames.GetValueOrDefault(excl.GroupId ?? "") ?? excl.GroupId ?? "Unknown", "Exclude"),
+            GroupAssignmentTarget grp => new AssignmentDto(
+                groupNames.GetValueOrDefault(grp.GroupId ?? "") ?? grp.GroupId ?? "Unknown", "Include"),
+            _ => new AssignmentDto("Unknown", "Unknown")
+        }).ToArray();
+    }
+
+    /// <summary>
     /// Fetches data from cache or calls the fetcher, storing the result in cache.
+    /// Uses null vs. non-null to distinguish "never fetched" from "fetched but empty".
     /// </summary>
     public static async Task<List<T>> GetCachedOrFetchAsync<T>(
         ICacheService cache, string? tenantId, string cacheKey, Func<Task<List<T>>> fetcher) where T : class
@@ -52,7 +73,7 @@ public static class GroupResolutionHelper
         if (tenantId is not null)
         {
             var cached = cache.Get<T>(tenantId, cacheKey);
-            if (cached is { Count: > 0 })
+            if (cached is not null)
                 return cached;
         }
 
