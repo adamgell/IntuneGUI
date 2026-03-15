@@ -2,12 +2,14 @@
 
   <PropertyGroup>
     <!-- Pass these from CI via -p: flags -->
+    <!-- ProductVersion: numeric only (X.Y.Z) for MSI; DisplayVersion: full semver for filenames -->
     <ProductVersion Condition="'$(ProductVersion)' == ''">0.4.5</ProductVersion>
+    <DisplayVersion Condition="'$(DisplayVersion)' == ''">$(ProductVersion)</DisplayVersion>
     <DesktopPublishDir Condition="'$(DesktopPublishDir)' == ''">$(MSBuildThisFileDirectory)..\..\publish\desktop</DesktopPublishDir>
     <CliPublishDir Condition="'$(CliPublishDir)' == ''">$(MSBuildThisFileDirectory)..\..\publish\cli</CliPublishDir>
     <InstallerOutputDir Condition="'$(InstallerOutputDir)' == ''">$(MSBuildThisFileDirectory)..\..\publish\installer</InstallerOutputDir>
     <OutputPath>$(InstallerOutputDir)</OutputPath>
-    <OutputName>IntuneCommander-$(ProductVersion)-x64</OutputName>
+    <OutputName>IntuneCommander-$(DisplayVersion)-x64</OutputName>
   </PropertyGroup>
 
   <PropertyGroup>

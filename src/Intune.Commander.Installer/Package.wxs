@@ -44,9 +44,6 @@
       <Directory Id="AppShortcutDir" Name="Intune Commander" />
     </StandardDirectory>
 
-    <!-- Desktop app: all files from publish directory -->
-    <Files Include="$(var.DesktopPublishDir)\**" />
-
     <!-- CLI tool -->
     <Component Id="CliExe" Directory="INSTALLFOLDER" Guid="D51B5047-D21C-42C5-8F76-14A679159328">
       <File Id="IcExe" Source="$(var.CliPublishDir)\ic.exe" KeyPath="yes" />
@@ -68,7 +65,7 @@
                      KeyPath="yes" />
     </Component>
 
-    <!-- PATH environment variable for CLI -->
+    <!-- PATH environment variable for CLI (unconditional — users expect CLI tools on PATH) -->
     <Component Id="PathComponent" Directory="INSTALLFOLDER" Guid="4CB6446C-41D8-4072-9BDF-2CB438C76898">
       <Environment Id="PathEntry"
                    Name="PATH"
@@ -84,6 +81,14 @@
                      Value="1"
                      KeyPath="yes" />
     </Component>
+
+    <!-- Single feature — all files + explicit components -->
+    <Feature Id="Complete" Title="Intune Commander" Level="1" AllowAbsent="no">
+      <Files Include="$(var.DesktopPublishDir)\**" />
+      <ComponentRef Id="CliExe" />
+      <ComponentRef Id="StartMenuShortcut" />
+      <ComponentRef Id="PathComponent" />
+    </Feature>
 
   </Package>
 </Wix>

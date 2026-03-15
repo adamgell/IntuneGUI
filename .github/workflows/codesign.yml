@@ -59,6 +59,10 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
 
+          # MSI ProductVersion must be numeric (X.Y.Z) — strip prerelease suffix
+          MSI_VERSION=$(echo "$VERSION" | sed 's/-.*//')
+          echo "msi_version=$MSI_VERSION" >> "$GITHUB_OUTPUT"
+
           if [[ "$VERSION" == *-* ]]; then
             echo "prerelease=true" >> "$GITHUB_OUTPUT"
           else
@@ -170,7 +174,8 @@ jobs:
         run: |
           dotnet build ${{ env.INSTALLER_PROJECT }} `
             -c Release `
-            -p:ProductVersion=${{ steps.version.outputs.version }} `
+            -p:ProductVersion=${{ steps.version.outputs.msi_version }} `
+            -p:DisplayVersion=${{ steps.version.outputs.version }} `
             -p:DesktopPublishDir="${{ github.workspace }}\publish\desktop" `
             -p:CliPublishDir="${{ github.workspace }}\publish\cli" `
             -p:InstallerOutputDir="${{ github.workspace }}\publish\installer"
