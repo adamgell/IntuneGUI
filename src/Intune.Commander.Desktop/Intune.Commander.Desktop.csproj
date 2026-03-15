@@ -9,6 +9,7 @@
     <AssemblyTitle>Intune Commander</AssemblyTitle>
     <Product>Intune Commander</Product>
     <ApplicationIcon>..\..\icon.ico</ApplicationIcon>
+    <AssemblyName>IntuneCommander</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>

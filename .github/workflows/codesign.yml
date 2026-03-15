@@ -15,9 +15,11 @@ permissions:
   contents: write
 
 env:
-  PROJECT: src/Intune.Commander.Desktop/Intune.Commander.Desktop.csproj
-  PUBLISH_DIR: src/Intune.Commander.Desktop/bin/Release/net10.0/win-x64/publish
+  PROJECT: src/Intune.Commander.DesktopReact/Intune.Commander.DesktopReact.csproj
+  PUBLISH_DIR: src/Intune.Commander.DesktopReact/bin/Release/net10.0-windows/win-x64/publish
+  REACT_DIR: intune-commander-react
   DOTNET_VERSION: '10.0.x'
+  NODE_VERSION: '20'
   GH_REPO: adamgell/IntuneCommander
 
 jobs:
@@ -35,6 +37,11 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Determine version
         id: version
@@ -63,12 +70,16 @@ jobs:
           git tag -a ${{ steps.version.outputs.tag }} -m "Release ${{ steps.version.outputs.tag }}"
           git push origin ${{ steps.version.outputs.tag }}
 
+      - name: Build React frontend
+        working-directory: ${{ env.REACT_DIR }}
+        run: |
+          npm ci
+          npm run build
+
       - name: Restore dependencies
         run: dotnet restore ${{ env.PROJECT }} -r win-x64
 
       - name: Publish
-        env:
-          SYNCFUSION_LICENSE_KEY: ${{ secrets.SYNCFUSION_LICENSE_KEY }}
         run: >
           dotnet publish ${{ env.PROJECT }}
           -c Release
@@ -78,18 +89,17 @@ jobs:
           -p:PublishSingleFile=true
           -p:IncludeNativeLibrariesForSelfExtract=true
           -p:Version=${{ steps.version.outputs.version }}
-          "-p:SyncfusionLicenseKey=$env:SYNCFUSION_LICENSE_KEY"
 
       - name: Verify build output
         shell: bash
         run: |
-          EXE="${{ env.PUBLISH_DIR }}/Intune.Commander.Desktop.exe"
+          EXE="${{ env.PUBLISH_DIR }}/IntuneCommander.exe"
           if [ ! -f "$EXE" ]; then
             echo "::error::Build output not found at $EXE"
             exit 1
           fi
           SIZE=$(stat -c%s "$EXE" 2>/dev/null || stat -f%z "$EXE")
-          echo "Artifact: Intune.Commander.Desktop.exe ($SIZE bytes)"
+          echo "Artifact: IntuneCommander.exe ($SIZE bytes)"
 
       - name: Sign with Trusted Signing
         uses: azure/trusted-signing-action@v0
@@ -118,7 +128,7 @@ jobs:
 
           gh release create "${{ steps.version.outputs.tag }}" \
             -R "${{ env.GH_REPO }}" \
-            "${{ env.PUBLISH_DIR }}/Intune.Commander.Desktop.exe" \
+            "${{ env.PUBLISH_DIR }}/IntuneCommander.exe" \
             --title "${{ steps.version.outputs.tag }}" \
             --generate-notes \
             $PRERELEASE_FLAG
