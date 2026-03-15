@@ -66,18 +66,7 @@ jobs:
 
   publish-cli:
     if: "!contains(github.event.head_commit.message || '', '[skip ci]')"
-    strategy:
-      matrix:
-        include:
-          - os: windows-latest
-            rid: win-x64
-            artifact-name: Intune.Commander.CLI-win-x64
-            binary: ic.exe
-          - os: ubuntu-latest
-            rid: linux-x64
-            artifact-name: Intune.Commander.CLI-linux-x64
-            binary: ic
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
     permissions:
       contents: read
 
@@ -93,18 +82,19 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore Intune.Commander.sln
 
-      - name: Publish CLI ${{ matrix.rid }}
-        run: >
-          dotnet publish src/Intune.Commander.CLI/Intune.Commander.CLI.csproj
-          --configuration Release
-          --runtime ${{ matrix.rid }}
-          --self-contained true
-          --output ./publish-cli/${{ matrix.rid }}
-          -p:PublishSingleFile=true
+      - name: Publish CLI win-x64
+        shell: pwsh
+        run: |
+          dotnet publish src/Intune.Commander.CLI/Intune.Commander.CLI.csproj `
+            --configuration Release `
+            --runtime win-x64 `
+            --self-contained true `
+            --output ./publish-cli/win-x64 `
+            -p:PublishSingleFile=true
 
-      - name: Upload CLI ${{ matrix.rid }} artifact
+      - name: Upload CLI win-x64 artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact-name }}
-          path: ./publish-cli/${{ matrix.rid }}/${{ matrix.binary }}
+          name: Intune.Commander.CLI-win-x64
+          path: ./publish-cli/win-x64/ic.exe
           retention-days: 30
