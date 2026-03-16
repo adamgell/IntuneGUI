@@ -152,7 +152,11 @@ jobs:
             exit 1
           fi
           if [ ! -f "${{ env.DESKTOP_PUBLISH_DIR }}/wwwroot/index.html" ]; then
-            echo "::error::wwwroot/index.html not found - React assets missing from build"
+            echo "::error::wwwroot/index.html not found (x64) - React assets missing from build"
+            exit 1
+          fi
+          if [ ! -f "${{ env.DESKTOP_PUBLISH_DIR_ARM64 }}/wwwroot/index.html" ]; then
+            echo "::error::wwwroot/index.html not found (arm64) - React assets missing from build"
             exit 1
           fi
           if [ ! -f "${{ env.CLI_PUBLISH_DIR }}/ic.exe" ]; then

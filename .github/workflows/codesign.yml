@@ -157,6 +157,7 @@ jobs:
             "${{ env.DESKTOP_PUBLISH_DIR }}/IntuneCommander.exe" \
             "${{ env.DESKTOP_PUBLISH_DIR }}/wwwroot/index.html" \
             "${{ env.DESKTOP_PUBLISH_DIR_ARM64 }}/IntuneCommander.exe" \
+            "${{ env.DESKTOP_PUBLISH_DIR_ARM64 }}/wwwroot/index.html" \
             "${{ env.CLI_PUBLISH_DIR }}/ic.exe" \
             "${{ env.CLI_PUBLISH_DIR_ARM64 }}/ic.exe"; do
             if [ ! -f "$f" ]; then

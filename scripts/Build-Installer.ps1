@@ -96,7 +96,7 @@ foreach ($arch in $archs) {
         Step "Publish desktop ($runtime) -> $desktopDir"
         dotnet publish $DesktopProj -c Release -r $runtime --self-contained true --output $desktopDir -p:Version=$Version --nologo -v:q
         if (-not (Test-Path "$desktopDir\IntuneCommander.exe")) { Fail "IntuneCommander.exe missing ($arch)" }
-        if ($arch -eq 'x64' -and -not (Test-Path "$desktopDir\wwwroot\index.html")) { Fail "wwwroot/index.html missing" }
+        if (-not (Test-Path "$desktopDir\wwwroot\index.html")) { Fail "wwwroot/index.html missing ($arch)" }
         Ok "IntuneCommander.exe present"
 
         Step "Publish CLI ($runtime) -> $cliDir"
