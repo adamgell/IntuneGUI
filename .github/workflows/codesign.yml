@@ -162,22 +162,35 @@ jobs:
 
       # ── Verify build output ──
       - name: Verify build output
-        shell: bash
+        shell: pwsh
         run: |
-          FAIL=0
-          for f in \
-            "${{ env.DESKTOP_PUBLISH_DIR }}/IntuneCommander.exe" \
-            "${{ env.DESKTOP_PUBLISH_DIR }}/wwwroot/index.html" \
-            "${{ env.DESKTOP_PUBLISH_DIR_ARM64 }}/IntuneCommander.exe" \
-            "${{ env.DESKTOP_PUBLISH_DIR_ARM64 }}/wwwroot/index.html" \
-            "${{ env.CLI_PUBLISH_DIR }}/ic.exe" \
-            "${{ env.CLI_PUBLISH_DIR_ARM64 }}/ic.exe"; do
-            if [ ! -f "$f" ]; then
-              echo "::error::Required file not found: $f"
-              FAIL=1
-            fi
-          done
-          [ $FAIL -ne 0 ] && exit 1
+          Write-Host "=== desktop (x64) ==="
+          Get-ChildItem "${{ env.DESKTOP_PUBLISH_DIR }}" -Name | Select-Object -First 20
+          Write-Host "=== desktop-arm64 ==="
+          Get-ChildItem "${{ env.DESKTOP_PUBLISH_DIR_ARM64 }}" -Name | Select-Object -First 20
+          Write-Host "=== cli (x64) ==="
+          Get-ChildItem "${{ env.CLI_PUBLISH_DIR }}" -Name
+          Write-Host "=== cli-arm64 ==="
+          Get-ChildItem "${{ env.CLI_PUBLISH_DIR_ARM64 }}" -Name
+
+          $missing = @()
+          $required = @(
+            "${{ env.DESKTOP_PUBLISH_DIR }}/IntuneCommander.exe",
+            "${{ env.DESKTOP_PUBLISH_DIR }}/wwwroot/index.html",
+            "${{ env.DESKTOP_PUBLISH_DIR_ARM64 }}/IntuneCommander.exe",
+            "${{ env.DESKTOP_PUBLISH_DIR_ARM64 }}/wwwroot/index.html",
+            "${{ env.CLI_PUBLISH_DIR }}/ic.exe",
+            "${{ env.CLI_PUBLISH_DIR_ARM64 }}/ic.exe"
+          )
+          foreach ($f in $required) {
+            if (Test-Path $f) {
+              Write-Host "OK: $f"
+            } else {
+              Write-Host "::error::MISSING: $f"
+              $missing += $f
+            }
+          }
+          if ($missing.Count -gt 0) { exit 1 }
 
       # ── Sign executables (before MSI so MSI contains signed binaries) ──
       - name: Sign Desktop exe (x64)
