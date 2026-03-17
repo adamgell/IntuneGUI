@@ -46,6 +46,9 @@ nav:
     - Drift Detection: user-guide/drift-detection.md
     - Multi-Cloud: user-guide/multi-cloud.md
     - CA PowerPoint Export: user-guide/ca-powerpoint.md
+    - Groups Workspace: user-guide/groups-workspace.md
+    - Application Workspaces: user-guide/application-workspaces.md
+    - Policy Comparison: user-guide/policy-comparison.md
   - Reference:
     - Graph Permissions: reference/graph-permissions.md
     - Supported Object Types: reference/object-types.md

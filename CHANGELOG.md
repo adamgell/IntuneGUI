@@ -4,6 +4,25 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+## [0.4.7.0] — 2026-03-17
+
+### Added
+- **Groups workspace** — full list + detail workspace under the new Admin tab with DataGrid, type filter chips (Dynamic Device/User/Assigned), membership rule viewer, members table with type icons, and Intune assignments table. Backend uses parallel `Task.WhenAll` for counts + members + assignments with 1-hour detail cache.
+- **Admin primary tab** — new top-level navigation tab with Tenant Admin and Groups sidebar items.
+- **10+ new React workspace components** — Applications, Compliance Policy, Conditional Access, Device Config, Endpoint Security, Enrollment, Scripts Hub, Security Posture, Assignment Explorer, Policy Comparison workspaces with corresponding Zustand stores, TypeScript types, and .NET bridge services.
+- **6 new Application sub-workspaces** — App Assignments (flat denormalized view), Bulk App Assignments, App Protection Policies, Managed Device App Configurations, Targeted Managed App Configurations, VPP Tokens.
+- **ApplicationDataMapper** — extracted app type/platform/version/bundle helpers from ApplicationBridgeService into a shared static class for reuse across application workspaces.
+- **DialogBridgeService** — native folder/file/save picker bridge commands (`dialog.pickFolder`, `dialog.pickFile`, `dialog.saveFile`) with UI thread marshaling and 5-minute React timeout.
+- **ICacheService.GetSingle/SetSingle** — new single-object cache overloads eliminating the `List<T>` wrapper hack for detail caching.
+- **MonacoDiffViewer** — extracted reusable diff component from PolicyComparisonWorkspace for use by Drift Detection and future workspaces.
+- **Operations tab additions** — Drift Detection and Export/Import sidebar items with placeholder workspaces ready for buildout.
+- **React UI workspaces expansion plan** — comprehensive planning documentation (`PLAN-react-workspaces.md`, `REMAINING-WORK.md`) outlining phased workspace buildout.
+- **Application assignment search integration** — global search now includes application assignment matches in results.
+- **Dynamic bridge command timeouts** — `HEAVY_COMMANDS` (60s) for multi-Graph-call commands and `LONG_RUNNING_COMMANDS` (180s) for bulk operations.
+
+### Changed
+- **Installer packaging** — added packaging details for Intune Commander MSI/MSIX builds.
+
 ## [0.4.6.2] — 2026-03-16
 
 ### Fixed
