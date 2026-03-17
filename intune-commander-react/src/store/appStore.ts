@@ -135,10 +135,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   setPrimaryTab: (tabId) => {
     const tabs: Record<string, string> = {
       'configuration': 'settings-catalog',
-      'endpoint-security': 'compliance-policies',
-      'devices': 'device-categories',
-      'reports': 'assignment-reports',
-      'automation': 'device-scripts',
+      'applications': 'applications',
+      'security': 'security-posture',
+      'devices': 'detection-remediation',
+      'operations': 'assignment-explorer',
+      'admin': 'tenant-admin',
     };
     const defaultSecondary = tabs[tabId] ?? '';
     set({
