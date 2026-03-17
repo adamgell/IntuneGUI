@@ -86,6 +86,9 @@ public class SearchBridgeService
             }
         }
 
+        if (results.Count < MaxResults)
+            SearchApplicationAssignments(tenantId, query, results);
+
         return Task.FromResult<object>(results.ToArray());
     }
 
@@ -125,6 +128,62 @@ public class SearchBridgeService
                     Name: name ?? "(unnamed)",
                     Description: Truncate(description, 120)));
             }
+        }
+    }
+
+    private void SearchApplicationAssignments(string tenantId, string query, List<SearchResult> results)
+    {
+        var assignmentRows = _cache.Get<ApplicationAssignmentRowDto>(tenantId, "ApplicationAssignments");
+        if (assignmentRows is not { Count: > 0 })
+            return;
+
+        var existingApplicationIds = results
+            .Where(result => string.Equals(result.Category, "Applications", StringComparison.OrdinalIgnoreCase))
+            .Select(result => result.Id)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var matchedApps = assignmentRows
+            .Where(row =>
+                !string.IsNullOrWhiteSpace(row.AppId) &&
+                !string.IsNullOrWhiteSpace(row.AppName) &&
+                row.TargetName.Contains(query, StringComparison.OrdinalIgnoreCase))
+            .GroupBy(row => row.AppId, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var appGroup in matchedApps)
+        {
+            if (results.Count >= MaxResults)
+                break;
+
+            if (existingApplicationIds.Contains(appGroup.Key))
+                continue;
+
+            var first = appGroup.First();
+            var matchedTargets = appGroup
+                .Select(row => row.TargetName)
+                .Where(target => !string.IsNullOrWhiteSpace(target))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(3)
+                .ToArray();
+
+            var matchedTargetSummary = matchedTargets.Length switch
+            {
+                0 => "Assigned group match",
+                1 => $"Assigned to {matchedTargets[0]}",
+                _ => $"Assigned to {string.Join(", ", matchedTargets)}"
+            };
+
+            var description = string.IsNullOrWhiteSpace(first.Description)
+                ? matchedTargetSummary
+                : $"{matchedTargetSummary} - {first.Description}";
+
+            results.Add(new SearchResult(
+                Category: "Applications",
+                CategoryKey: "applications",
+                Id: first.AppId,
+                Name: first.AppName,
+                Description: Truncate(description, 120)));
+
+            existingApplicationIds.Add(appGroup.Key);
         }
     }
 
