@@ -97,8 +97,18 @@ public class PolicyComparisonBridgeService
         var client = GetClient();
         _normalizer ??= new ExportNormalizer();
 
-        var (nameA, jsonA) = await GetPolicyJson(category, idA, client);
-        var (nameB, jsonB) = await GetPolicyJson(category, idB, client);
+        // For Settings Catalog, fetch settings once and reuse for both JSON and structured diff
+        List<DeviceManagementConfigurationSetting>? scSettingsA = null;
+        List<DeviceManagementConfigurationSetting>? scSettingsB = null;
+        if (category == "settingsCatalog")
+        {
+            _settingsCatalogService ??= new SettingsCatalogService(client);
+            scSettingsA = await _settingsCatalogService.GetPolicySettingsAsync(idA);
+            scSettingsB = await _settingsCatalogService.GetPolicySettingsAsync(idB);
+        }
+
+        var (nameA, jsonA) = await GetPolicyJson(category, idA, client, scSettingsA);
+        var (nameB, jsonB) = await GetPolicyJson(category, idB, client, scSettingsB);
 
         // Strip metadata/envelope fields — keep only settings differences
         var settingsOnlyA = StripMetadataFields(jsonA);
@@ -112,12 +122,9 @@ public class PolicyComparisonBridgeService
 
         // Build structured settings diff for Settings Catalog
         SettingDiffItem[]? settingsDiff = null;
-        if (category == "settingsCatalog")
+        if (scSettingsA is not null && scSettingsB is not null)
         {
-            _settingsCatalogService ??= new SettingsCatalogService(client);
-            var settingsA = await _settingsCatalogService.GetPolicySettingsAsync(idA);
-            var settingsB = await _settingsCatalogService.GetPolicySettingsAsync(idB);
-            settingsDiff = BuildSettingsDiff(settingsA, settingsB);
+            settingsDiff = BuildSettingsDiff(scSettingsA, scSettingsB);
         }
 
         return new PolicyComparisonResultDto(
@@ -138,25 +145,28 @@ public class PolicyComparisonBridgeService
         var flatA = SettingsCatalogHelper.FlattenSettings(settingsA);
         var flatB = SettingsCatalogHelper.FlattenSettings(settingsB);
 
-        // Index by label (label is the resolved friendly name)
-        var mapA = new Dictionary<string, (string Category, string Value)>();
+        // Use composite key (category + label) to avoid collisions from duplicate labels
+        static string BuildKey(string cat, string label) => $"{cat}\x1f{label}";
+
+        var mapA = new Dictionary<string, (string Category, string Label, string Value)>();
         foreach (var (cat, label, value) in flatA)
-            mapA[label] = (cat, value);
+            mapA[BuildKey(cat, label)] = (cat, label, value);
 
-        var mapB = new Dictionary<string, (string Category, string Value)>();
+        var mapB = new Dictionary<string, (string Category, string Label, string Value)>();
         foreach (var (cat, label, value) in flatB)
-            mapB[label] = (cat, value);
+            mapB[BuildKey(cat, label)] = (cat, label, value);
 
-        var allLabels = new HashSet<string>(mapA.Keys);
-        allLabels.UnionWith(mapB.Keys);
+        var allKeys = new HashSet<string>(mapA.Keys);
+        allKeys.UnionWith(mapB.Keys);
 
         var items = new List<SettingDiffItem>();
-        foreach (var label in allLabels.OrderBy(l => l))
+        foreach (var key in allKeys.OrderBy(k => k))
         {
-            var inA = mapA.TryGetValue(label, out var a);
-            var inB = mapB.TryGetValue(label, out var b);
+            var inA = mapA.TryGetValue(key, out var a);
+            var inB = mapB.TryGetValue(key, out var b);
 
             var category = inA ? a.Category : b.Category;
+            var label = inA ? a.Label : b.Label;
 
             if (inA && inB)
             {
@@ -177,7 +187,8 @@ public class PolicyComparisonBridgeService
     }
 
     private async Task<(string Name, string Json)> GetPolicyJson(
-        string category, string id, Microsoft.Graph.Beta.GraphServiceClient client)
+        string category, string id, Microsoft.Graph.Beta.GraphServiceClient client,
+        List<DeviceManagementConfigurationSetting>? preloadedSettings = null)
     {
         var options = new JsonSerializerOptions
         {
@@ -191,8 +202,7 @@ public class PolicyComparisonBridgeService
                 _settingsCatalogService ??= new SettingsCatalogService(client);
                 var sc = await _settingsCatalogService.GetSettingsCatalogPolicyAsync(id)
                     ?? throw new InvalidOperationException($"Policy {id} not found");
-                var scSettings = await _settingsCatalogService.GetPolicySettingsAsync(id);
-                // Build a composite object with the actual settings included
+                var scSettings = preloadedSettings ?? await _settingsCatalogService.GetPolicySettingsAsync(id);
                 var scComposite = new { policy = sc, settings = scSettings };
                 return (sc.Name ?? sc.Id ?? id, JsonSerializer.Serialize(scComposite, options));
 
@@ -257,11 +267,18 @@ public class PolicyComparisonBridgeService
 
     private static string StripMetadataFields(string json)
     {
-        var root = JsonNode.Parse(json);
-        if (root is JsonObject obj)
-            StripFieldsRecursive(obj);
-        var options = new JsonSerializerOptions { WriteIndented = true };
-        return root?.ToJsonString(options) ?? json;
+        try
+        {
+            var root = JsonNode.Parse(json);
+            if (root is JsonObject obj)
+                StripFieldsRecursive(obj);
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            return root?.ToJsonString(options) ?? json;
+        }
+        catch (JsonException)
+        {
+            return json;
+        }
     }
 
     private static void StripFieldsRecursive(JsonObject obj)

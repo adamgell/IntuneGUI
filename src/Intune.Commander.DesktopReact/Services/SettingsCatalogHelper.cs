@@ -158,9 +158,12 @@ public static class SettingsCatalogHelper
         }
 
         var parts = id.Split('_', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0) return "Unknown Setting";
+
         var labelParts = parts.Length > 1 ? parts[1..] : parts;
         var settingName = labelParts.Length > 0 ? labelParts[^1] : parts[^1];
         var spaced = Regex.Replace(settingName, @"(?<=[a-z0-9])(?=[A-Z])", " ");
+        if (string.IsNullOrEmpty(spaced)) return "Unknown Setting";
         return char.ToUpper(spaced[0]) + spaced[1..];
     }
 
